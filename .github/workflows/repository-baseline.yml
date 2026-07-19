@@ -1,0 +1,18 @@
+name: repository-baseline
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  repository-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify specification baseline
+        shell: pwsh
+        run: ./tools/verify-baseline.ps1

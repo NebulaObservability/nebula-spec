@@ -1,0 +1,22 @@
+name: Contract change
+description: Propose a versioned protocol or semantic change.
+title: "[Spec]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and rollout
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria and fixtures
+    validations:
+      required: true
