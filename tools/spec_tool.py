@@ -222,16 +222,16 @@ def go_output(data: dict[str, Any]) -> str:
         ("Metrics", "metrics", "Metric"),
         ("Spans", "spans", "Span"),
     ):
-        lines.extend([f"// {label}", "const ("])
+        lines.append(f"// {label}")
         for item in sorted(data[key], key=lambda entry: entry["name"]):
-            lines.append(f'\t{prefix}{pascal_case(item["name"])} = "{item["name"]}"')
-        lines.extend([")", ""])
+            lines.append(f'const {prefix}{pascal_case(item["name"])} = "{item["name"]}"')
+        lines.append("")
     for enum in sorted(data["enums"], key=lambda entry: entry["name"]):
         type_name = pascal_case(enum["name"])
-        lines.extend([f"type {type_name} string", "", "const ("])
+        lines.extend([f"type {type_name} string", ""])
         for value in enum["values"]:
-            lines.append(f'\t{type_name}{pascal_case(value)} {type_name} = "{value}"')
-        lines.extend([")", ""])
+            lines.append(f'const {type_name}{pascal_case(value)} {type_name} = "{value}"')
+        lines.append("")
     return "\n".join(lines)
 
 

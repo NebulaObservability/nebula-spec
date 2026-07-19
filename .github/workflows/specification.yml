@@ -46,6 +46,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.25.x"
+          cache: false
       - name: Verify generated Go formatting and syntax
         shell: bash
         run: test -z "$(gofmt -d generated/go/semantic/registry.go)"
