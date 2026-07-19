@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/spec/privacy-policy.schema.json",
+  "type": "object",
+  "required": ["schema_version", "policy_id", "policy_version", "default_action", "rules"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "policy_id": { "type": "string", "minLength": 1 },
+    "policy_version": { "type": "string", "minLength": 1 },
+    "default_action": { "enum": ["drop", "allow"] },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["selector", "match", "action", "classification"],
+        "properties": {
+          "selector": { "type": "string", "minLength": 1 },
+          "match": { "enum": ["exact", "exact_case_insensitive", "glob", "regex"] },
+          "action": { "enum": ["allow", "drop", "mask", "hash", "scrub", "sanitize_url"] },
+          "classification": { "enum": ["public", "internal", "identifier", "sensitive", "secret"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "allowed_baggage": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "forbidden_baggage": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+  },
+  "additionalProperties": false
+}

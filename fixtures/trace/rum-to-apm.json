@@ -1,0 +1,20 @@
+{
+  "rum": {
+    "trace_id": "0123456789abcdef0123456789abcdef",
+    "span_id": "0123456789abcdef",
+    "action_id": "01JZACTION0000000000000001",
+    "allowed_origin": "https://api.example.com"
+  },
+  "request_headers": {
+    "traceparent": "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01"
+  },
+  "apm": {
+    "trace_id": "0123456789abcdef0123456789abcdef",
+    "parent_span_id": "0123456789abcdef",
+    "span_kind": "server"
+  },
+  "expected": {
+    "same_trace": true,
+    "trusted_origin_only": true
+  }
+}

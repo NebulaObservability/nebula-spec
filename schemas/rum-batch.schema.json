@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/rum/rutp/v1/batch.schema.json",
+  "type": "object",
+  "required": ["protocol_version", "schema_url", "otel_schema_url", "batch_id", "project_id", "sent_time_unix_nano", "resource", "scope", "clock", "records"],
+  "properties": {
+    "protocol_version": { "const": "1.0" },
+    "schema_url": { "type": "string", "format": "uri" },
+    "otel_schema_url": { "type": "string", "format": "uri" },
+    "batch_id": { "$ref": "#/$defs/id" },
+    "project_id": { "type": "string", "minLength": 1 },
+    "sent_time_unix_nano": { "$ref": "#/$defs/uint64" },
+    "resource": {
+      "type": "object",
+      "required": ["attributes"],
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "required": ["service.namespace", "service.name", "service.version", "service.instance.id", "deployment.environment.name", "telemetry.sdk.name", "telemetry.sdk.version", "app.installation.id"],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "scope": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "attributes": { "$ref": "#/$defs/attributes" }
+      },
+      "additionalProperties": false
+    },
+    "clock": {
+      "type": "object",
+      "required": ["wall_time_unix_nano", "monotonic_time_nano", "offset_millis", "uncertainty_millis"],
+      "properties": {
+        "wall_time_unix_nano": { "$ref": "#/$defs/uint64" },
+        "monotonic_time_nano": { "$ref": "#/$defs/uint64" },
+        "offset_millis": { "type": "integer" },
+        "uncertainty_millis": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "records": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/record" } },
+    "attachments": { "type": "array", "items": { "type": "object" } },
+    "diagnostics": { "type": "object" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": { "type": "string", "minLength": 8, "maxLength": 128 },
+    "uint64": { "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "string", "pattern": "^[0-9]+$" }] },
+    "attributes": { "type": "object", "additionalProperties": true },
+    "context": {
+      "type": "object",
+      "required": ["session_id", "document_id", "view_id"],
+      "properties": {
+        "trace_id": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+        "span_id": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+        "parent_span_id": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+        "trace_flags": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "trace_state": { "type": "string" },
+        "session_id": { "$ref": "#/$defs/id" },
+        "document_id": { "$ref": "#/$defs/id" },
+        "view_id": { "$ref": "#/$defs/id" },
+        "navigation_id": { "$ref": "#/$defs/id" },
+        "action_id": { "$ref": "#/$defs/id" },
+        "replay_id": { "$ref": "#/$defs/id" },
+        "attributes": { "$ref": "#/$defs/attributes" }
+      },
+      "additionalProperties": false
+    },
+    "record": {
+      "type": "object",
+      "required": ["record_id", "time_unix_nano", "observed_time_unix_nano", "monotonic_time_nano", "source_id", "sequence", "priority", "context", "signal"],
+      "properties": {
+        "record_id": { "$ref": "#/$defs/id" },
+        "time_unix_nano": { "$ref": "#/$defs/uint64" },
+        "observed_time_unix_nano": { "$ref": "#/$defs/uint64" },
+        "monotonic_time_nano": { "$ref": "#/$defs/uint64" },
+        "source_id": { "type": "string", "minLength": 1 },
+        "sequence": { "type": "integer", "minimum": 0 },
+        "priority": { "enum": ["critical", "high", "normal", "low"] },
+        "context": { "$ref": "#/$defs/context" },
+        "signal": {
+          "oneOf": [
+            { "$ref": "#/$defs/span" },
+            { "$ref": "#/$defs/event" },
+            { "$ref": "#/$defs/metric" },
+            { "$ref": "#/$defs/diagnostic" },
+            { "$ref": "#/$defs/replay" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "span": {
+      "type": "object",
+      "required": ["type", "name", "kind", "start_time_unix_nano", "end_time_unix_nano", "attributes"],
+      "properties": {
+        "type": { "const": "span" },
+        "name": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["internal", "client", "server", "producer", "consumer"] },
+        "start_time_unix_nano": { "$ref": "#/$defs/uint64" },
+        "end_time_unix_nano": { "$ref": "#/$defs/uint64" },
+        "attributes": { "$ref": "#/$defs/attributes" },
+        "status_code": { "enum": ["unset", "ok", "error"] },
+        "status_message": { "type": "string" },
+        "links": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "required": ["type", "name", "severity_number", "attributes"],
+      "properties": {
+        "type": { "const": "event" },
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9_.]*$" },
+        "severity_number": { "type": "integer", "minimum": 0, "maximum": 24 },
+        "attributes": { "$ref": "#/$defs/attributes" },
+        "display_message": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "metric": {
+      "type": "object",
+      "required": ["type", "name", "kind", "value", "attributes"],
+      "properties": {
+        "type": { "const": "metric" },
+        "name": { "type": "string" },
+        "kind": { "enum": ["gauge", "counter", "histogram"] },
+        "value": {},
+        "attributes": { "$ref": "#/$defs/attributes" }
+      },
+      "additionalProperties": false
+    },
+    "diagnostic": {
+      "type": "object",
+      "required": ["type", "code", "count"],
+      "properties": {
+        "type": { "const": "diagnostic" },
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "count": { "type": "integer", "minimum": 1 },
+        "attributes": { "$ref": "#/$defs/attributes" }
+      },
+      "additionalProperties": false
+    },
+    "replay": {
+      "type": "object",
+      "required": ["type", "replay_id", "segment_id", "codec", "complete"],
+      "properties": {
+        "type": { "const": "replay" },
+        "replay_id": { "$ref": "#/$defs/id" },
+        "segment_id": { "$ref": "#/$defs/id" },
+        "codec": { "type": "string" },
+        "complete": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

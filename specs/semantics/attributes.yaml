@@ -1,0 +1,88 @@
+schema_version: 1
+registry_version: 1.0.0-draft.1
+otel_schema_url: https://opentelemetry.io/schemas/1.43.0
+attributes:
+  - { name: service.namespace, type: string, source: otel, stability: stable, requirement: required, privacy: internal, description: Logical service namespace. }
+  - { name: service.name, type: string, source: otel, stability: stable, requirement: required, privacy: internal, description: Logical service name. }
+  - { name: service.version, type: string, source: otel, stability: stable, requirement: required, privacy: internal, description: Deployed service or application version. }
+  - { name: service.instance.id, type: string, source: otel, stability: stable, requirement: required, privacy: identifier, description: Concurrent runtime instance identifier. }
+  - { name: deployment.environment.name, type: string, source: otel, stability: stable, requirement: required, privacy: internal, description: Deployment environment name. }
+  - { name: app.build_id, type: string, source: otel, stability: development, requirement: recommended, privacy: internal, description: Application build identifier. }
+  - { name: app.installation.id, type: string, source: otel, stability: development, requirement: recommended, privacy: identifier, description: Pseudonymous installation identifier. }
+  - { name: telemetry.sdk.name, type: string, source: otel, stability: stable, requirement: required, privacy: public, description: Telemetry SDK name. }
+  - { name: telemetry.sdk.language, type: string, source: otel, stability: stable, requirement: conditional, privacy: public, description: Telemetry SDK language. }
+  - { name: telemetry.sdk.version, type: string, source: otel, stability: stable, requirement: required, privacy: public, description: Telemetry SDK version. }
+  - { name: process.pid, type: int, source: otel, stability: stable, requirement: conditional, privacy: internal, description: Process identifier. }
+  - { name: process.runtime.name, type: string, source: otel, stability: stable, requirement: conditional, privacy: public, description: Runtime name. }
+  - { name: process.runtime.version, type: string, source: otel, stability: stable, requirement: conditional, privacy: public, description: Runtime version. }
+  - { name: host.id, type: string, source: otel, stability: stable, requirement: conditional, privacy: identifier, description: Host identifier. }
+  - { name: host.name, type: string, source: otel, stability: stable, requirement: optional, privacy: internal, description: Host name. }
+  - { name: container.id, type: string, source: otel, stability: stable, requirement: conditional, privacy: identifier, description: Container identifier. }
+  - { name: k8s.cluster.name, type: string, source: otel, stability: stable, requirement: conditional, privacy: internal, description: Kubernetes cluster name. }
+  - { name: k8s.namespace.name, type: string, source: otel, stability: stable, requirement: conditional, privacy: internal, description: Kubernetes namespace. }
+  - { name: k8s.pod.name, type: string, source: otel, stability: stable, requirement: conditional, privacy: internal, description: Kubernetes pod name. }
+  - { name: k8s.pod.uid, type: string, source: otel, stability: stable, requirement: conditional, privacy: identifier, description: Kubernetes pod UID. }
+  - { name: k8s.container.name, type: string, source: otel, stability: stable, requirement: conditional, privacy: internal, description: Kubernetes container name. }
+  - { name: session.id, type: string, source: otel, stability: development, requirement: required, privacy: identifier, description: User session identifier. }
+  - { name: session.previous_id, type: string, source: otel, stability: development, requirement: optional, privacy: identifier, description: Previous session identifier. }
+  - { name: enduser.pseudo.id, type: string, source: otel, stability: development, requirement: optional, privacy: identifier, description: Pseudonymous end-user identifier. }
+  - { name: browser.brands, type: string_array, source: otel, stability: development, requirement: optional, privacy: public, description: User agent brands. }
+  - { name: browser.language, type: string, source: otel, stability: development, requirement: optional, privacy: public, description: Browser language. }
+  - { name: browser.mobile, type: bool, source: otel, stability: development, requirement: optional, privacy: public, description: Browser mobile indicator. }
+  - { name: browser.platform, type: string, source: otel, stability: development, requirement: optional, privacy: public, description: Browser platform. }
+  - { name: user_agent.original, type: string, source: otel, stability: stable, requirement: optional, privacy: identifier, description: Original user agent after policy filtering. }
+  - { name: http.request.method, type: string, source: otel, stability: stable, requirement: conditional, privacy: public, description: HTTP request method. }
+  - { name: http.response.status_code, type: int, source: otel, stability: stable, requirement: conditional, privacy: public, description: HTTP response status code. }
+  - { name: url.full, type: string, source: otel, stability: stable, requirement: optional, privacy: sensitive, description: Sanitized full URL. }
+  - { name: url.scheme, type: string, source: otel, stability: stable, requirement: optional, privacy: public, description: URL scheme. }
+  - { name: url.path, type: string, source: otel, stability: stable, requirement: recommended, privacy: internal, description: Normalized URL path. }
+  - { name: server.address, type: string, source: otel, stability: stable, requirement: optional, privacy: internal, description: Server host or address. }
+  - { name: server.port, type: int, source: otel, stability: stable, requirement: optional, privacy: public, description: Server port. }
+  - { name: network.protocol.name, type: string, source: otel, stability: stable, requirement: optional, privacy: public, description: Network protocol name. }
+  - { name: network.protocol.version, type: string, source: otel, stability: stable, requirement: optional, privacy: public, description: Network protocol version. }
+  - { name: exception.type, type: string, source: otel, stability: stable, requirement: conditional, privacy: internal, description: Exception type. }
+  - { name: exception.message, type: string, source: otel, stability: stable, requirement: optional, privacy: sensitive, description: Sanitized exception message. }
+  - { name: exception.stacktrace, type: string, source: otel, stability: stable, requirement: optional, privacy: sensitive, description: Sanitized exception stack trace. }
+  - { name: error.type, type: string, source: otel, stability: stable, requirement: optional, privacy: internal, description: Low-cardinality error type. }
+  - { name: rum.app.type, type: enum, enum: rum.app.type, source: rutp, stability: stable, requirement: required, privacy: public, description: Application surface type. }
+  - { name: rum.runtime.type, type: enum, enum: rum.runtime.type, source: rutp, stability: stable, requirement: required, privacy: public, description: Runtime family. }
+  - { name: rum.runtime.source, type: string, source: rutp, stability: stable, requirement: optional, privacy: internal, description: Signal source such as window or iframe. }
+  - { name: rum.document.id, type: string, source: rutp, stability: stable, requirement: required, privacy: identifier, description: Browser document or native runtime identifier. }
+  - { name: rum.view.id, type: string, source: rutp, stability: stable, requirement: required, privacy: identifier, description: View instance identifier. }
+  - { name: rum.view.name, type: string, source: rutp, stability: stable, requirement: recommended, privacy: internal, description: Low-cardinality view name. }
+  - { name: rum.view.route, type: string, source: rutp, stability: stable, requirement: optional, privacy: internal, description: Normalized route template. }
+  - { name: rum.view.type, type: enum, enum: rum.view.type, source: rutp, stability: stable, requirement: optional, privacy: public, description: View transition type. }
+  - { name: rum.view.previous_id, type: string, source: rutp, stability: stable, requirement: optional, privacy: identifier, description: Previous view identifier. }
+  - { name: rum.navigation.id, type: string, source: rutp, stability: stable, requirement: conditional, privacy: identifier, description: Navigation identifier. }
+  - { name: rum.navigation.type, type: enum, enum: rum.navigation.type, source: rutp, stability: stable, requirement: conditional, privacy: public, description: Navigation type. }
+  - { name: rum.action.id, type: string, source: rutp, stability: stable, requirement: conditional, privacy: identifier, description: User action identifier. }
+  - { name: rum.action.parent_id, type: string, source: rutp, stability: stable, requirement: optional, privacy: identifier, description: Parent action identifier. }
+  - { name: rum.action.type, type: enum, enum: rum.action.type, source: rutp, stability: stable, requirement: conditional, privacy: public, description: User action type. }
+  - { name: rum.action.name, type: string, source: rutp, stability: stable, requirement: optional, privacy: internal, description: Low-cardinality action name. }
+  - { name: rum.action.target, type: string, source: rutp, stability: stable, requirement: optional, privacy: sensitive, description: Sanitized action target. }
+  - { name: rum.web_vital.name, type: enum, enum: rum.web_vital.name, source: rutp, stability: stable, requirement: conditional, privacy: public, description: Web Vital metric name. }
+  - { name: rum.web_vital.value, type: double, source: rutp, stability: stable, requirement: conditional, privacy: public, description: Web Vital value in its defined unit. }
+  - { name: rum.web_vital.rating, type: enum, enum: rum.web_vital.rating, source: rutp, stability: stable, requirement: optional, privacy: public, description: Web Vital quality rating. }
+  - { name: rum.performance.duration_ms, type: double, source: rutp, stability: stable, requirement: conditional, privacy: public, description: Client performance duration in milliseconds. }
+  - { name: rum.error.fingerprint, type: string, source: rutp, stability: stable, requirement: optional, privacy: identifier, description: Client grouping hint. }
+  - { name: rum.error.source, type: enum, enum: rum.error.source, source: rutp, stability: stable, requirement: optional, privacy: public, description: Error source. }
+  - { name: rum.error.handled, type: bool, source: rutp, stability: stable, requirement: optional, privacy: public, description: Whether the error was handled. }
+  - { name: rum.clock.monotonic_ns, type: int, source: rutp, stability: stable, requirement: recommended, privacy: public, description: Monotonic timestamp in nanoseconds. }
+  - { name: rum.clock.offset_ms, type: int, source: rutp, stability: stable, requirement: optional, privacy: public, description: Estimated wall-clock offset. }
+  - { name: rum.clock.uncertainty_ms, type: int, source: rutp, stability: stable, requirement: optional, privacy: public, description: Clock offset uncertainty. }
+  - { name: rum.sampling.rate, type: double, source: rutp, stability: stable, requirement: recommended, privacy: public, description: Effective sampling rate. }
+  - { name: rum.sampling.reason, type: enum, enum: rum.sampling.reason, source: rutp, stability: stable, requirement: recommended, privacy: public, description: Sampling decision reason. }
+  - { name: rum.sampling.priority, type: int, source: rutp, stability: stable, requirement: recommended, privacy: public, description: Record priority. }
+  - { name: rum.privacy.policy.id, type: string, source: rutp, stability: stable, requirement: required, privacy: internal, description: Effective privacy policy identifier. }
+  - { name: rum.privacy.policy.version, type: string, source: rutp, stability: stable, requirement: required, privacy: internal, description: Effective privacy policy version. }
+  - { name: rum.consent.state, type: enum, enum: rum.consent.state, source: rutp, stability: stable, requirement: required, privacy: public, description: Consent state used for capture. }
+  - { name: rum.sdk.config.version, type: string, source: rutp, stability: stable, requirement: required, privacy: internal, description: Effective SDK configuration version. }
+  - { name: rum.sdk.queue.size, type: int, source: rutp, stability: stable, requirement: optional, privacy: public, description: Current SDK queue size. }
+  - { name: rum.sdk.dropped.count, type: int, source: rutp, stability: stable, requirement: optional, privacy: public, description: Aggregated dropped record count. }
+  - { name: rum.replay.id, type: string, source: rutp, stability: development, requirement: conditional, privacy: identifier, description: Replay identifier. }
+  - { name: rum.replay.segment.id, type: string, source: rutp, stability: development, requirement: conditional, privacy: identifier, description: Replay segment identifier. }
+  - { name: rum.replay.chunk.id, type: string, source: rutp, stability: development, requirement: conditional, privacy: identifier, description: Replay chunk identifier. }
+  - { name: rum.replay.storage.key, type: string, source: rutp, stability: development, requirement: optional, privacy: internal, description: Replay object storage reference. }
+  - { name: rum.replay.codec, type: string, source: rutp, stability: development, requirement: conditional, privacy: public, description: Replay codec identifier. }
+  - { name: rum.replay.bytes, type: int, source: rutp, stability: development, requirement: optional, privacy: public, description: Replay payload size. }
+  - { name: rum.replay.complete, type: bool, source: rutp, stability: development, requirement: conditional, privacy: public, description: Replay completeness indicator. }

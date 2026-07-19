@@ -1,0 +1,48 @@
+schema_version: 1
+apm_extension_version: 1.0.0-draft.1
+otlp_protocol: 1.x
+otel_schema_url: https://opentelemetry.io/schemas/1.43.0
+transport:
+  preferred: otlp_grpc_protobuf
+  fallback: otlp_http_protobuf
+propagation:
+  trace_context: w3c
+  headers:
+    - traceparent
+    - tracestate
+  baggage_policy: explicit_allowlist
+signals:
+  traces: stable
+  metrics: stable
+  logs: stable
+  profiles: experimental_adapter_only
+resource:
+  required:
+    - service.name
+    - service.namespace
+    - service.instance.id
+    - service.version
+    - deployment.environment.name
+    - telemetry.sdk.name
+    - telemetry.sdk.language
+    - telemetry.sdk.version
+    - process.pid
+    - process.runtime.name
+    - process.runtime.version
+  conditional:
+    kubernetes:
+      - k8s.cluster.name
+      - k8s.namespace.name
+      - k8s.pod.name
+      - k8s.pod.uid
+      - k8s.container.name
+    container:
+      - container.id
+    host:
+      - host.id
+semantic_rules:
+  span_name_cardinality: low
+  topology_source: backend_span_derivation
+  error_signal: otlp_log_record
+  metrics_independent_from_trace_sampling: true
+extension_namespace: nebula.apm

@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/rum/rutp/v1/config.schema.json",
+  "type": "object",
+  "required": ["config_version", "issued_at", "expires_at", "protocol_version", "encoding", "compression", "sampling", "privacy", "upload", "instrumentation", "kill_switch", "key_id", "signature"],
+  "properties": {
+    "config_version": { "type": "string", "minLength": 1 },
+    "issued_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "protocol_version": { "const": "1.0" },
+    "encoding": { "enum": ["protobuf", "json"] },
+    "compression": { "enum": ["gzip", "none"] },
+    "sampling": { "$ref": "#/$defs/sampling" },
+    "privacy": { "$ref": "#/$defs/privacy" },
+    "upload": { "$ref": "#/$defs/upload" },
+    "instrumentation": { "$ref": "#/$defs/instrumentation" },
+    "kill_switch": { "$ref": "#/$defs/kill_switch" },
+    "key_id": { "type": "string", "minLength": 1 },
+    "signature": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "rate": { "type": "number", "minimum": 0, "maximum": 1 },
+    "sampling": {
+      "type": "object",
+      "required": ["session_rate", "trace_rate", "replay_rate", "always_keep_events"],
+      "properties": {
+        "session_rate": { "$ref": "#/$defs/rate" },
+        "trace_rate": { "$ref": "#/$defs/rate" },
+        "replay_rate": { "$ref": "#/$defs/rate" },
+        "always_keep_events": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "privacy": {
+      "type": "object",
+      "required": ["policy_id", "policy_version", "default_action"],
+      "properties": {
+        "policy_id": { "type": "string", "minLength": 1 },
+        "policy_version": { "type": "string", "minLength": 1 },
+        "default_action": { "enum": ["drop", "allow"] },
+        "rules": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": false
+    },
+    "upload": {
+      "type": "object",
+      "required": ["endpoint", "batch_max_records", "batch_max_bytes", "flush_interval_millis"],
+      "properties": {
+        "endpoint": { "type": "string", "minLength": 1 },
+        "batch_max_records": { "type": "integer", "minimum": 1 },
+        "batch_max_bytes": { "type": "integer", "minimum": 1024 },
+        "flush_interval_millis": { "type": "integer", "minimum": 100 },
+        "retry_max_delay_millis": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "instrumentation": {
+      "type": "object",
+      "required": ["navigation", "resource", "web_vitals", "long_tasks", "fetch_xhr", "errors", "console", "trace_allow_origins", "trace_deny_origins"],
+      "properties": {
+        "navigation": { "type": "boolean" },
+        "resource": { "type": "boolean" },
+        "web_vitals": { "type": "boolean" },
+        "long_tasks": { "type": "boolean" },
+        "fetch_xhr": { "type": "boolean" },
+        "errors": { "type": "boolean" },
+        "console": { "type": "boolean" },
+        "trace_allow_origins": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "trace_deny_origins": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "kill_switch": {
+      "type": "object",
+      "required": ["disable_all", "disable_replay", "disable_network_body", "disable_console", "disable_trace_propagation", "disable_webview_bridge"],
+      "properties": {
+        "disable_all": { "type": "boolean" },
+        "disable_replay": { "type": "boolean" },
+        "disable_network_body": { "type": "boolean" },
+        "disable_console": { "type": "boolean" },
+        "disable_trace_propagation": { "type": "boolean" },
+        "disable_webview_bridge": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

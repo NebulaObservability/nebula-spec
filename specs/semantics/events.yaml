@@ -1,0 +1,135 @@
+schema_version: 1
+events:
+  - name: session.start
+    stability: stable
+    attributes:
+      - { ref: session.id, requirement: required }
+      - { ref: session.previous_id, requirement: optional }
+  - name: session.end
+    stability: stable
+    attributes:
+      - { ref: session.id, requirement: required }
+  - name: rum.view.start
+    stability: stable
+    attributes:
+      - { ref: rum.view.id, requirement: required }
+      - { ref: rum.view.name, requirement: recommended }
+      - { ref: rum.view.route, requirement: optional }
+  - name: rum.view.end
+    stability: stable
+    attributes:
+      - { ref: rum.view.id, requirement: required }
+  - name: rum.view.lifecycle
+    stability: stable
+    attributes:
+      - { ref: rum.view.id, requirement: required }
+      - { ref: rum.view.type, requirement: optional }
+  - name: rum.user.click
+    stability: stable
+    attributes:
+      - { ref: rum.action.id, requirement: required }
+      - { ref: rum.action.type, requirement: required }
+      - { ref: rum.action.name, requirement: optional }
+      - { ref: rum.action.target, requirement: optional }
+  - name: rum.user.input
+    stability: stable
+    attributes:
+      - { ref: rum.action.id, requirement: required }
+      - { ref: rum.action.type, requirement: required }
+      - { ref: rum.action.target, requirement: optional }
+  - name: rum.user.scroll
+    stability: stable
+    attributes:
+      - { ref: rum.action.id, requirement: required }
+      - { ref: rum.action.type, requirement: required }
+  - name: rum.user.action.result
+    stability: stable
+    attributes:
+      - { ref: rum.action.id, requirement: required }
+  - name: browser.web_vital
+    stability: development
+    attributes:
+      - { ref: rum.view.id, requirement: required }
+      - { ref: rum.web_vital.name, requirement: required }
+      - { ref: rum.web_vital.value, requirement: required }
+      - { ref: rum.web_vital.rating, requirement: optional }
+  - name: rum.performance.long_task
+    stability: stable
+    attributes:
+      - { ref: rum.view.id, requirement: required }
+      - { ref: rum.performance.duration_ms, requirement: required }
+  - name: rum.performance.memory
+    stability: development
+    attributes:
+      - { ref: rum.view.id, requirement: required }
+  - name: rum.performance.resource
+    stability: development
+    attributes:
+      - { ref: rum.view.id, requirement: required }
+      - { ref: url.path, requirement: recommended }
+  - name: rum.error
+    stability: stable
+    attributes:
+      - { ref: error.type, requirement: recommended }
+      - { ref: exception.type, requirement: optional }
+      - { ref: rum.error.handled, requirement: optional }
+  - name: rum.crash
+    stability: stable
+    attributes:
+      - { ref: error.type, requirement: recommended }
+      - { ref: exception.type, requirement: optional }
+  - name: rum.console
+    stability: stable
+    attributes:
+      - { ref: error.type, requirement: optional }
+  - name: rum.network.change
+    stability: stable
+    attributes: []
+  - name: rum.http.failure
+    stability: stable
+    attributes:
+      - { ref: http.request.method, requirement: required }
+      - { ref: url.path, requirement: required }
+      - { ref: http.response.status_code, requirement: optional }
+  - name: rum.replay.start
+    stability: development
+    attributes:
+      - { ref: rum.replay.id, requirement: required }
+      - { ref: rum.replay.codec, requirement: required }
+  - name: rum.replay.segment
+    stability: development
+    attributes:
+      - { ref: rum.replay.id, requirement: required }
+      - { ref: rum.replay.segment.id, requirement: required }
+      - { ref: rum.replay.chunk.id, requirement: optional }
+      - { ref: rum.replay.bytes, requirement: optional }
+  - name: rum.replay.marker
+    stability: development
+    attributes:
+      - { ref: rum.replay.id, requirement: required }
+  - name: rum.replay.end
+    stability: development
+    attributes:
+      - { ref: rum.replay.id, requirement: required }
+      - { ref: rum.replay.complete, requirement: required }
+  - name: rum.sdk.start
+    stability: stable
+    attributes:
+      - { ref: rum.sdk.config.version, requirement: required }
+  - name: rum.sdk.config
+    stability: stable
+    attributes:
+      - { ref: rum.sdk.config.version, requirement: required }
+  - name: rum.sdk.diagnostic
+    stability: stable
+    attributes:
+      - { ref: rum.sdk.config.version, requirement: required }
+  - name: rum.sdk.drop
+    stability: stable
+    attributes:
+      - { ref: rum.sdk.dropped.count, requirement: required }
+      - { ref: rum.sdk.queue.size, requirement: optional }
+  - name: rum.sdk.upload
+    stability: stable
+    attributes:
+      - { ref: rum.sdk.queue.size, requirement: optional }
