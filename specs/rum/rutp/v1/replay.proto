@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package nebula.rum.rutp.v1;
+
+import "rum/rutp/v1/common.proto";
+
+option java_multiple_files = true;
+option java_package = "io.nebulaobservability.rum.rutp.v1";
+option go_package = "github.com/NebulaObservability/nebula-spec/generated/go/rum/rutp/v1;rutpv1";
+
+message ReplayManifest {
+  string replay_id = 1;
+  string segment_id = 2;
+  string codec = 3;
+  string codec_version = 4;
+  uint64 start_time_unix_nano = 5;
+  uint64 end_time_unix_nano = 6;
+  repeated ReplayChunkReference chunks = 7;
+  bool complete = 8;
+}
+
+message ReplayChunkReference {
+  string chunk_id = 1;
+  uint64 sequence = 2;
+  bool keyframe = 3;
+  AttachmentReference attachment = 4;
+  bytes previous_chunk_hash = 5;
+}

@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package nebula.rum.rutp.v1;
+
+import "rum/rutp/v1/common.proto";
+import "rum/rutp/v1/record.proto";
+
+option java_multiple_files = true;
+option java_package = "io.nebulaobservability.rum.rutp.v1";
+option go_package = "github.com/NebulaObservability/nebula-spec/generated/go/rum/rutp/v1;rutpv1";
+
+message RumBatch {
+  string protocol_version = 1;
+  string schema_url = 2;
+  string otel_schema_url = 3;
+  string batch_id = 4;
+  string project_id = 5;
+  uint64 sent_time_unix_nano = 6;
+  Resource resource = 7;
+  InstrumentationScope scope = 8;
+  ClientClock clock = 9;
+  repeated RumRecord records = 10;
+  repeated AttachmentReference attachments = 11;
+  BatchDiagnostics diagnostics = 12;
+}
+
+message ClientClock {
+  uint64 wall_time_unix_nano = 1;
+  uint64 monotonic_time_nano = 2;
+  sint64 offset_millis = 3;
+  uint64 uncertainty_millis = 4;
+}
+
+message BatchDiagnostics {
+  uint64 queue_size = 1;
+  uint64 dropped_records = 2;
+  uint64 retry_count = 3;
+  string config_version = 4;
+}
+
+message BatchAck {
+  string batch_id = 1;
+  uint32 accepted_records = 2;
+  uint32 rejected_records = 3;
+  repeated RejectedRecord rejected = 4;
+  uint64 retry_after_millis = 5;
+  uint64 server_time_unix_nano = 6;
+  string config_etag = 7;
+}
+
+message RejectedRecord {
+  bytes record_id = 1;
+  string reason = 2;
+  bool retryable = 3;
+}

@@ -1,0 +1,1064 @@
+{
+  "attributes": {
+    "app.build_id": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "recommended",
+      "type": "string"
+    },
+    "app.installation.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "recommended",
+      "type": "string"
+    },
+    "browser.brands": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "string_array"
+    },
+    "browser.language": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "browser.mobile": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "bool"
+    },
+    "browser.platform": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "container.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "deployment.environment.name": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "required",
+      "type": "string"
+    },
+    "enduser.pseudo.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "error.type": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "exception.message": {
+      "enum": null,
+      "privacy": "sensitive",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "exception.stacktrace": {
+      "enum": null,
+      "privacy": "sensitive",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "exception.type": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "host.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "host.name": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "http.request.method": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "http.response.status_code": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "int"
+    },
+    "k8s.cluster.name": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "k8s.container.name": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "k8s.namespace.name": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "k8s.pod.name": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "k8s.pod.uid": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "network.protocol.name": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "network.protocol.version": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "process.pid": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "conditional",
+      "type": "int"
+    },
+    "process.runtime.name": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "process.runtime.version": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "rum.action.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "rum.action.name": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "rum.action.parent_id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "rum.action.target": {
+      "enum": null,
+      "privacy": "sensitive",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "rum.action.type": {
+      "enum": "rum.action.type",
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "enum"
+    },
+    "rum.app.type": {
+      "enum": "rum.app.type",
+      "privacy": "public",
+      "requirement": "required",
+      "type": "enum"
+    },
+    "rum.clock.monotonic_ns": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "recommended",
+      "type": "int"
+    },
+    "rum.clock.offset_ms": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "int"
+    },
+    "rum.clock.uncertainty_ms": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "int"
+    },
+    "rum.consent.state": {
+      "enum": "rum.consent.state",
+      "privacy": "public",
+      "requirement": "required",
+      "type": "enum"
+    },
+    "rum.document.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "required",
+      "type": "string"
+    },
+    "rum.error.fingerprint": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "rum.error.handled": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "bool"
+    },
+    "rum.error.source": {
+      "enum": "rum.error.source",
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "enum"
+    },
+    "rum.navigation.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "rum.navigation.type": {
+      "enum": "rum.navigation.type",
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "enum"
+    },
+    "rum.performance.duration_ms": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "double"
+    },
+    "rum.privacy.policy.id": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "required",
+      "type": "string"
+    },
+    "rum.privacy.policy.version": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "required",
+      "type": "string"
+    },
+    "rum.replay.bytes": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "int"
+    },
+    "rum.replay.chunk.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "rum.replay.codec": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "rum.replay.complete": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "bool"
+    },
+    "rum.replay.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "rum.replay.segment.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "rum.replay.storage.key": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "rum.runtime.source": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "rum.runtime.type": {
+      "enum": "rum.runtime.type",
+      "privacy": "public",
+      "requirement": "required",
+      "type": "enum"
+    },
+    "rum.sampling.priority": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "recommended",
+      "type": "int"
+    },
+    "rum.sampling.rate": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "recommended",
+      "type": "double"
+    },
+    "rum.sampling.reason": {
+      "enum": "rum.sampling.reason",
+      "privacy": "public",
+      "requirement": "recommended",
+      "type": "enum"
+    },
+    "rum.sdk.config.version": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "required",
+      "type": "string"
+    },
+    "rum.sdk.dropped.count": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "int"
+    },
+    "rum.sdk.queue.size": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "int"
+    },
+    "rum.view.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "required",
+      "type": "string"
+    },
+    "rum.view.name": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "recommended",
+      "type": "string"
+    },
+    "rum.view.previous_id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "rum.view.route": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "rum.view.type": {
+      "enum": "rum.view.type",
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "enum"
+    },
+    "rum.web_vital.name": {
+      "enum": "rum.web_vital.name",
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "enum"
+    },
+    "rum.web_vital.rating": {
+      "enum": "rum.web_vital.rating",
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "enum"
+    },
+    "rum.web_vital.value": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "double"
+    },
+    "server.address": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "server.port": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "int"
+    },
+    "service.instance.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "required",
+      "type": "string"
+    },
+    "service.name": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "required",
+      "type": "string"
+    },
+    "service.namespace": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "required",
+      "type": "string"
+    },
+    "service.version": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "required",
+      "type": "string"
+    },
+    "session.id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "required",
+      "type": "string"
+    },
+    "session.previous_id": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "telemetry.sdk.language": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "conditional",
+      "type": "string"
+    },
+    "telemetry.sdk.name": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "required",
+      "type": "string"
+    },
+    "telemetry.sdk.version": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "required",
+      "type": "string"
+    },
+    "url.full": {
+      "enum": null,
+      "privacy": "sensitive",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "url.path": {
+      "enum": null,
+      "privacy": "internal",
+      "requirement": "recommended",
+      "type": "string"
+    },
+    "url.scheme": {
+      "enum": null,
+      "privacy": "public",
+      "requirement": "optional",
+      "type": "string"
+    },
+    "user_agent.original": {
+      "enum": null,
+      "privacy": "identifier",
+      "requirement": "optional",
+      "type": "string"
+    }
+  },
+  "enums": {
+    "rum.action.type": {
+      "values": [
+        "click",
+        "input",
+        "scroll",
+        "submit",
+        "custom"
+      ]
+    },
+    "rum.app.type": {
+      "values": [
+        "web",
+        "webview",
+        "native",
+        "miniapp",
+        "desktop"
+      ]
+    },
+    "rum.consent.state": {
+      "values": [
+        "unknown",
+        "granted",
+        "denied"
+      ]
+    },
+    "rum.error.source": {
+      "values": [
+        "javascript",
+        "promise",
+        "console",
+        "network",
+        "resource",
+        "native",
+        "unknown"
+      ]
+    },
+    "rum.navigation.type": {
+      "values": [
+        "navigate",
+        "reload",
+        "back_forward",
+        "prerender",
+        "spa"
+      ]
+    },
+    "rum.runtime.type": {
+      "values": [
+        "browser",
+        "android",
+        "ios",
+        "react_native",
+        "flutter",
+        "miniapp",
+        "electron",
+        "tauri"
+      ]
+    },
+    "rum.sampling.reason": {
+      "values": [
+        "default",
+        "error",
+        "slow",
+        "manual",
+        "release",
+        "budget",
+        "replay"
+      ]
+    },
+    "rum.view.type": {
+      "values": [
+        "initial_load",
+        "route_change",
+        "bfcache_restore",
+        "prerender_activation",
+        "screen"
+      ]
+    },
+    "rum.web_vital.name": {
+      "values": [
+        "lcp",
+        "inp",
+        "cls",
+        "fcp",
+        "ttfb"
+      ]
+    },
+    "rum.web_vital.rating": {
+      "values": [
+        "good",
+        "needs_improvement",
+        "poor"
+      ]
+    }
+  },
+  "events": {
+    "browser.web_vital": {
+      "attributes": [
+        {
+          "ref": "rum.view.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.web_vital.name",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.web_vital.value",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.web_vital.rating",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "development"
+    },
+    "rum.console": {
+      "attributes": [
+        {
+          "ref": "error.type",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.crash": {
+      "attributes": [
+        {
+          "ref": "error.type",
+          "requirement": "recommended"
+        },
+        {
+          "ref": "exception.type",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.error": {
+      "attributes": [
+        {
+          "ref": "error.type",
+          "requirement": "recommended"
+        },
+        {
+          "ref": "exception.type",
+          "requirement": "optional"
+        },
+        {
+          "ref": "rum.error.handled",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.http.failure": {
+      "attributes": [
+        {
+          "ref": "http.request.method",
+          "requirement": "required"
+        },
+        {
+          "ref": "url.path",
+          "requirement": "required"
+        },
+        {
+          "ref": "http.response.status_code",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.network.change": {
+      "attributes": [],
+      "stability": "stable"
+    },
+    "rum.performance.long_task": {
+      "attributes": [
+        {
+          "ref": "rum.view.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.performance.duration_ms",
+          "requirement": "required"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.performance.memory": {
+      "attributes": [
+        {
+          "ref": "rum.view.id",
+          "requirement": "required"
+        }
+      ],
+      "stability": "development"
+    },
+    "rum.performance.resource": {
+      "attributes": [
+        {
+          "ref": "rum.view.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "url.path",
+          "requirement": "recommended"
+        }
+      ],
+      "stability": "development"
+    },
+    "rum.replay.end": {
+      "attributes": [
+        {
+          "ref": "rum.replay.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.replay.complete",
+          "requirement": "required"
+        }
+      ],
+      "stability": "development"
+    },
+    "rum.replay.marker": {
+      "attributes": [
+        {
+          "ref": "rum.replay.id",
+          "requirement": "required"
+        }
+      ],
+      "stability": "development"
+    },
+    "rum.replay.segment": {
+      "attributes": [
+        {
+          "ref": "rum.replay.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.replay.segment.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.replay.chunk.id",
+          "requirement": "optional"
+        },
+        {
+          "ref": "rum.replay.bytes",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "development"
+    },
+    "rum.replay.start": {
+      "attributes": [
+        {
+          "ref": "rum.replay.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.replay.codec",
+          "requirement": "required"
+        }
+      ],
+      "stability": "development"
+    },
+    "rum.sdk.config": {
+      "attributes": [
+        {
+          "ref": "rum.sdk.config.version",
+          "requirement": "required"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.sdk.diagnostic": {
+      "attributes": [
+        {
+          "ref": "rum.sdk.config.version",
+          "requirement": "required"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.sdk.drop": {
+      "attributes": [
+        {
+          "ref": "rum.sdk.dropped.count",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.sdk.queue.size",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.sdk.start": {
+      "attributes": [
+        {
+          "ref": "rum.sdk.config.version",
+          "requirement": "required"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.sdk.upload": {
+      "attributes": [
+        {
+          "ref": "rum.sdk.queue.size",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.user.action.result": {
+      "attributes": [
+        {
+          "ref": "rum.action.id",
+          "requirement": "required"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.user.click": {
+      "attributes": [
+        {
+          "ref": "rum.action.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.action.type",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.action.name",
+          "requirement": "optional"
+        },
+        {
+          "ref": "rum.action.target",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.user.input": {
+      "attributes": [
+        {
+          "ref": "rum.action.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.action.type",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.action.target",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.user.scroll": {
+      "attributes": [
+        {
+          "ref": "rum.action.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.action.type",
+          "requirement": "required"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.view.end": {
+      "attributes": [
+        {
+          "ref": "rum.view.id",
+          "requirement": "required"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.view.lifecycle": {
+      "attributes": [
+        {
+          "ref": "rum.view.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.view.type",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "stable"
+    },
+    "rum.view.start": {
+      "attributes": [
+        {
+          "ref": "rum.view.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.view.name",
+          "requirement": "recommended"
+        },
+        {
+          "ref": "rum.view.route",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "stable"
+    },
+    "session.end": {
+      "attributes": [
+        {
+          "ref": "session.id",
+          "requirement": "required"
+        }
+      ],
+      "stability": "stable"
+    },
+    "session.start": {
+      "attributes": [
+        {
+          "ref": "session.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "session.previous_id",
+          "requirement": "optional"
+        }
+      ],
+      "stability": "stable"
+    }
+  },
+  "metrics": {
+    "rum.error.count": {
+      "attributes": [
+        "error.type",
+        "service.name"
+      ],
+      "instrument": "counter",
+      "unit": "{error}",
+      "value_type": "int"
+    },
+    "rum.http.client.duration": {
+      "attributes": [
+        "http.request.method",
+        "server.address",
+        "http.response.status_code"
+      ],
+      "instrument": "histogram",
+      "unit": "ms",
+      "value_type": "double"
+    },
+    "rum.long_task.duration": {
+      "attributes": [
+        "rum.view.name"
+      ],
+      "instrument": "histogram",
+      "unit": "ms",
+      "value_type": "double"
+    },
+    "rum.sdk.dropped.records": {
+      "attributes": [
+        "rum.sampling.reason"
+      ],
+      "instrument": "counter",
+      "unit": "{record}",
+      "value_type": "int"
+    },
+    "rum.session.count": {
+      "attributes": [
+        "service.name",
+        "deployment.environment.name"
+      ],
+      "instrument": "counter",
+      "unit": "{session}",
+      "value_type": "int"
+    },
+    "rum.view.duration": {
+      "attributes": [
+        "rum.view.name",
+        "service.name"
+      ],
+      "instrument": "histogram",
+      "unit": "ms",
+      "value_type": "double"
+    }
+  },
+  "registry_version": "1.0.0-draft.1",
+  "spans": {
+    "rum.http.client": {
+      "attributes": [
+        {
+          "ref": "http.request.method",
+          "requirement": "required"
+        },
+        {
+          "ref": "url.path",
+          "requirement": "required"
+        },
+        {
+          "ref": "server.address",
+          "requirement": "optional"
+        },
+        {
+          "ref": "http.response.status_code",
+          "requirement": "optional"
+        },
+        {
+          "ref": "rum.action.id",
+          "requirement": "optional"
+        }
+      ],
+      "kind": "client"
+    },
+    "rum.navigation": {
+      "attributes": [
+        {
+          "ref": "rum.navigation.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.navigation.type",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.view.id",
+          "requirement": "required"
+        }
+      ],
+      "kind": "internal"
+    },
+    "rum.user.action": {
+      "attributes": [
+        {
+          "ref": "rum.action.id",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.action.type",
+          "requirement": "required"
+        },
+        {
+          "ref": "rum.view.id",
+          "requirement": "required"
+        }
+      ],
+      "kind": "internal"
+    }
+  }
+}

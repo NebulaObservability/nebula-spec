@@ -1,0 +1,22 @@
+schema_version: 1
+enums:
+  - name: rum.app.type
+    values: [web, webview, native, miniapp, desktop]
+  - name: rum.runtime.type
+    values: [browser, android, ios, react_native, flutter, miniapp, electron, tauri]
+  - name: rum.view.type
+    values: [initial_load, route_change, bfcache_restore, prerender_activation, screen]
+  - name: rum.navigation.type
+    values: [navigate, reload, back_forward, prerender, spa]
+  - name: rum.action.type
+    values: [click, input, scroll, submit, custom]
+  - name: rum.web_vital.name
+    values: [lcp, inp, cls, fcp, ttfb]
+  - name: rum.web_vital.rating
+    values: [good, needs_improvement, poor]
+  - name: rum.error.source
+    values: [javascript, promise, console, network, resource, native, unknown]
+  - name: rum.sampling.reason
+    values: [default, error, slow, manual, release, budget, replay]
+  - name: rum.consent.state
+    values: [unknown, granted, denied]

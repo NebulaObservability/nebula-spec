@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/rum/rutp/v1/batch-ack.schema.json",
+  "type": "object",
+  "required": ["batch_id", "accepted_records", "rejected_records", "rejected", "retry_after_ms", "server_time_unix_nano"],
+  "properties": {
+    "batch_id": { "type": "string", "minLength": 8 },
+    "accepted_records": { "type": "integer", "minimum": 0 },
+    "rejected_records": { "type": "integer", "minimum": 0 },
+    "rejected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["record_id", "reason", "retryable"],
+        "properties": {
+          "record_id": { "type": "string" },
+          "reason": { "type": "string" },
+          "retryable": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "retry_after_ms": { "type": "integer", "minimum": 0 },
+    "server_time_unix_nano": { "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "string", "pattern": "^[0-9]+$" }] },
+    "config_etag": { "type": "string" }
+  },
+  "additionalProperties": false
+}

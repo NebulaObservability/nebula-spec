@@ -25,8 +25,33 @@ releases/       平台 Release Manifest
 tools/          Lint、Diff 和生成工具
 ```
 
-当前为 Phase 0 目录基线。Phase 1 将提交首批 Proto、Semantic YAML、JSON Schema、Codegen 和 Fixture。
+Phase 1 已提供：
+
+- RUTP v1 Batch、Record、Context、Config 和 Replay Proto。
+- APM v1 OTLP/Resource 约束及 RUTP 到 OTLP 的版本化映射。
+- 语义、枚举和隐私注册表。
+- RUM Batch、ACK、配置、隐私和 Release Manifest JSON Schema。
+- TypeScript、Java、Go 语义常量生成。
+- Golden Fixtures、协议 Lint 和兼容性快照检查。
 
 ## 版本
 
 当前仓库版本见 [`VERSION`](VERSION)。版本和兼容规则见 [`VERSIONING.md`](VERSIONING.md)。
+
+## 开发命令
+
+```powershell
+python -m pip install -r tools/requirements.txt
+python tools/spec_tool.py lint
+python tools/spec_tool.py generate --check
+python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.2.0-draft.0.json
+npx --yes @bufbuild/buf@1.72.0 lint
+```
+
+需要更新生成物时运行：
+
+```powershell
+python tools/spec_tool.py generate
+```
+
+兼容性快照只能在准备新协议基线时更新，不能用更新快照来隐藏 Breaking Change。

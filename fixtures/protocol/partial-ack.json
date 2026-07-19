@@ -1,0 +1,15 @@
+{
+  "batch_id": "01JZBATCH000000000000000001",
+  "accepted_records": 1,
+  "rejected_records": 1,
+  "rejected": [
+    {
+      "record_id": "01JZRECORD0000000000000002",
+      "reason": "invalid_attribute_type",
+      "retryable": false
+    }
+  ],
+  "retry_after_ms": 0,
+  "server_time_unix_nano": "1784476802000000000",
+  "config_etag": "cfg-2026-07-1"
+}

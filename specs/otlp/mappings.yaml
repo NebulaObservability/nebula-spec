@@ -1,0 +1,36 @@
+schema_version: 1
+otel_schema_url: https://opentelemetry.io/schemas/1.43.0
+mappings:
+  rum_span:
+    target: otlp.trace.v1.Span
+    fields:
+      context.trace_id: trace_id
+      context.span_id: span_id
+      context.parent_span_id: parent_span_id
+      span.name: name
+      span.kind: kind
+      span.start_time_unix_nano: start_time_unix_nano
+      span.end_time_unix_nano: end_time_unix_nano
+      span.attributes: attributes
+      span.status_code: status.code
+      span.links: links
+  rum_event:
+    target: otlp.logs.v1.LogRecord
+    fields:
+      record.time_unix_nano: time_unix_nano
+      record.observed_time_unix_nano: observed_time_unix_nano
+      context.trace_id: trace_id
+      context.span_id: span_id
+      event.severity_number: severity_number
+      event.name: event_name
+      event.display_message: body
+      event.attributes: attributes
+  rum_metric:
+    target: otlp.metrics.v1.Metric
+    temporality: cumulative
+  replay_manifest:
+    target: otlp.logs.v1.LogRecord
+    binary_payload: object_storage_only
+  apm:
+    target: otlp
+    transform: identity_with_validation

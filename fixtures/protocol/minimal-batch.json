@@ -1,0 +1,65 @@
+{
+  "protocol_version": "1.0",
+  "schema_url": "https://schemas.nebula-observability.io/rum/rutp/1.0",
+  "otel_schema_url": "https://opentelemetry.io/schemas/1.43.0",
+  "batch_id": "01JZBATCH000000000000000001",
+  "project_id": "demo-project",
+  "sent_time_unix_nano": "1784476801000000000",
+  "resource": {
+    "attributes": {
+      "service.namespace": "shop",
+      "service.name": "web-store",
+      "service.version": "1.0.0",
+      "service.instance.id": "01JZINSTALL00000000000001",
+      "deployment.environment.name": "test",
+      "telemetry.sdk.name": "nebula-rum-web",
+      "telemetry.sdk.version": "0.1.0",
+      "app.installation.id": "01JZINSTALL00000000000001"
+    }
+  },
+  "scope": {
+    "name": "io.nebulaobservability.rum.web",
+    "version": "0.1.0"
+  },
+  "clock": {
+    "wall_time_unix_nano": "1784476801000000000",
+    "monotonic_time_nano": "1000000000",
+    "offset_millis": 0,
+    "uncertainty_millis": 2
+  },
+  "records": [
+    {
+      "record_id": "01JZRECORD0000000000000001",
+      "time_unix_nano": "1784476800000000000",
+      "observed_time_unix_nano": "1784476800001000000",
+      "monotonic_time_nano": "900000000",
+      "source_id": "window:main",
+      "sequence": 1,
+      "priority": "high",
+      "context": {
+        "trace_id": "0123456789abcdef0123456789abcdef",
+        "span_id": "0123456789abcdef",
+        "trace_flags": 1,
+        "trace_state": "",
+        "session_id": "01JZSESSION000000000000001",
+        "document_id": "01JZDOCUMENT00000000000001",
+        "view_id": "01JZVIEW000000000000000001",
+        "attributes": {
+          "rum.privacy.policy.id": "nebula-default-deny",
+          "rum.privacy.policy.version": "1.0.0-draft.1"
+        }
+      },
+      "signal": {
+        "type": "event",
+        "name": "rum.view.start",
+        "severity_number": 9,
+        "attributes": {
+          "rum.view.id": "01JZVIEW000000000000000001",
+          "rum.view.name": "ProductDetail",
+          "rum.view.route": "/products/{productId}"
+        },
+        "display_message": "View started"
+      }
+    }
+  ]
+}

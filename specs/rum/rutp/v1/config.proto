@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package nebula.rum.rutp.v1;
+
+option java_multiple_files = true;
+option java_package = "io.nebulaobservability.rum.rutp.v1";
+option go_package = "github.com/NebulaObservability/nebula-spec/generated/go/rum/rutp/v1;rutpv1";
+
+message ClientHandshake {
+  string sdk_name = 1;
+  string sdk_version = 2;
+  repeated string supported_protocols = 3;
+  repeated string supported_encodings = 4;
+  repeated string supported_compressions = 5;
+  repeated string supported_replay_codecs = 6;
+  ClientCapabilities capabilities = 7;
+}
+
+message ClientCapabilities {
+  bool trace = 1;
+  bool metrics = 2;
+  bool replay = 3;
+  bool offline = 4;
+  bool webview_bridge = 5;
+}
+
+message SignedConfig {
+  string config_version = 1;
+  uint64 issued_at_unix_nano = 2;
+  uint64 expires_at_unix_nano = 3;
+  string protocol_version = 4;
+  string encoding = 5;
+  string compression = 6;
+  SamplingConfig sampling = 7;
+  PrivacyConfig privacy = 8;
+  UploadConfig upload = 9;
+  InstrumentationConfig instrumentation = 10;
+  KillSwitch kill_switch = 11;
+  string key_id = 12;
+  bytes signature = 13;
+}
+
+message SamplingConfig {
+  double session_rate = 1;
+  double trace_rate = 2;
+  double replay_rate = 3;
+  repeated string always_keep_events = 4;
+}
+
+message PrivacyConfig {
+  string policy_id = 1;
+  string policy_version = 2;
+  string default_action = 3;
+  repeated PrivacyRule rules = 4;
+}
+
+message PrivacyRule {
+  string selector = 1;
+  string action = 2;
+}
+
+message UploadConfig {
+  string endpoint = 1;
+  uint32 batch_max_records = 2;
+  uint32 batch_max_bytes = 3;
+  uint64 flush_interval_millis = 4;
+  uint64 retry_max_delay_millis = 5;
+}
+
+message InstrumentationConfig {
+  bool navigation = 1;
+  bool resource = 2;
+  bool web_vitals = 3;
+  bool long_tasks = 4;
+  bool fetch_xhr = 5;
+  bool errors = 6;
+  bool console = 7;
+  repeated string trace_allow_origins = 8;
+  repeated string trace_deny_origins = 9;
+}
+
+message KillSwitch {
+  bool disable_all = 1;
+  bool disable_replay = 2;
+  bool disable_network_body = 3;
+  bool disable_console = 4;
+  bool disable_trace_propagation = 5;
+  bool disable_webview_bridge = 6;
+}

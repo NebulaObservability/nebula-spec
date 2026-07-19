@@ -1,0 +1,28 @@
+schema_version: 1
+spans:
+  - name: rum.navigation
+    kind: internal
+    stability: stable
+    name_template: "Navigation {rum.view.name}"
+    attributes:
+      - { ref: rum.navigation.id, requirement: required }
+      - { ref: rum.navigation.type, requirement: required }
+      - { ref: rum.view.id, requirement: required }
+  - name: rum.http.client
+    kind: client
+    stability: stable
+    name_template: "HTTP {http.request.method} {url.path}"
+    attributes:
+      - { ref: http.request.method, requirement: required }
+      - { ref: url.path, requirement: required }
+      - { ref: server.address, requirement: optional }
+      - { ref: http.response.status_code, requirement: optional }
+      - { ref: rum.action.id, requirement: optional }
+  - name: rum.user.action
+    kind: internal
+    stability: stable
+    name_template: "Action {rum.action.type}"
+    attributes:
+      - { ref: rum.action.id, requirement: required }
+      - { ref: rum.action.type, requirement: required }
+      - { ref: rum.view.id, requirement: required }

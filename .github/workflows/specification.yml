@@ -1,0 +1,52 @@
+name: specification
+
+on:
+  pull_request:
+  push:
+    branches: [main, "codex/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install validation dependencies
+        run: python -m pip install -r tools/requirements.txt
+      - name: Lint registries and fixtures
+        run: python tools/spec_tool.py lint
+      - name: Verify generated artifacts
+        run: python tools/spec_tool.py generate --check
+      - name: Check semantic compatibility
+        run: python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.2.0-draft.0.json
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+      - name: Lint Protobuf
+        run: buf lint
+      - name: Compile Protobuf
+        run: buf build
+      - name: Check Protobuf compatibility
+        run: buf breaking --against compatibility/baselines/rutp-v1.binpb
+      - name: Compile generated Java registry
+        run: javac -d "${{ runner.temp }}/java-classes" generated/java/io/nebulaobservability/semantic/NebulaSemanticRegistry.java
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Type-check generated TypeScript registry
+        run: npx --yes --package typescript@5.9.3 tsc --noEmit --target ES2020 generated/typescript/registry.ts
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+          cache: false
+      - name: Verify generated Go formatting and syntax
+        shell: bash
+        run: test -z "$(gofmt -d generated/go/semantic/registry.go)"

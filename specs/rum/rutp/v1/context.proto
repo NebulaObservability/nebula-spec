@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package nebula.rum.rutp.v1;
+
+import "rum/rutp/v1/common.proto";
+
+option java_multiple_files = true;
+option java_package = "io.nebulaobservability.rum.rutp.v1";
+option go_package = "github.com/NebulaObservability/nebula-spec/generated/go/rum/rutp/v1;rutpv1";
+
+message RumContext {
+  bytes trace_id = 1;
+  bytes span_id = 2;
+  bytes parent_span_id = 3;
+  uint32 trace_flags = 4;
+  string trace_state = 5;
+
+  string session_id = 10;
+  string document_id = 11;
+  string view_id = 12;
+  string navigation_id = 13;
+  string action_id = 14;
+  string replay_id = 15;
+
+  map<string, AttributeValue> attributes = 20;
+}

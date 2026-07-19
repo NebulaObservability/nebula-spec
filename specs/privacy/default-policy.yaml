@@ -1,0 +1,57 @@
+schema_version: 1
+policy_id: nebula-default-deny
+policy_version: 1.0.0-draft.1
+default_action: drop
+rules:
+  - selector: Authorization
+    match: exact_case_insensitive
+    action: drop
+    classification: secret
+  - selector: Cookie
+    match: exact_case_insensitive
+    action: drop
+    classification: secret
+  - selector: Set-Cookie
+    match: exact_case_insensitive
+    action: drop
+    classification: secret
+  - selector: "*.password"
+    match: glob
+    action: drop
+    classification: secret
+  - selector: "*.token"
+    match: glob
+    action: drop
+    classification: secret
+  - selector: enduser.pseudo.id
+    match: exact
+    action: hash
+    classification: identifier
+  - selector: app.installation.id
+    match: exact
+    action: hash
+    classification: identifier
+  - selector: url.full
+    match: exact
+    action: sanitize_url
+    classification: sensitive
+  - selector: exception.message
+    match: exact
+    action: scrub
+    classification: sensitive
+  - selector: exception.stacktrace
+    match: exact
+    action: scrub
+    classification: sensitive
+allowed_baggage:
+  - tenant_hint
+  - traffic_tag
+  - release_channel
+  - test_case_id
+  - canary_flag
+forbidden_baggage:
+  - authorization
+  - cookie
+  - email
+  - phone
+  - access_token

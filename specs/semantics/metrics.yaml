@@ -1,0 +1,8 @@
+schema_version: 1
+metrics:
+  - { name: rum.session.count, unit: "{session}", instrument: counter, value_type: int, stability: stable, attributes: [service.name, deployment.environment.name] }
+  - { name: rum.view.duration, unit: ms, instrument: histogram, value_type: double, stability: stable, attributes: [rum.view.name, service.name] }
+  - { name: rum.http.client.duration, unit: ms, instrument: histogram, value_type: double, stability: stable, attributes: [http.request.method, server.address, http.response.status_code] }
+  - { name: rum.error.count, unit: "{error}", instrument: counter, value_type: int, stability: stable, attributes: [error.type, service.name] }
+  - { name: rum.long_task.duration, unit: ms, instrument: histogram, value_type: double, stability: stable, attributes: [rum.view.name] }
+  - { name: rum.sdk.dropped.records, unit: "{record}", instrument: counter, value_type: int, stability: stable, attributes: [rum.sampling.reason] }

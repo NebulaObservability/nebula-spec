@@ -1,0 +1,22 @@
+schema_version: 1
+classifications:
+  - name: public
+    rank: 0
+    storage: allow
+    description: Non-identifying technical metadata.
+  - name: internal
+    rank: 1
+    storage: allow
+    description: Internal topology or application metadata.
+  - name: identifier
+    rank: 2
+    storage: pseudonymize
+    description: Stable or session-scoped identifiers.
+  - name: sensitive
+    rank: 3
+    storage: redact_or_hash
+    description: Content that may contain user or business data.
+  - name: secret
+    rank: 4
+    storage: drop
+    description: Credentials, tokens, cookies, and authentication material.

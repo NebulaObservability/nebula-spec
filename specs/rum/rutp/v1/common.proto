@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package nebula.rum.rutp.v1;
+
+option java_multiple_files = true;
+option java_package = "io.nebulaobservability.rum.rutp.v1";
+option go_package = "github.com/NebulaObservability/nebula-spec/generated/go/rum/rutp/v1;rutpv1";
+
+message AttributeValue {
+  oneof value {
+    string string_value = 1;
+    bool bool_value = 2;
+    int64 int_value = 3;
+    double double_value = 4;
+    bytes bytes_value = 5;
+    AttributeArray array_value = 6;
+    AttributeMap map_value = 7;
+  }
+}
+
+message AttributeArray {
+  repeated AttributeValue values = 1;
+}
+
+message AttributeMap {
+  map<string, AttributeValue> values = 1;
+}
+
+message Resource {
+  map<string, AttributeValue> attributes = 1;
+  string schema_url = 2;
+}
+
+message InstrumentationScope {
+  string name = 1;
+  string version = 2;
+  map<string, AttributeValue> attributes = 3;
+}
+
+message AttachmentReference {
+  string attachment_id = 1;
+  string content_type = 2;
+  string storage_key = 3;
+  bytes sha256 = 4;
+  uint64 size_bytes = 5;
+}
