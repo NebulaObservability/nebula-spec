@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package nebula.rum.rutp.v1;
+
+import "rum/rutp/v1/common.proto";
+import "rum/rutp/v1/context.proto";
+import "rum/rutp/v1/replay.proto";
+
+option java_multiple_files = true;
+option java_package = "io.nebulaobservability.rum.rutp.v1";
+option go_package = "github.com/NebulaObservability/nebula-spec/generated/go/rum/rutp/v1;rutpv1";
+
+enum RecordPriority {
+  RECORD_PRIORITY_UNSPECIFIED = 0;
+  RECORD_PRIORITY_CRITICAL = 1;
+  RECORD_PRIORITY_HIGH = 2;
+  RECORD_PRIORITY_NORMAL = 3;
+  RECORD_PRIORITY_LOW = 4;
+}
+
+enum SpanKind {
+  SPAN_KIND_UNSPECIFIED = 0;
+  SPAN_KIND_INTERNAL = 1;
+  SPAN_KIND_SERVER = 2;
+  SPAN_KIND_CLIENT = 3;
+  SPAN_KIND_PRODUCER = 4;
+  SPAN_KIND_CONSUMER = 5;
+}
+
+enum SpanStatusCode {
+  SPAN_STATUS_CODE_UNSPECIFIED = 0;
+  SPAN_STATUS_CODE_OK = 1;
+  SPAN_STATUS_CODE_ERROR = 2;
+}
+
+enum MetricKind {
+  METRIC_KIND_UNSPECIFIED = 0;
+  METRIC_KIND_GAUGE = 1;
+  METRIC_KIND_COUNTER = 2;
+  METRIC_KIND_HISTOGRAM = 3;
+}
+
+message RumRecord {
+  bytes record_id = 1;
+  uint64 time_unix_nano = 2;
+  uint64 observed_time_unix_nano = 3;
+  uint64 monotonic_time_nano = 4;
+  string source_id = 5;
+  uint64 sequence = 6;
+  RecordPriority priority = 7;
+  RumContext context = 8;
+
+  oneof signal {
+    RumSpan span = 20;
+    RumEvent event = 21;
+    RumMetricPoint metric = 22;
+    ReplayManifest replay = 23;
+    SdkDiagnostic diagnostic = 24;
+  }
+}
+
+message RumSpan {
+  string name = 1;
+  SpanKind kind = 2;
+  uint64 start_time_unix_nano = 3;
+  uint64 end_time_unix_nano = 4;
+  map<string, AttributeValue> attributes = 5;
+  SpanStatusCode status_code = 6;
+  string status_message = 7;
+  repeated SpanLink links = 8;
+}
+
+message SpanLink {
+  bytes trace_id = 1;
+  bytes span_id = 2;
+  string trace_state = 3;
+  map<string, AttributeValue> attributes = 4;
+}
+
+message RumEvent {
+  string name = 1;
+  uint32 severity_number = 2;
+  map<string, AttributeValue> attributes = 3;
+  string display_message = 4;
+  AttachmentReference payload = 5;
+}
+
+message RumMetricPoint {
+  string name = 1;
+  MetricKind kind = 2;
+  map<string, AttributeValue> attributes = 3;
+  oneof point {
+    double number = 10;
+    HistogramPoint histogram = 11;
+  }
+}
+
+message HistogramPoint {
+  uint64 count = 1;
+  double sum = 2;
+  repeated double explicit_bounds = 3;
+  repeated uint64 bucket_counts = 4;
+  optional double min = 5;
+  optional double max = 6;
+}
+
+message SdkDiagnostic {
+  string code = 1;
+  string message = 2;
+  uint64 count = 3;
+  map<string, AttributeValue> attributes = 4;
+}

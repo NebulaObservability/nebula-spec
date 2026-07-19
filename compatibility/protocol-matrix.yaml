@@ -1,0 +1,18 @@
+schema_version: 1
+protocols:
+  rutp:
+    current: 1.0.0-draft.1
+    accepts:
+      - ">=1.0.0-draft.1 <2.0.0"
+    encoding:
+      - protobuf
+      - json_debug
+  apm_extension:
+    current: 1.0.0-draft.1
+    accepts:
+      - ">=1.0.0-draft.1 <2.0.0"
+    base_protocol: OTLP 1.x
+config:
+  rum: rutp-config/v1
+diagnostics:
+  status: deferred

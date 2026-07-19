@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/spec/semantic-attributes.schema.json",
+  "type": "object",
+  "required": ["schema_version", "registry_version", "otel_schema_url", "attributes"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "registry_version": { "type": "string" },
+    "otel_schema_url": { "type": "string", "format": "uri" },
+    "attributes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "source", "stability", "requirement", "privacy", "description"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9_.]*$" },
+          "type": { "enum": ["string", "int", "double", "bool", "string_array", "enum"] },
+          "enum": { "type": "string" },
+          "source": { "enum": ["otel", "rutp"] },
+          "stability": { "enum": ["stable", "development", "experimental"] },
+          "requirement": { "enum": ["required", "recommended", "conditional", "optional"] },
+          "privacy": { "enum": ["public", "internal", "identifier", "sensitive", "secret"] },
+          "description": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

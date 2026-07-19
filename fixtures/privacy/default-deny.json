@@ -1,0 +1,14 @@
+{
+  "input": {
+    "Authorization": "Bearer secret",
+    "enduser.pseudo.id": "user-42",
+    "url.full": "https://shop.example/orders/42?token=secret",
+    "service.name": "web-store"
+  },
+  "expected": {
+    "absent": ["Authorization"],
+    "hashed": ["enduser.pseudo.id"],
+    "sanitized": ["url.full"],
+    "unchanged": ["service.name"]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "initial": "idle",
+  "events": [
+    { "type": "app_start", "at_millis": 0 },
+    { "type": "user_activity", "at_millis": 1000 },
+    { "type": "inactivity_timeout", "at_millis": 1801000 }
+  ],
+  "expected": {
+    "state": "expired",
+    "session_count": 1,
+    "end_reason": "inactivity"
+  }
+}
