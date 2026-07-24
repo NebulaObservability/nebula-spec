@@ -6,6 +6,9 @@ if ($LASTEXITCODE -ne 0) { throw 'Specification lint failed.' }
 python tools/spec_tool.py generate --check
 if ($LASTEXITCODE -ne 0) { throw 'Generated artifact check failed.' }
 
+python tools/spec_tool.py verify-artifacts
+if ($LASTEXITCODE -ne 0) { throw 'Distributable artifact check failed.' }
+
 python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.2.0-draft.0.json
 if ($LASTEXITCODE -ne 0) { throw 'Compatibility check failed.' }
 

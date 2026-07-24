@@ -1,0 +1,20 @@
+{
+  "name": "@nebula-observability/semantic-registry",
+  "version": "0.2.0-draft.0",
+  "description": "Generated Nebula Observability semantic registry.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./registry.d.ts",
+      "import": "./registry.js",
+      "default": "./registry.js"
+    }
+  },
+  "files": [
+    "registry.js",
+    "registry.d.ts",
+    "README.md"
+  ]
+}

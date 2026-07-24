@@ -23,3 +23,15 @@
 ## Release Manifest
 
 每个平台发行版在 `releases/` 中声明协议、OTel Schema 和各组件的兼容版本；组件不共享一个版本号。
+
+## 可分发制品
+
+`VERSION` 是 generated TypeScript package、generated Rust crate 和 RUM
+Conformance bundle 的唯一版本源。发布 tag 必须严格使用
+`spec-v<VERSION>` 格式，例如 `VERSION=0.2.0-draft.0` 对应
+`spec-v0.2.0-draft.0`。
+
+发布 workflow 会生成 npm tarball、Cargo crate、Fixture zip 和 `SHA256SUMS`。
+消费者必须固定所依赖的制品版本，并在执行 Fixture 前验证
+`fixture-manifest.json` 中的 SHA-256。预发布版本只可用于明确记录的兼容组合，
+不能隐式升级。
