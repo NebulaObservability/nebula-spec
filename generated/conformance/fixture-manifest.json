@@ -17,13 +17,58 @@
     },
     {
       "kind": "protocol",
+      "path": "fixtures/protocol/invalid-batch-unsupported-major.json",
+      "sha256": "9a5243da5feae8445c2d2060ab766a9d52e80a332bb9aab8c1eb3c6ddbfd4721"
+    },
+    {
+      "kind": "protocol",
+      "path": "fixtures/protocol/minimal-batch-with-unknown-members.json",
+      "sha256": "985739f4663956e795c45cbdd31fe9d4f1606e9185350fcca66268d5605f17ff"
+    },
+    {
+      "kind": "protocol",
       "path": "fixtures/protocol/minimal-batch.json",
       "sha256": "b5b8984d9a3459a7491878bad568920abca17841a539dce2a79a706e5f1c0af8"
     },
     {
       "kind": "protocol",
+      "path": "fixtures/protocol/partial-ack-with-unknown-members.json",
+      "sha256": "8ac553ae913343b5aa342ae39352e5a3cf4e387a5844b4077050bb1cf22ad8b6"
+    },
+    {
+      "kind": "protocol",
       "path": "fixtures/protocol/partial-ack.json",
       "sha256": "70ee6c0cb376b457ff30ec2babff7893be3a740cbb2b4405c974f9f94c643f91"
+    },
+    {
+      "kind": "receiver",
+      "path": "fixtures/receiver/accepted-binding.json",
+      "sha256": "bfd362758a11d0a883759eb62500bc023e8f18cf470ce6bf4d57475c81e7203e"
+    },
+    {
+      "kind": "receiver",
+      "path": "fixtures/receiver/json-debug-unknown-members.json",
+      "sha256": "2bdbc0e9a9088691514c9bcff632c26584305c31bc692724989f2a23c7e90175"
+    },
+    {
+      "kind": "receiver",
+      "path": "fixtures/receiver/rejected-json-debug-missing-opt-in.json",
+      "sha256": "59f195e446bf4163fe94888c2b54e06718e20ffa7014547a91f2973dbcc5646f"
+    },
+    {
+      "kind": "receiver",
+      "path": "fixtures/receiver/rejected-json-debug-not-authorized.json",
+      "sha256": "06bf2641ac278ff6ff4ce84c1c6bd4cb51440e3c4407f3f2644282b5b4346d03"
+    },
+    {
+      "kind": "receiver",
+      "path": "fixtures/receiver/rejected-missing-ingest-permission.json",
+      "sha256": "19954a2c2d29395c9a6cbad364455769273d9f67781438f29e4f44226e950ecd"
+    },
+    {
+      "kind": "receiver",
+      "path": "fixtures/receiver/rejected-project-mismatch.json",
+      "sha256": "d13ae78a062289cde1b633dfa22865e2358bc37afa5b731313251a065afffb01"
     },
     {
       "kind": "session-lifecycle",
@@ -41,6 +86,6 @@
     "apm_extension": "1.0.0-draft.1",
     "rutp": "1.0.0-draft.1"
   },
-  "release": "2026.07.1-draft.1",
-  "spec_version": "0.2.0-draft.0"
+  "release": "2026.07.2-draft.0",
+  "spec_version": "0.3.0-draft.0"
 }

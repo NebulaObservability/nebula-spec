@@ -12,6 +12,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install specification validation dependencies
+        run: python -m pip install -r tools/requirements.txt
+      - name: Verify specification and RUTP Receiver contract
+        run: |
+          python tools/spec_tool.py lint
+          python tools/spec_tool.py verify-receiver-contract
+          python tools/spec_tool.py generate --check
       - name: Verify module tag matches VERSION
         shell: bash
         run: test "${GITHUB_REF_NAME}" = "generated/go/v$(cat VERSION)"

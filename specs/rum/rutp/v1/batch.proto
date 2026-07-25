@@ -14,6 +14,9 @@ message RumBatch {
   string schema_url = 2;
   string otel_schema_url = 3;
   string batch_id = 4;
+  // Client-declared project identifier. Receivers MUST resolve tenant and
+  // project from the authenticated transport principal, then reject this
+  // batch when this assertion does not match that server-side binding.
   string project_id = 5;
   uint64 sent_time_unix_nano = 6;
   Resource resource = 7;

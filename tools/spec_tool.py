@@ -21,6 +21,10 @@ SEMANTICS = ROOT / "specs" / "semantics"
 SCHEMAS = ROOT / "schemas"
 FIXTURES = ROOT / "fixtures"
 RUTP = ROOT / "specs" / "rum" / "rutp" / "v1"
+RELEASES = ROOT / "releases"
+CURRENT_RELEASE = RELEASES / "CURRENT"
+RECEIVER_FIXTURES = FIXTURES / "receiver"
+RECEIVER_FIXTURE_SCHEMA = SCHEMAS / "rutp-receiver-conformance.schema.json"
 GO_MODULE = ROOT / "generated" / "go"
 GO_MODULE_PATH = "github.com/NebulaObservability/nebula-spec/generated/go"
 GO_PROTOBUF_VERSION = "v1.36.6"
@@ -39,8 +43,16 @@ def load_yaml(path: Path) -> dict[str, Any]:
 
 
 def load_json(path: Path) -> dict[str, Any]:
+    def object_with_unique_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in pairs:
+            if key in value:
+                raise SpecError(f"{path.relative_to(ROOT)} contains duplicate JSON member: {key}")
+            value[key] = item
+        return value
+
     with path.open(encoding="utf-8") as handle:
-        value = json.load(handle)
+        value = json.load(handle, object_pairs_hook=object_with_unique_members)
     if not isinstance(value, dict):
         raise SpecError(f"{path.relative_to(ROOT)} must contain a JSON object")
     return value
@@ -88,6 +100,131 @@ def artifact_version() -> str:
     if not re.fullmatch(r"\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?", value):
         raise SpecError(f"VERSION is not a semantic version: {value}")
     return value
+
+
+def current_release_path() -> Path:
+    try:
+        filename = CURRENT_RELEASE.read_text(encoding="utf-8").strip()
+    except OSError as error:
+        raise SpecError(f"cannot read current release pointer: {error}") from error
+    if not re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z._-]*[.]yaml", filename):
+        raise SpecError("releases/CURRENT must contain one release manifest filename")
+    path = (RELEASES / filename).resolve()
+    if path.parent != RELEASES.resolve() or not path.is_file():
+        raise SpecError(f"current release manifest does not exist: {filename}")
+    return path
+
+
+def release_manifest_paths() -> list[Path]:
+    paths = sorted(RELEASES.glob("*.yaml"))
+    if not paths:
+        raise SpecError("releases must contain at least one release manifest")
+    current = current_release_path()
+    if current not in paths:
+        raise SpecError("releases/CURRENT must point to a YAML release manifest")
+    return paths
+
+
+def current_release() -> dict[str, Any]:
+    return load_yaml(current_release_path())
+
+
+def receiver_conformance_errors() -> list[str]:
+    errors: list[str] = []
+    if not RECEIVER_FIXTURES.is_dir():
+        return ["fixtures/receiver is missing"]
+
+    fixture_paths = sorted(RECEIVER_FIXTURES.glob("*.json"))
+    if not fixture_paths:
+        return ["fixtures/receiver must contain conformance cases"]
+
+    coverage = {
+        "accepted_binding": False,
+        "missing_ingest_permission": False,
+        "project_mismatch": False,
+        "json_debug_unknown_members": False,
+        "json_debug_explicit_opt_in": False,
+        "json_debug_not_authorized": False,
+    }
+    for path in fixture_paths:
+        label = path.relative_to(ROOT).as_posix()
+        try:
+            fixture = load_json(path)
+        except (OSError, json.JSONDecodeError, SpecError) as error:
+            errors.append(f"{label}: {error}")
+            continue
+
+        schema_errors = validate(fixture, RECEIVER_FIXTURE_SCHEMA, label)
+        if schema_errors:
+            errors.extend(schema_errors)
+            continue
+
+        request = fixture["request"]
+        principal = request["authenticated_principal"]
+        expected = fixture["expected"]
+        permissions = set(principal["permissions"])
+        content_type = request["content_type"]
+        declared_project_id = request["declared_project_id"]
+        bound_project_id = principal["project_id"]
+
+        if "rum.ingest" not in permissions:
+            expected_outcome = "rejected"
+            expected_rejection = "ingest_not_authorized"
+            coverage["missing_ingest_permission"] = True
+        elif content_type == "application/json" and request.get("debug_opt_in") is not True:
+            expected_outcome = "rejected"
+            expected_rejection = "json_debug_opt_in_required"
+            coverage["json_debug_explicit_opt_in"] = True
+        elif content_type == "application/json" and "rum.ingest.debug" not in permissions:
+            expected_outcome = "rejected"
+            expected_rejection = "json_debug_not_authorized"
+            coverage["json_debug_not_authorized"] = True
+        elif declared_project_id != bound_project_id:
+            expected_outcome = "rejected"
+            expected_rejection = "project_binding_mismatch"
+            coverage["project_mismatch"] = True
+        else:
+            expected_outcome = "accepted"
+            expected_rejection = None
+            if content_type == "application/x-protobuf":
+                coverage["accepted_binding"] = True
+            elif request.get("unknown_json_members"):
+                coverage["json_debug_unknown_members"] = True
+
+        if expected["outcome"] != expected_outcome:
+            errors.append(f"{label}: expected outcome must be {expected_outcome}")
+        if expected_rejection is None:
+            if expected.get("resolved_tenant_id") != principal["tenant_id"]:
+                errors.append(f"{label}: accepted request must use the principal tenant binding")
+            if expected.get("resolved_project_id") != bound_project_id:
+                errors.append(f"{label}: accepted request must use the principal project binding")
+            if "rejection_code" in expected:
+                errors.append(f"{label}: accepted request must not expose a rejection code")
+        else:
+            if expected.get("rejection_code") != expected_rejection:
+                errors.append(f"{label}: expected rejection code must be {expected_rejection}")
+            if "resolved_tenant_id" in expected or "resolved_project_id" in expected:
+                errors.append(f"{label}: rejected request must not expose a resolved binding")
+
+        expected_unknown_handling = "discarded" if content_type == "application/json" else "not_applicable"
+        if expected["unknown_json_members"] != expected_unknown_handling:
+            errors.append(f"{label}: unknown JSON member handling must be {expected_unknown_handling}")
+        if content_type != "application/json" and "unknown_json_members" in request:
+            errors.append(f"{label}: non-JSON request must not declare JSON members")
+        if content_type != "application/json" and "debug_opt_in" in request:
+            errors.append(f"{label}: non-JSON request must not declare JSON debug opt-in")
+
+    for name, covered in coverage.items():
+        if not covered:
+            errors.append(f"fixtures/receiver is missing required coverage: {name}")
+    return errors
+
+
+def verify_receiver_contract() -> None:
+    errors = receiver_conformance_errors()
+    if errors:
+        raise SpecError("RUTP Receiver conformance failed:\n- " + "\n- ".join(errors))
+    print("RUTP Receiver authentication and JSON debug conformance passed.")
 
 
 def lint() -> None:
@@ -139,8 +276,26 @@ def lint() -> None:
         if requirement not in attributes:
             errors.append(f"APM required resource attribute is not registered: {requirement}")
 
-    release = load_yaml(ROOT / "releases" / "2026.07.1-draft.yaml")
-    errors.extend(validate(release, SCHEMAS / "release-manifest.schema.json", "release manifest"))
+    for release_path in release_manifest_paths():
+        release = load_yaml(release_path)
+        errors.extend(
+            validate(
+                release,
+                SCHEMAS / "release-manifest.schema.json",
+                release_path.relative_to(ROOT).as_posix(),
+            )
+        )
+
+    active_release = current_release()
+    components = active_release.get("components")
+    if not isinstance(components, dict) or components.get("spec") != artifact_version():
+        errors.append("current release manifest components.spec must match VERSION")
+
+    protocol_matrix = load_yaml(ROOT / "compatibility" / "protocol-matrix.yaml")
+    matrix_rutp = protocol_matrix.get("protocols", {}).get("rutp", {}).get("current")
+    release_rutp = active_release.get("protocols", {}).get("rutp")
+    if matrix_rutp != release_rutp:
+        errors.append("current release manifest RUTP version must match compatibility/protocol-matrix.yaml")
 
     fixture_manifest = load_yaml(ROOT / "fixtures" / "manifest.yaml")
     for fixture in fixture_manifest.get("fixtures", []):
@@ -161,6 +316,8 @@ def lint() -> None:
             load_json(path)
         except (json.JSONDecodeError, SpecError) as error:
             errors.append(str(error))
+
+    errors.extend(receiver_conformance_errors())
 
     if errors:
         raise SpecError("Specification lint failed:\n- " + "\n- ".join(errors))
@@ -395,7 +552,7 @@ def go_output(data: dict[str, Any]) -> str:
 
 
 def rutp_protocol_version() -> str:
-    release = load_yaml(ROOT / "releases" / "2026.07.1-draft.yaml")
+    release = current_release()
     protocols = release.get("protocols")
     if not isinstance(protocols, dict) or not isinstance(protocols.get("rutp"), str):
         raise SpecError("release manifest must declare protocols.rutp")
@@ -454,7 +611,7 @@ def fixture_kind(path: Path) -> str:
 
 
 def conformance_manifest_output() -> str:
-    release = load_yaml(ROOT / "releases" / "2026.07.1-draft.yaml")
+    release = current_release()
     fixtures: list[dict[str, str]] = []
     for path in sorted(FIXTURES.rglob("*.json")):
         relative = path.relative_to(ROOT).as_posix()
@@ -705,6 +862,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("lint")
+    subparsers.add_parser("verify-receiver-contract")
     generate_parser = subparsers.add_parser("generate")
     generate_parser.add_argument("--check", action="store_true")
     subparsers.add_parser("verify-artifacts")
@@ -717,6 +875,8 @@ def main() -> int:
     try:
         if args.command == "lint":
             lint()
+        elif args.command == "verify-receiver-contract":
+            verify_receiver_contract()
         elif args.command == "generate":
             generate(args.check)
         elif args.command == "verify-artifacts":

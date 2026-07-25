@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/rum/rutp/v1/receiver-conformance.schema.json",
+  "type": "object",
+  "required": ["case_id", "request", "expected"],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{7,127}$"
+    },
+    "request": {
+      "type": "object",
+      "required": ["content_type", "authenticated_principal", "declared_project_id"],
+      "properties": {
+        "content_type": {
+          "enum": ["application/x-protobuf", "application/json"]
+        },
+        "authenticated_principal": { "$ref": "#/$defs/principal" },
+        "declared_project_id": { "$ref": "#/$defs/id" },
+        "debug_opt_in": { "type": "boolean" },
+        "unknown_json_members": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "expected": {
+      "type": "object",
+      "required": ["outcome", "routing_source", "unknown_json_members"],
+      "properties": {
+        "outcome": { "enum": ["accepted", "rejected"] },
+        "routing_source": { "const": "authenticated_principal" },
+        "resolved_tenant_id": { "$ref": "#/$defs/id" },
+        "resolved_project_id": { "$ref": "#/$defs/id" },
+        "rejection_code": {
+          "enum": [
+            "ingest_not_authorized",
+            "json_debug_opt_in_required",
+            "json_debug_not_authorized",
+            "project_binding_mismatch"
+          ]
+        },
+        "unknown_json_members": { "enum": ["discarded", "not_applicable"] }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "outcome": { "const": "accepted" } } },
+          "then": { "required": ["resolved_tenant_id", "resolved_project_id"] }
+        },
+        {
+          "if": { "properties": { "outcome": { "const": "rejected" } } },
+          "then": { "required": ["rejection_code"] }
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "principal": {
+      "type": "object",
+      "required": ["principal_id", "tenant_id", "project_id", "permissions"],
+      "properties": {
+        "principal_id": { "$ref": "#/$defs/id" },
+        "tenant_id": { "$ref": "#/$defs/id" },
+        "project_id": { "$ref": "#/$defs/id" },
+        "permissions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

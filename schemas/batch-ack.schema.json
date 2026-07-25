@@ -17,12 +17,12 @@
           "reason": { "type": "string" },
           "retryable": { "type": "boolean" }
         },
-        "additionalProperties": false
+        "additionalProperties": true
       }
     },
     "retry_after_ms": { "type": "integer", "minimum": 0 },
     "server_time_unix_nano": { "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "string", "pattern": "^[0-9]+$" }] },
     "config_etag": { "type": "string" }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }
