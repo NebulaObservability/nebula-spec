@@ -3,7 +3,7 @@
     {
       "kind": "config",
       "path": "fixtures/config/signed-config.json",
-      "sha256": "fee8f2175186e54c176fd3ba9375237d061d6dfa3153be974ecc291fa126f4ac"
+      "sha256": "de511d83b11adfcc70b84762c21943e85241d0df9d9b3e71f2c8df98b196871e"
     },
     {
       "kind": "privacy",
@@ -13,22 +13,22 @@
     {
       "kind": "protocol",
       "path": "fixtures/protocol/invalid-batch-missing-session.json",
-      "sha256": "23ff7d0d10936be3f8c4441b9ece3206490ae41268576333410f3034bda8a3d1"
+      "sha256": "a71c2e1f9cf78bb08e600dcfc871a61f8e3591f10fbbcbb6550718fe104f865e"
     },
     {
       "kind": "protocol",
       "path": "fixtures/protocol/invalid-batch-unsupported-major.json",
-      "sha256": "9a5243da5feae8445c2d2060ab766a9d52e80a332bb9aab8c1eb3c6ddbfd4721"
+      "sha256": "14be4932325ed0e7c464a048d0194486fb0752a80fd409113720404a8140d5ff"
     },
     {
       "kind": "protocol",
       "path": "fixtures/protocol/minimal-batch-with-unknown-members.json",
-      "sha256": "985739f4663956e795c45cbdd31fe9d4f1606e9185350fcca66268d5605f17ff"
+      "sha256": "eaee0c242a1793f0ff26cbf8de1065d1593d5cd8aa096c19ac1a3baaa2333b0a"
     },
     {
       "kind": "protocol",
       "path": "fixtures/protocol/minimal-batch.json",
-      "sha256": "b5b8984d9a3459a7491878bad568920abca17841a539dce2a79a706e5f1c0af8"
+      "sha256": "02be8f240dba87c0f740ac64a00d39ae45cde85027060d5cd97db660efd5fc1f"
     },
     {
       "kind": "protocol",
@@ -86,6 +86,6 @@
     "apm_extension": "1.0.0-draft.1",
     "rutp": "1.0.0-draft.1"
   },
-  "release": "2026.07.3-draft.0",
-  "spec_version": "0.4.0-draft.0"
+  "release": "2026.07.4-draft.0",
+  "spec_version": "0.4.0-draft.1"
 }

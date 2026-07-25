@@ -1,5 +1,5 @@
 {
-  "protocol_version": "1.1",
+  "protocol_version": "1.1.0-draft.0",
   "schema_url": "https://schemas.nebula-observability.io/rum/rutp/1.1",
   "otel_schema_url": "https://opentelemetry.io/schemas/1.43.0",
   "batch_id": "01JZBATCH000000000000000002",

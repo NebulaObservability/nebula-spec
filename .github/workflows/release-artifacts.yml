@@ -62,7 +62,7 @@ jobs:
         run: |
           npm install --ignore-scripts --no-package-lock
           npx --yes --package typescript@5.9.3 tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck false index.d.ts
-          node --input-type=module -e 'import { create } from "@bufbuild/protobuf"; import { RumBatchSchema, encodeRumBatch, decodeRumBatch } from "./index.js"; const source = create(RumBatchSchema, { protocolVersion: "1.0.0-draft.1", batchId: "release-check" }); const decoded = decodeRumBatch(encodeRumBatch(source)); if (decoded.batchId !== source.batchId) process.exit(1)'
+          node --input-type=module -e 'import { readFileSync } from "node:fs"; import { create } from "@bufbuild/protobuf"; import { ProtocolVersion, RumBatchSchema, SpecVersion, encodeRumBatch, decodeRumBatch } from "./index.js"; const packageVersion = JSON.parse(readFileSync("./package.json", "utf8")).version; const source = create(RumBatchSchema, { protocolVersion: ProtocolVersion, batchId: "release-check" }); const decoded = decodeRumBatch(encodeRumBatch(source)); if (SpecVersion !== packageVersion || decoded.protocolVersion !== ProtocolVersion || decoded.batchId !== source.batchId) process.exit(1)'
           npm pack --ignore-scripts --pack-destination ../../artifacts
       - name: Pack RUM conformance fixtures
         working-directory: generated/conformance
@@ -90,4 +90,19 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          prerelease: true
+          make_latest: false
           files: artifacts/*
+      - name: Publish matching Go module tag
+        shell: bash
+        run: |
+          GO_TAG="generated/go/v$(cat VERSION)"
+          REMOTE_SHA="$(git ls-remote --tags origin "refs/tags/${GO_TAG}" | awk '{print $1}')"
+          if [ -n "$REMOTE_SHA" ] && [ "$REMOTE_SHA" != "$GITHUB_SHA" ]; then
+            echo "${GO_TAG} already points to ${REMOTE_SHA}, expected ${GITHUB_SHA}" >&2
+            exit 1
+          fi
+          if [ -z "$REMOTE_SHA" ]; then
+            git tag "$GO_TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/${GO_TAG}"
+          fi

@@ -9,13 +9,19 @@
       "type": "object",
       "required": ["rutp", "apm_extension"],
       "properties": {
-        "rutp": { "type": "string" },
-        "apm_extension": { "type": "string" }
+        "rutp": { "$ref": "#/$defs/semver" },
+        "apm_extension": { "$ref": "#/$defs/semver" }
       },
       "additionalProperties": false
     },
     "otel_schema": { "type": "string" },
     "components": { "type": "object", "additionalProperties": { "type": ["string", "null"] } }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    }
+  }
 }

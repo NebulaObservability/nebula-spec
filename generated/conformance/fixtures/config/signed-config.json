@@ -2,7 +2,7 @@
   "config_version": "2026-07-19.1",
   "issued_at": "2026-07-19T16:00:00Z",
   "expires_at": "2026-07-20T16:00:00Z",
-  "protocol_version": "1.0",
+  "protocol_version": "1.0.0-draft.1",
   "encoding": "protobuf",
   "compression": "gzip",
   "sampling": {
