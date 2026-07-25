@@ -1,0 +1,29 @@
+{
+  "name": "@nebula-observability/rutp-protobuf",
+  "version": "0.4.0-draft.0",
+  "description": "Generated browser-compatible Nebula RUTP v1 Protobuf codec.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "codec.js",
+    "codec.d.ts",
+    "rum",
+    "README.md"
+  ],
+  "dependencies": {
+    "@bufbuild/protobuf": "2.10.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

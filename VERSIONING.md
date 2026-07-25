@@ -31,6 +31,9 @@
 `spec-v<VERSION>` 格式，例如 `VERSION=0.2.0-draft.0` 对应
 `spec-v0.2.0-draft.0`。
 
+发布制品还包含生成的 `@nebula-observability/rutp-protobuf` package。Browser
+SDK 必须固定并校验此制品，不得在实现仓库维护私有 Protobuf codec。
+
 Go module 还必须在同一提交创建 `generated/go/v<VERSION>` tag，例如
 `generated/go/v0.2.0-draft.0`，供 Collector 和 Backend 以标准 Go module 版本解析。
 发布 workflow 会生成 npm tarball、Cargo crate、Go module zip、Fixture zip 和 `SHA256SUMS`。

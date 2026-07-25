@@ -6,12 +6,12 @@ if ($LASTEXITCODE -ne 0) { throw 'Specification lint failed.' }
 python tools/spec_tool.py verify-receiver-contract
 if ($LASTEXITCODE -ne 0) { throw 'RUTP Receiver conformance check failed.' }
 
-$goGeneratedBefore = (git status --porcelain -- generated/go) -join "`n"
+$protobufGeneratedBefore = (git status --porcelain -- generated/go generated/typescript-rutp) -join "`n"
 npx --yes @bufbuild/buf@1.72.0 generate --template buf.gen.yaml
-if ($LASTEXITCODE -ne 0) { throw 'Go RUTP Protobuf generation failed.' }
-$goGeneratedAfter = (git status --porcelain -- generated/go) -join "`n"
-if ($goGeneratedBefore -ne $goGeneratedAfter) {
-    throw 'Generated Go RUTP Protobuf sources are stale. Run: npx --yes @bufbuild/buf@1.72.0 generate --template buf.gen.yaml'
+if ($LASTEXITCODE -ne 0) { throw 'RUTP Protobuf generation failed.' }
+$protobufGeneratedAfter = (git status --porcelain -- generated/go generated/typescript-rutp) -join "`n"
+if ($protobufGeneratedBefore -ne $protobufGeneratedAfter) {
+    throw 'Generated Go or TypeScript RUTP Protobuf sources are stale. Run: npx --yes @bufbuild/buf@1.72.0 generate --template buf.gen.yaml'
 }
 
 python tools/spec_tool.py generate --check

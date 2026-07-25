@@ -5,4 +5,5 @@ __pycache__/
 .idea/
 .vscode/
 target/
+node_modules/
 *.crate
