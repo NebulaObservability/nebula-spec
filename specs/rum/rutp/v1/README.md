@@ -10,3 +10,6 @@ RUTP v1 包含：
 - `replay.proto`：Replay 索引与 Chunk 引用。
 
 Replay 只定义兼容边界，首期产品不实现采集或播放。正式传输使用 Protobuf；`schemas/rum-batch.schema.json` 仅描述调试 JSON 格式。
+Go Collector 和 Backend 必须消费版本固定的
+`github.com/NebulaObservability/nebula-spec/generated/go` module 中的
+`rum/rutp/v1` 包，不得手写消息类型或将调试 JSON 作为正式线协议。

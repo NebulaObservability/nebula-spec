@@ -6,6 +6,7 @@ $requiredFiles = @(
     'VERSIONING.md',
     'CONTRIBUTING.md',
     'buf.yaml',
+    'buf.gen.yaml',
     'specs/README.md',
     'specs/apm/v1/README.md',
     'specs/apm/v1/manifest.yaml',

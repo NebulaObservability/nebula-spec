@@ -38,6 +38,14 @@ jobs:
         run: buf build
       - name: Check Protobuf compatibility
         run: buf breaking --against compatibility/baselines/rutp-v1.binpb
+      - name: Verify generated Go RUTP Protobuf sources
+        shell: bash
+        run: |
+          buf generate --template buf.gen.yaml
+          if [ -n "$(git status --porcelain -- generated/go)" ]; then
+            git status --short -- generated/go
+            exit 1
+          fi
       - name: Compile generated Java registry
         run: javac -d "${{ runner.temp }}/java-classes" generated/java/io/nebulaobservability/semantic/NebulaSemanticRegistry.java
       - uses: actions/setup-node@v4
@@ -64,4 +72,9 @@ jobs:
           cache: false
       - name: Verify generated Go formatting and syntax
         shell: bash
-        run: test -z "$(gofmt -d generated/go/semantic/registry.go)"
+        working-directory: generated/go
+        run: |
+          test -z "$(gofmt -d $(find . -name '*.go' -type f))"
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+          go test ./...
