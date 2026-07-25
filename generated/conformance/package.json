@@ -1,0 +1,12 @@
+{
+  "name": "@nebula-observability/rum-conformance",
+  "version": "0.2.0-draft.0",
+  "description": "Generated Nebula RUM conformance fixtures.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "fixture-manifest.json",
+    "fixtures",
+    "README.md"
+  ]
+}

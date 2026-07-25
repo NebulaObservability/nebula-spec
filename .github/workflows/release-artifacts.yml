@@ -1,0 +1,81 @@
+name: release-artifacts
+
+on:
+  push:
+    tags: ["spec-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: python -m pip install -r tools/requirements.txt
+      - name: Verify tag matches VERSION
+        shell: bash
+        run: test "${GITHUB_REF_NAME}" = "spec-v$(cat VERSION)"
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+      - name: Verify generated Go RUTP Protobuf sources
+        shell: bash
+        run: |
+          buf generate --template buf.gen.yaml
+          if [ -n "$(git status --porcelain -- generated/go)" ]; then
+            git status --short -- generated/go
+            exit 1
+          fi
+      - run: python tools/spec_tool.py generate --check
+      - run: python tools/spec_tool.py verify-artifacts
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+          cache: false
+      - name: Verify Go RUTP module
+        working-directory: generated/go
+        shell: bash
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+          go test ./...
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Create release directory
+        run: mkdir -p artifacts
+      - name: Pack TypeScript semantic registry
+        working-directory: generated/typescript
+        run: npm pack --ignore-scripts --pack-destination ../../artifacts
+      - name: Pack RUM conformance fixtures
+        working-directory: generated/conformance
+        run: npm pack --ignore-scripts --pack-destination ../../artifacts
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Pack Rust semantic registry
+        working-directory: generated/rust/nebula-semantic-registry
+        run: |
+          cargo package --locked --allow-dirty --no-verify
+          cp target/package/*.crate ../../../artifacts/
+      - name: Archive fixture bundle
+        run: |
+          VERSION="$(cat VERSION)"
+          cd generated/conformance
+          zip -r "../../artifacts/rum-conformance-fixtures-${VERSION}.zip" .
+      - name: Archive Go RUTP module
+        run: |
+          VERSION="$(cat VERSION)"
+          cd generated/go
+          zip -r "../../artifacts/nebula-rutp-go-module-${VERSION}.zip" .
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          sha256sum * > SHA256SUMS
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: artifacts/*

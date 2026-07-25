@@ -1,0 +1,46 @@
+{
+  "config_version": "2026-07-19.1",
+  "issued_at": "2026-07-19T16:00:00Z",
+  "expires_at": "2026-07-20T16:00:00Z",
+  "protocol_version": "1.0",
+  "encoding": "protobuf",
+  "compression": "gzip",
+  "sampling": {
+    "session_rate": 1.0,
+    "trace_rate": 0.1,
+    "replay_rate": 0.0,
+    "always_keep_events": ["rum.error", "rum.http.failure"]
+  },
+  "privacy": {
+    "policy_id": "nebula-default-deny",
+    "policy_version": "1.0.0-draft.1",
+    "default_action": "drop"
+  },
+  "upload": {
+    "endpoint": "/rum/v1/batches",
+    "batch_max_records": 100,
+    "batch_max_bytes": 262144,
+    "flush_interval_millis": 5000
+  },
+  "instrumentation": {
+    "navigation": true,
+    "resource": true,
+    "web_vitals": true,
+    "long_tasks": true,
+    "fetch_xhr": true,
+    "errors": true,
+    "console": false,
+    "trace_allow_origins": ["https://api.example.com"],
+    "trace_deny_origins": []
+  },
+  "kill_switch": {
+    "disable_all": false,
+    "disable_replay": true,
+    "disable_network_body": true,
+    "disable_console": true,
+    "disable_trace_propagation": false,
+    "disable_webview_bridge": true
+  },
+  "key_id": "config-key-2026-01",
+  "signature": "BASE64_SIGNATURE_FIXTURE"
+}

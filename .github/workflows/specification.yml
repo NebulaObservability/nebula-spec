@@ -25,6 +25,8 @@ jobs:
         run: python tools/spec_tool.py lint
       - name: Verify generated artifacts
         run: python tools/spec_tool.py generate --check
+      - name: Verify distributable artifacts
+        run: python tools/spec_tool.py verify-artifacts
       - name: Check semantic compatibility
         run: python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.2.0-draft.0.json
       - uses: bufbuild/buf-setup-action@v1
@@ -36,6 +38,14 @@ jobs:
         run: buf build
       - name: Check Protobuf compatibility
         run: buf breaking --against compatibility/baselines/rutp-v1.binpb
+      - name: Verify generated Go RUTP Protobuf sources
+        shell: bash
+        run: |
+          buf generate --template buf.gen.yaml
+          if [ -n "$(git status --porcelain -- generated/go)" ]; then
+            git status --short -- generated/go
+            exit 1
+          fi
       - name: Compile generated Java registry
         run: javac -d "${{ runner.temp }}/java-classes" generated/java/io/nebulaobservability/semantic/NebulaSemanticRegistry.java
       - uses: actions/setup-node@v4
@@ -43,10 +53,28 @@ jobs:
           node-version: "22"
       - name: Type-check generated TypeScript registry
         run: npx --yes --package typescript@5.9.3 tsc --noEmit --target ES2020 generated/typescript/registry.ts
+      - name: Import generated TypeScript package
+        run: node --input-type=module -e "import('./generated/typescript/registry.js').then(({Attributes}) => { if (!Attributes.RumViewId) process.exit(1) })"
+      - name: Verify TypeScript packages are packable
+        shell: bash
+        run: |
+          (cd generated/typescript && npm pack --dry-run --ignore-scripts)
+          (cd generated/conformance && npm pack --dry-run --ignore-scripts)
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Compile and package generated Rust registry
+        shell: bash
+        run: |
+          cargo test --manifest-path generated/rust/nebula-semantic-registry/Cargo.toml --locked
+          cargo package --manifest-path generated/rust/nebula-semantic-registry/Cargo.toml --locked --allow-dirty --no-verify
       - uses: actions/setup-go@v5
         with:
           go-version: "1.25.x"
           cache: false
       - name: Verify generated Go formatting and syntax
         shell: bash
-        run: test -z "$(gofmt -d generated/go/semantic/registry.go)"
+        working-directory: generated/go
+        run: |
+          test -z "$(gofmt -d $(find . -name '*.go' -type f))"
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+          go test ./...
