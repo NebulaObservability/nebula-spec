@@ -27,12 +27,12 @@ jobs:
       - uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.72.0
-      - name: Verify generated Go RUTP Protobuf sources
+      - name: Verify generated Go and TypeScript RUTP Protobuf sources
         shell: bash
         run: |
           buf generate --template buf.gen.yaml
-          if [ -n "$(git status --porcelain -- generated/go)" ]; then
-            git status --short -- generated/go
+          if [ -n "$(git status --porcelain -- generated/go generated/typescript-rutp)" ]; then
+            git status --short -- generated/go generated/typescript-rutp
             exit 1
           fi
       - run: python tools/spec_tool.py generate --check
@@ -56,6 +56,14 @@ jobs:
       - name: Pack TypeScript semantic registry
         working-directory: generated/typescript
         run: npm pack --ignore-scripts --pack-destination ../../artifacts
+      - name: Verify and pack TypeScript RUTP codec
+        working-directory: generated/typescript-rutp
+        shell: bash
+        run: |
+          npm install --ignore-scripts --no-package-lock
+          npx --yes --package typescript@5.9.3 tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck false index.d.ts
+          node --input-type=module -e 'import { create } from "@bufbuild/protobuf"; import { RumBatchSchema, encodeRumBatch, decodeRumBatch } from "./index.js"; const source = create(RumBatchSchema, { protocolVersion: "1.0.0-draft.1", batchId: "release-check" }); const decoded = decodeRumBatch(encodeRumBatch(source)); if (decoded.batchId !== source.batchId) process.exit(1)'
+          npm pack --ignore-scripts --pack-destination ../../artifacts
       - name: Pack RUM conformance fixtures
         working-directory: generated/conformance
         run: npm pack --ignore-scripts --pack-destination ../../artifacts

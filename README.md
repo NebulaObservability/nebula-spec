@@ -42,6 +42,7 @@ Phase 1 已提供：
 每次 `spec-v*` tag 发布以下 GitHub Release assets：
 
 - `@nebula-observability/semantic-registry` npm tarball
+- `@nebula-observability/rutp-protobuf` browser-compatible npm tarball
 - `nebula-semantic-registry` Rust crate
 - `@nebula-observability/rum-conformance` npm tarball
 - RUM conformance fixture zip 与 `SHA256SUMS`

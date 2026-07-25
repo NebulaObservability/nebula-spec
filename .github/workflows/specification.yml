@@ -40,12 +40,12 @@ jobs:
         run: buf build
       - name: Check Protobuf compatibility
         run: buf breaking --against compatibility/baselines/rutp-v1.binpb
-      - name: Verify generated Go RUTP Protobuf sources
+      - name: Verify generated Go and TypeScript RUTP Protobuf sources
         shell: bash
         run: |
           buf generate --template buf.gen.yaml
-          if [ -n "$(git status --porcelain -- generated/go)" ]; then
-            git status --short -- generated/go
+          if [ -n "$(git status --porcelain -- generated/go generated/typescript-rutp)" ]; then
+            git status --short -- generated/go generated/typescript-rutp
             exit 1
           fi
       - name: Compile generated Java registry
@@ -57,10 +57,18 @@ jobs:
         run: npx --yes --package typescript@5.9.3 tsc --noEmit --target ES2020 generated/typescript/registry.ts
       - name: Import generated TypeScript package
         run: node --input-type=module -e "import('./generated/typescript/registry.js').then(({Attributes}) => { if (!Attributes.RumViewId) process.exit(1) })"
+      - name: Verify generated TypeScript RUTP codec
+        working-directory: generated/typescript-rutp
+        shell: bash
+        run: |
+          npm install --ignore-scripts --no-package-lock
+          npx --yes --package typescript@5.9.3 tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck false index.d.ts
+          node --input-type=module -e 'import { create } from "@bufbuild/protobuf"; import { RumBatchSchema, encodeRumBatch, decodeRumBatch } from "./index.js"; const source = create(RumBatchSchema, { protocolVersion: "1.0.0-draft.1", batchId: "codec-check" }); const decoded = decodeRumBatch(encodeRumBatch(source)); if (decoded.batchId !== source.batchId) process.exit(1)'
       - name: Verify TypeScript packages are packable
         shell: bash
         run: |
           (cd generated/typescript && npm pack --dry-run --ignore-scripts)
+          (cd generated/typescript-rutp && npm pack --dry-run --ignore-scripts)
           (cd generated/conformance && npm pack --dry-run --ignore-scripts)
       - uses: dtolnay/rust-toolchain@stable
       - name: Compile and package generated Rust registry
