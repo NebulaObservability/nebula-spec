@@ -1,11 +1,22 @@
 {
-  "protocol_version": "1.0",
+  "protocol_version": "1.0.0-draft.1",
   "schema_url": "https://schemas.nebula-observability.io/rum/rutp/1.0",
   "otel_schema_url": "https://opentelemetry.io/schemas/1.43.0",
   "batch_id": "01JZINVALIDBATCH00000000001",
   "project_id": "demo-project",
   "sent_time_unix_nano": "1784476801000000000",
-  "resource": { "attributes": {} },
+  "resource": {
+    "attributes": {
+      "service.namespace": "shop",
+      "service.name": "web-store",
+      "service.version": "1.0.0",
+      "service.instance.id": "01JZINSTALL00000000000001",
+      "deployment.environment.name": "test",
+      "telemetry.sdk.name": "nebula-rum-web",
+      "telemetry.sdk.version": "0.1.0",
+      "app.installation.id": "01JZINSTALL00000000000001"
+    }
+  },
   "scope": { "name": "invalid-fixture", "version": "0.1.0" },
   "clock": {
     "wall_time_unix_nano": "1784476801000000000",

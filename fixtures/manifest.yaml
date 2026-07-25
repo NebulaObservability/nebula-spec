@@ -3,15 +3,23 @@ fixtures:
   - path: fixtures/protocol/minimal-batch.json
     schema: schemas/rum-batch.schema.json
     valid: true
+    protocol_expectation: current
   - path: fixtures/protocol/minimal-batch-with-unknown-members.json
     schema: schemas/rum-batch.schema.json
     valid: true
+    protocol_expectation: compatible_future
   - path: fixtures/protocol/invalid-batch-missing-session.json
     schema: schemas/rum-batch.schema.json
     valid: false
+    protocol_expectation: current
+    expected_error_paths:
+      - records/0/context
   - path: fixtures/protocol/invalid-batch-unsupported-major.json
     schema: schemas/rum-batch.schema.json
     valid: false
+    protocol_expectation: unsupported
+    expected_error_paths:
+      - protocol_version
   - path: fixtures/protocol/partial-ack.json
     schema: schemas/batch-ack.schema.json
     valid: true
@@ -39,3 +47,4 @@ fixtures:
   - path: fixtures/config/signed-config.json
     schema: schemas/rum-config.schema.json
     valid: true
+    protocol_expectation: current

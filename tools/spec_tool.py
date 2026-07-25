@@ -30,6 +30,11 @@ GO_MODULE_PATH = "github.com/NebulaObservability/nebula-spec/generated/go"
 GO_PROTOBUF_VERSION = "v1.36.6"
 TYPESCRIPT_RUTP = ROOT / "generated" / "typescript-rutp"
 TYPESCRIPT_PROTOBUF_VERSION = "2.10.0"
+SEMVER_PATTERN = re.compile(
+    r"^(0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)"
+    r"(?:-([0-9A-Za-z-]+(?:[.][0-9A-Za-z-]+)*))?"
+    r"(?:[+]([0-9A-Za-z-]+(?:[.][0-9A-Za-z-]+)*))?$"
+)
 
 
 class SpecError(Exception):
@@ -69,6 +74,14 @@ def validate(instance: Any, schema_path: Path, label: str) -> list[str]:
     ]
 
 
+def validation_error_paths(instance: Any, schema_path: Path) -> list[str]:
+    schema = load_json(schema_path)
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    return sorted(
+        {"/".join(str(part) for part in error.absolute_path) or "<root>" for error in validator.iter_errors(instance)}
+    )
+
+
 def duplicate_names(items: list[dict[str, Any]], label: str) -> list[str]:
     seen: set[str] = set()
     errors: list[str] = []
@@ -99,9 +112,66 @@ def registry() -> dict[str, Any]:
 
 def artifact_version() -> str:
     value = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    if not re.fullmatch(r"\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?", value):
+    if SEMVER_PATTERN.fullmatch(value) is None:
         raise SpecError(f"VERSION is not a semantic version: {value}")
     return value
+
+
+def parse_semver(value: str) -> tuple[int, int, int, tuple[str, ...] | None]:
+    match = SEMVER_PATTERN.fullmatch(value)
+    if match is None:
+        raise SpecError(f"invalid semantic version: {value}")
+    major, minor, patch, prerelease, _build = match.groups()
+    return int(major), int(minor), int(patch), tuple(prerelease.split(".")) if prerelease else None
+
+
+def compare_semver(left: str, right: str) -> int:
+    left_major, left_minor, left_patch, left_pre = parse_semver(left)
+    right_major, right_minor, right_patch, right_pre = parse_semver(right)
+    left_core = (left_major, left_minor, left_patch)
+    right_core = (right_major, right_minor, right_patch)
+    if left_core != right_core:
+        return -1 if left_core < right_core else 1
+    if left_pre is None or right_pre is None:
+        if left_pre is right_pre:
+            return 0
+        return 1 if left_pre is None else -1
+    for left_item, right_item in zip(left_pre, right_pre):
+        if left_item == right_item:
+            continue
+        left_numeric = left_item.isdigit()
+        right_numeric = right_item.isdigit()
+        if left_numeric and right_numeric:
+            return -1 if int(left_item) < int(right_item) else 1
+        if left_numeric != right_numeric:
+            return -1 if left_numeric else 1
+        return -1 if left_item < right_item else 1
+    if len(left_pre) == len(right_pre):
+        return 0
+    return -1 if len(left_pre) < len(right_pre) else 1
+
+
+def semver_satisfies(version: str, expression: str) -> bool:
+    tokens = expression.split()
+    if not tokens:
+        raise SpecError("semantic version range must not be empty")
+    for token in tokens:
+        match = re.fullmatch(r"(>=|<=|>|<|=)?(.+)", token)
+        if match is None:
+            raise SpecError(f"invalid semantic version comparator: {token}")
+        operator, boundary = match.groups()
+        comparison = compare_semver(version, boundary)
+        if operator == ">=" and comparison < 0:
+            return False
+        if operator == "<=" and comparison > 0:
+            return False
+        if operator == ">" and comparison <= 0:
+            return False
+        if operator == "<" and comparison >= 0:
+            return False
+        if operator in (None, "=") and comparison != 0:
+            return False
+    return True
 
 
 def current_release_path() -> Path:
@@ -294,10 +364,33 @@ def lint() -> None:
         errors.append("current release manifest components.spec must match VERSION")
 
     protocol_matrix = load_yaml(ROOT / "compatibility" / "protocol-matrix.yaml")
-    matrix_rutp = protocol_matrix.get("protocols", {}).get("rutp", {}).get("current")
+    matrix_rutp_config = protocol_matrix.get("protocols", {}).get("rutp", {})
+    matrix_rutp = matrix_rutp_config.get("current")
+    accepted_rutp_ranges = matrix_rutp_config.get("accepts", [])
     release_rutp = active_release.get("protocols", {}).get("rutp")
     if matrix_rutp != release_rutp:
         errors.append("current release manifest RUTP version must match compatibility/protocol-matrix.yaml")
+
+    try:
+        parse_semver(str(release_rutp))
+        if not isinstance(accepted_rutp_ranges, list) or not accepted_rutp_ranges:
+            errors.append("compatibility/protocol-matrix.yaml must declare accepted RUTP ranges")
+        elif not any(semver_satisfies(str(release_rutp), str(expression)) for expression in accepted_rutp_ranges):
+            errors.append("current release RUTP version must be included in the compatibility acceptance range")
+    except SpecError as error:
+        errors.append(str(error))
+
+    versioned_schema_paths = (SCHEMAS / "rum-batch.schema.json", SCHEMAS / "rum-config.schema.json")
+    for schema_path in versioned_schema_paths:
+        schema = load_json(schema_path)
+        version_schema = schema.get("properties", {}).get("protocol_version", {})
+        if not Draft202012Validator(version_schema).is_valid(release_rutp):
+            errors.append(
+                f"{schema_path.relative_to(ROOT).as_posix()} must accept the current release RUTP version"
+            )
+    config_version = load_json(SCHEMAS / "rum-config.schema.json").get("properties", {}).get("protocol_version", {}).get("const")
+    if config_version != release_rutp:
+        errors.append("schemas/rum-config.schema.json protocol_version must equal the current release RUTP version")
 
     fixture_manifest = load_yaml(ROOT / "fixtures" / "manifest.yaml")
     for fixture in fixture_manifest.get("fixtures", []):
@@ -306,12 +399,46 @@ def lint() -> None:
         if not fixture_path.is_file():
             errors.append(f"fixture does not exist: {fixture['path']}")
             continue
-        fixture_errors = validate(load_json(fixture_path), schema_path, fixture["path"])
+        fixture_data = load_json(fixture_path)
+        fixture_errors = validate(fixture_data, schema_path, fixture["path"])
         expected_valid = fixture.get("valid", True)
         if expected_valid:
             errors.extend(fixture_errors)
-        elif not fixture_errors:
-            errors.append(f"fixture was expected to be invalid: {fixture['path']}")
+        else:
+            if not fixture_errors:
+                errors.append(f"fixture was expected to be invalid: {fixture['path']}")
+            expected_error_paths = fixture.get("expected_error_paths")
+            if not isinstance(expected_error_paths, list) or not expected_error_paths:
+                errors.append(f"invalid fixture must declare expected_error_paths: {fixture['path']}")
+            else:
+                actual_error_paths = validation_error_paths(fixture_data, schema_path)
+                if sorted(expected_error_paths) != actual_error_paths:
+                    errors.append(
+                        f"{fixture['path']} validation errors must occur at {sorted(expected_error_paths)}, got {actual_error_paths}"
+                    )
+
+        protocol_expectation = fixture.get("protocol_expectation")
+        if schema_path in versioned_schema_paths:
+            fixture_rutp = fixture_data.get("protocol_version")
+            if protocol_expectation == "current":
+                if fixture_rutp != release_rutp:
+                    errors.append(f"{fixture['path']} protocol_version must match the current release RUTP version")
+            elif protocol_expectation == "compatible_future":
+                try:
+                    if fixture_rutp == release_rutp or not any(
+                        semver_satisfies(str(fixture_rutp), str(expression)) for expression in accepted_rutp_ranges
+                    ):
+                        errors.append(f"{fixture['path']} must exercise a compatible future RUTP version")
+                except SpecError as error:
+                    errors.append(f"{fixture['path']}: {error}")
+            elif protocol_expectation == "unsupported":
+                try:
+                    if any(semver_satisfies(str(fixture_rutp), str(expression)) for expression in accepted_rutp_ranges):
+                        errors.append(f"{fixture['path']} must exercise an unsupported RUTP version")
+                except SpecError as error:
+                    errors.append(f"{fixture['path']}: {error}")
+            else:
+                errors.append(f"versioned fixture must declare protocol_expectation: {fixture['path']}")
 
     for path in sorted((ROOT / "fixtures").rglob("*.json")):
         try:
@@ -434,7 +561,16 @@ def typescript_rutp_package_json_output() -> str:
                     "default": "./index.js",
                 }
             },
-            "files": ["index.js", "index.d.ts", "codec.js", "codec.d.ts", "rum", "README.md"],
+            "files": [
+                "index.js",
+                "index.d.ts",
+                "version.js",
+                "version.d.ts",
+                "codec.js",
+                "codec.d.ts",
+                "rum",
+                "README.md",
+            ],
             "dependencies": {"@bufbuild/protobuf": TYPESCRIPT_PROTOBUF_VERSION},
             "engines": {"node": ">=18"},
         },
@@ -444,9 +580,27 @@ def typescript_rutp_package_json_output() -> str:
 
 def typescript_rutp_index_output() -> str:
     modules = ("batch", "common", "config", "context", "record", "replay")
-    lines = ["// Code generated by tools/spec_tool.py. DO NOT EDIT.", 'export * from "./codec.js";']
+    lines = [
+        "// Code generated by tools/spec_tool.py. DO NOT EDIT.",
+        'export * from "./version.js";',
+        'export * from "./codec.js";',
+    ]
     lines.extend(f'export * from "./rum/rutp/v1/{module}_pb.js";' for module in modules)
     return "\n".join(lines) + "\n"
+
+
+def typescript_rutp_version_output() -> str:
+    return f'''// Code generated by tools/spec_tool.py. DO NOT EDIT.
+export const SpecVersion = "{artifact_version()}";
+export const ProtocolVersion = "{rutp_protocol_version()}";
+'''
+
+
+def typescript_rutp_version_declaration_output() -> str:
+    return f'''// Code generated by tools/spec_tool.py. DO NOT EDIT.
+export declare const SpecVersion: "{artifact_version()}";
+export declare const ProtocolVersion: "{rutp_protocol_version()}";
+'''
 
 
 def typescript_rutp_codec_output() -> str:
@@ -489,6 +643,10 @@ def typescript_rutp_package_readme_output() -> str:
 Browser-compatible RUTP v1 Protobuf schemas and binary codec generated from
 `nebula-spec` with `protoc-gen-es`. The package version is `{artifact_version()}`
 and the RUTP wire version is `{rutp_protocol_version()}`.
+
+Import `SpecVersion` and `ProtocolVersion` from the package root. Use
+`ProtocolVersion` when constructing RUTP batches and signed configurations so
+the wire value stays aligned with the released codec.
 
 Use `create(RumBatchSchema, init)` from `@bufbuild/protobuf` to create a batch,
 then call `encodeRumBatch` before sending it as `application/x-protobuf`.
@@ -764,6 +922,8 @@ def generated_files(data: dict[str, Any]) -> dict[Path, str]:
         TYPESCRIPT_RUTP / "README.md": typescript_rutp_package_readme_output(),
         TYPESCRIPT_RUTP / "index.js": typescript_rutp_index_output(),
         TYPESCRIPT_RUTP / "index.d.ts": typescript_rutp_index_output(),
+        TYPESCRIPT_RUTP / "version.js": typescript_rutp_version_output(),
+        TYPESCRIPT_RUTP / "version.d.ts": typescript_rutp_version_declaration_output(),
         TYPESCRIPT_RUTP / "codec.js": typescript_rutp_codec_output(),
         TYPESCRIPT_RUTP / "codec.d.ts": typescript_rutp_codec_declaration_output(),
         ROOT / "generated" / "java" / "io" / "nebulaobservability" / "semantic" / "NebulaSemanticRegistry.java": java_output(data),
@@ -802,6 +962,33 @@ def verify_artifacts() -> None:
     typescript_rutp_package = load_json(TYPESCRIPT_RUTP / "package.json")
     if typescript_rutp_package.get("dependencies", {}).get("@bufbuild/protobuf") != TYPESCRIPT_PROTOBUF_VERSION:
         errors.append("generated TypeScript RUTP package has an unexpected protobuf runtime version")
+
+    for metadata_path, declarations in (
+        (
+            TYPESCRIPT_RUTP / "version.js",
+            (
+                f'export const SpecVersion = "{version}";',
+                f'export const ProtocolVersion = "{rutp_protocol_version()}";',
+            ),
+        ),
+        (
+            TYPESCRIPT_RUTP / "version.d.ts",
+            (
+                f'export declare const SpecVersion: "{version}";',
+                f'export declare const ProtocolVersion: "{rutp_protocol_version()}";',
+            ),
+        ),
+    ):
+        try:
+            metadata = metadata_path.read_text(encoding="utf-8")
+            for declaration in declarations:
+                if declaration not in metadata:
+                    errors.append(
+                        f"generated TypeScript RUTP metadata does not match the current release: {metadata_path.relative_to(ROOT)}"
+                    )
+                    break
+        except OSError as error:
+            errors.append(f"invalid generated TypeScript RUTP metadata: {error}")
 
     expected_typescript_proto_files = {
         TYPESCRIPT_RUTP / path.relative_to(ROOT / "specs").with_name(f"{path.stem}_pb.js")
@@ -868,6 +1055,10 @@ def verify_artifacts() -> None:
         manifest = load_json(manifest_path)
         if manifest.get("spec_version") != version:
             errors.append("conformance bundle version does not match VERSION")
+        if manifest.get("release") != current_release().get("release"):
+            errors.append("conformance bundle release does not match the current release manifest")
+        if manifest.get("protocols") != current_release().get("protocols"):
+            errors.append("conformance bundle protocols do not match the current release manifest")
         for fixture in manifest.get("fixtures", []):
             relative = Path(fixture["path"])
             bundled = ROOT / "generated" / "conformance" / relative

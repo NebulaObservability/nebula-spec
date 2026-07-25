@@ -7,7 +7,7 @@
     "config_version": { "type": "string", "minLength": 1 },
     "issued_at": { "type": "string", "format": "date-time" },
     "expires_at": { "type": "string", "format": "date-time" },
-    "protocol_version": { "const": "1.0" },
+    "protocol_version": { "const": "1.0.0-draft.1" },
     "encoding": { "enum": ["protobuf", "json"] },
     "compression": { "enum": ["gzip", "none"] },
     "sampling": { "$ref": "#/$defs/sampling" },
