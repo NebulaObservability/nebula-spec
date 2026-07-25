@@ -3,6 +3,9 @@ $ErrorActionPreference = 'Stop'
 python tools/spec_tool.py lint
 if ($LASTEXITCODE -ne 0) { throw 'Specification lint failed.' }
 
+python tools/spec_tool.py verify-receiver-contract
+if ($LASTEXITCODE -ne 0) { throw 'RUTP Receiver conformance check failed.' }
+
 $goGeneratedBefore = (git status --porcelain -- generated/go) -join "`n"
 npx --yes @bufbuild/buf@1.72.0 generate --template buf.gen.yaml
 if ($LASTEXITCODE -ne 0) { throw 'Go RUTP Protobuf generation failed.' }

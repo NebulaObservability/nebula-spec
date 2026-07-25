@@ -7,6 +7,11 @@ protocols:
     encoding:
       - protobuf
       - json_debug
+    receiver:
+      project_binding: authenticated_principal
+      json_debug:
+        access: explicit_debug_only
+        unknown_members: discard
   apm_extension:
     current: 1.0.0-draft.1
     accepts:

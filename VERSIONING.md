@@ -37,3 +37,8 @@ Go module 还必须在同一提交创建 `generated/go/v<VERSION>` tag，例如
 消费者必须固定所依赖的制品版本，并在执行 Fixture 前验证
 `fixture-manifest.json` 中的 SHA-256。预发布版本只可用于明确记录的兼容组合，
 不能隐式升级。
+
+RUTP Receiver 的认证主体绑定、项目声明校验和 JSON 调试规则同样随 `VERSION`
+发布。仅新增可选 JSON 字段、Fixture 或兼容接收语义时提升 Minor；只有改变
+Protobuf 编码、删除字段或改变既有字段语义时才提升 RUTP Major。Receiver 不能以
+客户端 `project_id` 选择 tenant/project，这一安全边界不得作为兼容性例外放宽。

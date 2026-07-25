@@ -22,11 +22,14 @@ const (
 )
 
 type RumBatch struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	ProtocolVersion  string                 `protobuf:"bytes,1,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"`
-	SchemaUrl        string                 `protobuf:"bytes,2,opt,name=schema_url,json=schemaUrl,proto3" json:"schema_url,omitempty"`
-	OtelSchemaUrl    string                 `protobuf:"bytes,3,opt,name=otel_schema_url,json=otelSchemaUrl,proto3" json:"otel_schema_url,omitempty"`
-	BatchId          string                 `protobuf:"bytes,4,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ProtocolVersion string                 `protobuf:"bytes,1,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"`
+	SchemaUrl       string                 `protobuf:"bytes,2,opt,name=schema_url,json=schemaUrl,proto3" json:"schema_url,omitempty"`
+	OtelSchemaUrl   string                 `protobuf:"bytes,3,opt,name=otel_schema_url,json=otelSchemaUrl,proto3" json:"otel_schema_url,omitempty"`
+	BatchId         string                 `protobuf:"bytes,4,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
+	// Client-declared project identifier. Receivers MUST resolve tenant and
+	// project from the authenticated transport principal, then reject this
+	// batch when this assertion does not match that server-side binding.
 	ProjectId        string                 `protobuf:"bytes,5,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	SentTimeUnixNano uint64                 `protobuf:"varint,6,opt,name=sent_time_unix_nano,json=sentTimeUnixNano,proto3" json:"sent_time_unix_nano,omitempty"`
 	Resource         *Resource              `protobuf:"bytes,7,opt,name=resource,proto3" json:"resource,omitempty"`

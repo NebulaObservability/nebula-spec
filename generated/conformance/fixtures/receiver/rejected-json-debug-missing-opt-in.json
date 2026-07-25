@@ -1,0 +1,20 @@
+{
+  "case_id": "json-debug-requires-explicit-opt-in",
+  "request": {
+    "content_type": "application/json",
+    "authenticated_principal": {
+      "principal_id": "ingest-key-web-debug",
+      "tenant_id": "tenant-shop",
+      "project_id": "project-web-staging",
+      "permissions": ["rum.ingest", "rum.ingest.debug"]
+    },
+    "declared_project_id": "project-web-staging",
+    "debug_opt_in": false
+  },
+  "expected": {
+    "outcome": "rejected",
+    "routing_source": "authenticated_principal",
+    "rejection_code": "json_debug_opt_in_required",
+    "unknown_json_members": "discarded"
+  }
+}

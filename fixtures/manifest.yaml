@@ -3,11 +3,38 @@ fixtures:
   - path: fixtures/protocol/minimal-batch.json
     schema: schemas/rum-batch.schema.json
     valid: true
+  - path: fixtures/protocol/minimal-batch-with-unknown-members.json
+    schema: schemas/rum-batch.schema.json
+    valid: true
   - path: fixtures/protocol/invalid-batch-missing-session.json
+    schema: schemas/rum-batch.schema.json
+    valid: false
+  - path: fixtures/protocol/invalid-batch-unsupported-major.json
     schema: schemas/rum-batch.schema.json
     valid: false
   - path: fixtures/protocol/partial-ack.json
     schema: schemas/batch-ack.schema.json
+    valid: true
+  - path: fixtures/protocol/partial-ack-with-unknown-members.json
+    schema: schemas/batch-ack.schema.json
+    valid: true
+  - path: fixtures/receiver/accepted-binding.json
+    schema: schemas/rutp-receiver-conformance.schema.json
+    valid: true
+  - path: fixtures/receiver/rejected-missing-ingest-permission.json
+    schema: schemas/rutp-receiver-conformance.schema.json
+    valid: true
+  - path: fixtures/receiver/rejected-project-mismatch.json
+    schema: schemas/rutp-receiver-conformance.schema.json
+    valid: true
+  - path: fixtures/receiver/json-debug-unknown-members.json
+    schema: schemas/rutp-receiver-conformance.schema.json
+    valid: true
+  - path: fixtures/receiver/rejected-json-debug-missing-opt-in.json
+    schema: schemas/rutp-receiver-conformance.schema.json
+    valid: true
+  - path: fixtures/receiver/rejected-json-debug-not-authorized.json
+    schema: schemas/rutp-receiver-conformance.schema.json
     valid: true
   - path: fixtures/config/signed-config.json
     schema: schemas/rum-config.schema.json
