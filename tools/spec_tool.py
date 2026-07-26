@@ -9,11 +9,13 @@ import json
 import re
 import shutil
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
+from referencing import Registry, Resource
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +27,9 @@ RELEASES = ROOT / "releases"
 CURRENT_RELEASE = RELEASES / "CURRENT"
 RECEIVER_FIXTURES = FIXTURES / "receiver"
 RECEIVER_FIXTURE_SCHEMA = SCHEMAS / "rutp-receiver-conformance.schema.json"
+CONTROL_PLANE_FIXTURES = FIXTURES / "control-plane"
+CONTROL_PLANE_REVISION_SCHEMA = SCHEMAS / "control-plane-config-revision.schema.json"
+CONTROL_PLANE_DELIVERY_SCHEMA = SCHEMAS / "control-plane-config-delivery.schema.json"
 GO_MODULE = ROOT / "generated" / "go"
 GO_MODULE_PATH = "github.com/NebulaObservability/nebula-spec/generated/go"
 GO_PROTOBUF_VERSION = "v1.36.6"
@@ -67,7 +72,7 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def validate(instance: Any, schema_path: Path, label: str) -> list[str]:
     schema = load_json(schema_path)
-    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    validator = Draft202012Validator(schema, registry=schema_registry(), format_checker=FormatChecker())
     return [
         f"{label}: {'/'.join(str(part) for part in error.absolute_path) or '<root>'}: {error.message}"
         for error in sorted(validator.iter_errors(instance), key=lambda item: list(item.absolute_path))
@@ -76,10 +81,20 @@ def validate(instance: Any, schema_path: Path, label: str) -> list[str]:
 
 def validation_error_paths(instance: Any, schema_path: Path) -> list[str]:
     schema = load_json(schema_path)
-    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    validator = Draft202012Validator(schema, registry=schema_registry(), format_checker=FormatChecker())
     return sorted(
         {"/".join(str(part) for part in error.absolute_path) or "<root>" for error in validator.iter_errors(instance)}
     )
+
+
+def schema_registry() -> Registry:
+    registry = Registry()
+    for path in SCHEMAS.glob("*.schema.json"):
+        schema = load_json(path)
+        identifier = schema.get("$id")
+        if isinstance(identifier, str) and identifier:
+            registry = registry.with_resource(identifier, Resource.from_contents(schema))
+    return registry
 
 
 def duplicate_names(items: list[dict[str, Any]], label: str) -> list[str]:
@@ -299,6 +314,96 @@ def verify_receiver_contract() -> None:
     print("RUTP Receiver authentication and JSON debug conformance passed.")
 
 
+def parse_rfc3339_timestamp(value: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def control_plane_conformance_errors() -> list[str]:
+    errors: list[str] = []
+    if not CONTROL_PLANE_FIXTURES.is_dir():
+        return ["fixtures/control-plane is missing"]
+
+    fixture_manifest = load_yaml(FIXTURES / "manifest.yaml")
+    entries = [
+        entry
+        for entry in fixture_manifest.get("fixtures", [])
+        if entry.get("valid") is True
+        and entry.get("schema")
+        in {
+            CONTROL_PLANE_REVISION_SCHEMA.relative_to(ROOT).as_posix(),
+            CONTROL_PLANE_DELIVERY_SCHEMA.relative_to(ROOT).as_posix(),
+        }
+    ]
+    if not entries:
+        return ["fixtures/manifest.yaml is missing valid control-plane fixtures"]
+
+    coverage = {"publish": False, "rollback": False, "delivery": False}
+    revisions: dict[tuple[str, str, str], set[int]] = {}
+    etags: dict[tuple[str, str, str], set[str]] = {}
+
+    for entry in entries:
+        fixture_path = ROOT / entry["path"]
+        label = fixture_path.relative_to(ROOT).as_posix()
+        try:
+            fixture = load_json(fixture_path)
+        except (OSError, json.JSONDecodeError, SpecError) as error:
+            errors.append(f"{label}: {error}")
+            continue
+
+        schema_path = ROOT / entry["schema"]
+        schema_errors = validate(fixture, schema_path, label)
+        if schema_errors:
+            errors.extend(schema_errors)
+            continue
+
+        document = fixture["document"]
+        issued_at = parse_rfc3339_timestamp(document["issued_at"])
+        expires_at = parse_rfc3339_timestamp(document["expires_at"])
+        if issued_at is not None and expires_at is not None and expires_at <= issued_at:
+            errors.append(f"{label}: document expires_at must be later than issued_at")
+        if document["privacy"]["default_action"] != "drop":
+            errors.append(f"{label}: control-plane document privacy.default_action must be drop")
+
+        if schema_path == CONTROL_PLANE_DELIVERY_SCHEMA:
+            coverage["delivery"] = True
+            continue
+
+        scope = fixture["scope"]
+        key = (scope["tenant_id"], scope["project_id"], fixture["config_id"])
+        known_revisions = revisions.setdefault(key, set())
+        if fixture["revision"] in known_revisions:
+            errors.append(f"{label}: duplicate revision for server scope and config_id")
+        known_revisions.add(fixture["revision"])
+        known_etags = etags.setdefault(key, set())
+        if fixture["etag"] in known_etags:
+            errors.append(f"{label}: duplicate ETag for server scope and config_id")
+        known_etags.add(fixture["etag"])
+
+        lifecycle = fixture["lifecycle"]
+        operation = lifecycle["operation"]
+        if operation == "publish":
+            coverage["publish"] = True
+        elif operation == "rollback":
+            coverage["rollback"] = True
+            if lifecycle["rollback_of_revision"] >= fixture["revision"]:
+                errors.append(f"{label}: rollback_of_revision must be lower than the new revision")
+
+    for name, covered in coverage.items():
+        if not covered:
+            errors.append(f"fixtures/control-plane is missing required coverage: {name}")
+    return errors
+
+
+def verify_control_plane_contract() -> None:
+    errors = control_plane_conformance_errors()
+    if errors:
+        raise SpecError("Control Plane configuration conformance failed:\n- " + "\n- ".join(errors))
+    print("Control Plane configuration revision and delivery conformance passed.")
+
+
 def lint() -> None:
     data = registry()
     errors: list[str] = []
@@ -380,6 +485,24 @@ def lint() -> None:
     except SpecError as error:
         errors.append(str(error))
 
+    matrix_control_plane = protocol_matrix.get("protocols", {}).get("control_plane_config", {})
+    matrix_control_plane_version = matrix_control_plane.get("current")
+    accepted_control_plane_ranges = matrix_control_plane.get("accepts", [])
+    release_control_plane_version = active_release.get("protocols", {}).get("control_plane_config")
+    if matrix_control_plane_version != release_control_plane_version:
+        errors.append("current release Control Plane version must match compatibility/protocol-matrix.yaml")
+    try:
+        parse_semver(str(release_control_plane_version))
+        if not isinstance(accepted_control_plane_ranges, list) or not accepted_control_plane_ranges:
+            errors.append("compatibility/protocol-matrix.yaml must declare accepted Control Plane ranges")
+        elif not any(
+            semver_satisfies(str(release_control_plane_version), str(expression))
+            for expression in accepted_control_plane_ranges
+        ):
+            errors.append("current release Control Plane version must be included in the compatibility acceptance range")
+    except SpecError as error:
+        errors.append(str(error))
+
     versioned_schema_paths = (SCHEMAS / "rum-batch.schema.json", SCHEMAS / "rum-config.schema.json")
     for schema_path in versioned_schema_paths:
         schema = load_json(schema_path)
@@ -391,6 +514,14 @@ def lint() -> None:
     config_version = load_json(SCHEMAS / "rum-config.schema.json").get("properties", {}).get("protocol_version", {}).get("const")
     if config_version != release_rutp:
         errors.append("schemas/rum-config.schema.json protocol_version must equal the current release RUTP version")
+
+    for schema_path in (CONTROL_PLANE_REVISION_SCHEMA, CONTROL_PLANE_DELIVERY_SCHEMA):
+        control_plane_schema = load_json(schema_path)
+        contract_version = control_plane_schema.get("properties", {}).get("contract_version", {}).get("const")
+        if contract_version != release_control_plane_version:
+            errors.append(
+                f"{schema_path.relative_to(ROOT).as_posix()} contract_version must equal the current release Control Plane version"
+            )
 
     fixture_manifest = load_yaml(ROOT / "fixtures" / "manifest.yaml")
     for fixture in fixture_manifest.get("fixtures", []):
@@ -447,6 +578,7 @@ def lint() -> None:
             errors.append(str(error))
 
     errors.extend(receiver_conformance_errors())
+    errors.extend(control_plane_conformance_errors())
 
     if errors:
         raise SpecError("Specification lint failed:\n- " + "\n- ".join(errors))
@@ -851,6 +983,10 @@ def fixture_kind(path: Path) -> str:
     return relative.parts[0] if len(relative.parts) > 1 else "generic"
 
 
+def normalized_fixture_content(path: Path) -> str:
+    return path.read_text(encoding="utf-8").rstrip() + "\n"
+
+
 def conformance_manifest_output() -> str:
     release = current_release()
     fixtures: list[dict[str, str]] = []
@@ -860,7 +996,7 @@ def conformance_manifest_output() -> str:
             {
                 "path": relative,
                 "kind": fixture_kind(path),
-                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "sha256": hashlib.sha256(normalized_fixture_content(path).encode("utf-8")).hexdigest(),
             }
         )
     return json.dumps(
@@ -907,7 +1043,7 @@ def conformance_fixture_outputs() -> dict[Path, str]:
     }
     for path in sorted(FIXTURES.rglob("*.json")):
         relative = path.relative_to(FIXTURES)
-        output[ROOT / "generated" / "conformance" / "fixtures" / relative] = path.read_text(encoding="utf-8")
+        output[ROOT / "generated" / "conformance" / "fixtures" / relative] = normalized_fixture_content(path)
     return output
 
 
@@ -1162,6 +1298,7 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("lint")
     subparsers.add_parser("verify-receiver-contract")
+    subparsers.add_parser("verify-control-plane-contract")
     generate_parser = subparsers.add_parser("generate")
     generate_parser.add_argument("--check", action="store_true")
     subparsers.add_parser("verify-artifacts")
@@ -1176,6 +1313,8 @@ def main() -> int:
             lint()
         elif args.command == "verify-receiver-contract":
             verify_receiver_contract()
+        elif args.command == "verify-control-plane-contract":
+            verify_control_plane_contract()
         elif args.command == "generate":
             generate(args.check)
         elif args.command == "verify-artifacts":

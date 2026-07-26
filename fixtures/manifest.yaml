@@ -48,3 +48,22 @@ fixtures:
     schema: schemas/rum-config.schema.json
     valid: true
     protocol_expectation: current
+  - path: fixtures/control-plane/active-rum-config-revision.json
+    schema: schemas/control-plane-config-revision.schema.json
+    valid: true
+  - path: fixtures/control-plane/rollback-rum-config-revision.json
+    schema: schemas/control-plane-config-revision.schema.json
+    valid: true
+  - path: fixtures/control-plane/delivery-active-rum-config.json
+    schema: schemas/control-plane-config-delivery.schema.json
+    valid: true
+  - path: fixtures/control-plane/invalid-privacy-escalation.json
+    schema: schemas/control-plane-config-delivery.schema.json
+    valid: false
+    expected_error_paths:
+      - document/privacy/default_action
+  - path: fixtures/control-plane/invalid-client-scope-in-delivery.json
+    schema: schemas/control-plane-config-delivery.schema.json
+    valid: false
+    expected_error_paths:
+      - <root>

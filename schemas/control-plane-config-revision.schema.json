@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/control-plane/v1/config-revision.schema.json",
+  "title": "Nebula Control Plane RUM Configuration Revision v1",
+  "description": "Server-side configuration revision. Its scope and audit fields are never a client-controlled request body and are never sent to SDKs.",
+  "type": "object",
+  "required": ["contract_version", "config_id", "scope", "revision", "status", "lifecycle", "etag", "created_at", "created_by", "document"],
+  "properties": {
+    "contract_version": { "const": "1.0.0-draft.1" },
+    "config_id": { "type": "string", "pattern": "^cfg-[A-Za-z0-9][A-Za-z0-9._-]{2,127}$" },
+    "scope": { "$ref": "#/$defs/server_scope" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["draft", "active", "superseded", "revoked"] },
+    "lifecycle": { "$ref": "#/$defs/lifecycle" },
+    "etag": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,255}$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "created_by": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "activated_at": { "type": "string", "format": "date-time" },
+    "activated_by": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "document": {
+      "allOf": [
+        { "$ref": "https://schemas.nebula-observability.io/rum/rutp/v1/config.schema.json" },
+        {
+          "properties": {
+            "privacy": {
+              "properties": {
+                "default_action": { "const": "drop" },
+                "rules": { "maxItems": 0 }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "lifecycle": { "properties": { "operation": { "const": "create" } }, "required": ["operation"] } }, "required": ["lifecycle"] },
+      "then": { "properties": { "status": { "const": "draft" }, "lifecycle": { "not": { "required": ["rollback_of_revision"] } } } }
+    },
+    {
+      "if": { "properties": { "lifecycle": { "properties": { "operation": { "const": "publish" } }, "required": ["operation"] } }, "required": ["lifecycle"] },
+      "then": { "required": ["activated_at", "activated_by"], "properties": { "status": { "const": "active" }, "lifecycle": { "not": { "required": ["rollback_of_revision"] } } } }
+    },
+    {
+      "if": { "properties": { "lifecycle": { "properties": { "operation": { "const": "rollback" } }, "required": ["operation"] } }, "required": ["lifecycle"] },
+      "then": { "required": ["activated_at", "activated_by"], "properties": { "status": { "const": "active" }, "lifecycle": { "required": ["rollback_of_revision"] } } }
+    },
+    {
+      "if": { "properties": { "lifecycle": { "properties": { "operation": { "const": "supersede" } }, "required": ["operation"] } }, "required": ["lifecycle"] },
+      "then": { "properties": { "status": { "const": "superseded" }, "lifecycle": { "not": { "required": ["rollback_of_revision"] } } } }
+    },
+    {
+      "if": { "properties": { "lifecycle": { "properties": { "operation": { "const": "revoke" } }, "required": ["operation"] } }, "required": ["lifecycle"] },
+      "then": { "properties": { "status": { "const": "revoked" }, "lifecycle": { "not": { "required": ["rollback_of_revision"] } } } }
+    }
+  ],
+  "$defs": {
+    "server_scope": {
+      "type": "object",
+      "required": ["tenant_id", "project_id"],
+      "properties": {
+        "tenant_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+        "project_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" }
+      },
+      "additionalProperties": false
+    },
+    "lifecycle": {
+      "type": "object",
+      "required": ["operation"],
+      "properties": {
+        "operation": { "enum": ["create", "publish", "rollback", "supersede", "revoke"] },
+        "rollback_of_revision": { "type": "integer", "minimum": 1 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 1024 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -6,6 +6,9 @@ if ($LASTEXITCODE -ne 0) { throw 'Specification lint failed.' }
 python tools/spec_tool.py verify-receiver-contract
 if ($LASTEXITCODE -ne 0) { throw 'RUTP Receiver conformance check failed.' }
 
+python tools/spec_tool.py verify-control-plane-contract
+if ($LASTEXITCODE -ne 0) { throw 'Control Plane configuration conformance check failed.' }
+
 $protobufGeneratedBefore = (git status --porcelain -- generated/go generated/typescript-rutp) -join "`n"
 npx --yes @bufbuild/buf@1.72.0 generate --template buf.gen.yaml
 if ($LASTEXITCODE -ne 0) { throw 'RUTP Protobuf generation failed.' }

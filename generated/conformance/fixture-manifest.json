@@ -6,6 +6,31 @@
       "sha256": "de511d83b11adfcc70b84762c21943e85241d0df9d9b3e71f2c8df98b196871e"
     },
     {
+      "kind": "control-plane",
+      "path": "fixtures/control-plane/active-rum-config-revision.json",
+      "sha256": "713c0876d3d1cf070b15bf8f1460587e824eeceb5496fe09b00bea401093b91f"
+    },
+    {
+      "kind": "control-plane",
+      "path": "fixtures/control-plane/delivery-active-rum-config.json",
+      "sha256": "f34ea763bceb8a80b57e50ba9487f3e4f7c76ca8994c74d00d27050300a4d027"
+    },
+    {
+      "kind": "control-plane",
+      "path": "fixtures/control-plane/invalid-client-scope-in-delivery.json",
+      "sha256": "edc21035e88c01c3414825d16715107f5e8b286f6f74eae0d3b17e84855e0f38"
+    },
+    {
+      "kind": "control-plane",
+      "path": "fixtures/control-plane/invalid-privacy-escalation.json",
+      "sha256": "f797a68118a49d69bde59e55d03d3a16b196f4b58198fc398dfe564db72d4325"
+    },
+    {
+      "kind": "control-plane",
+      "path": "fixtures/control-plane/rollback-rum-config-revision.json",
+      "sha256": "b7b2074d054c1d6425e8b33d5e69948133e4cdc088ff7e50e25954d7a35fee1d"
+    },
+    {
       "kind": "privacy",
       "path": "fixtures/privacy/default-deny.json",
       "sha256": "a0bcbcf97f58f8a2207805eb45d58c9ce2fef9cffa24b9f970d0c79d7218d13c"
@@ -84,8 +109,9 @@
   "format_version": 1,
   "protocols": {
     "apm_extension": "1.0.0-draft.1",
+    "control_plane_config": "1.0.0-draft.1",
     "rutp": "1.0.0-draft.1"
   },
-  "release": "2026.07.4-draft.0",
-  "spec_version": "0.4.0-draft.1"
+  "release": "2026.07.5-draft.0",
+  "spec_version": "0.5.0-draft.0"
 }

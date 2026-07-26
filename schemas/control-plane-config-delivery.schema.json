@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/control-plane/v1/config-delivery.schema.json",
+  "title": "Nebula Control Plane RUM Configuration Delivery v1",
+  "description": "Authenticated SDK delivery envelope. Tenant, project, principal, audit, and management lifecycle metadata are intentionally absent.",
+  "type": "object",
+  "required": ["contract_version", "revision", "etag", "status", "document"],
+  "properties": {
+    "contract_version": { "const": "1.0.0-draft.1" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "etag": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,255}$" },
+    "status": { "const": "active" },
+    "document": {
+      "allOf": [
+        { "$ref": "https://schemas.nebula-observability.io/rum/rutp/v1/config.schema.json" },
+        {
+          "properties": {
+            "privacy": {
+              "properties": {
+                "default_action": { "const": "drop" },
+                "rules": { "maxItems": 0 }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}
