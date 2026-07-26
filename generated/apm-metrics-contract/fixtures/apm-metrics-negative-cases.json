@@ -1,0 +1,418 @@
+{
+  "schema_version": 1,
+  "base_fixture": "fixtures/metrics/apm-metrics-mvp.json",
+  "cases": [
+    {
+      "name": "delta-temporality",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/aggregationTemporality",
+          "value": 1
+        }
+      ],
+      "expected_errors": [
+        "aggregation temporality must be cumulative"
+      ]
+    },
+    {
+      "name": "wrong-unit",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/unit",
+          "value": "ms"
+        }
+      ],
+      "expected_errors": [
+        "unit must be s"
+      ]
+    },
+    {
+      "name": "wrong-metric-type",
+      "patch": [
+        {
+          "op": "remove",
+          "path": "/resourceMetrics/0/scopeMetrics/2/metrics/0/sum/dataPoints/0/asInt"
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/2/metrics/0/sum/dataPoints/0/asDouble",
+          "value": 134217728
+        }
+      ],
+      "expected_errors": [
+        "integer metric must use asInt"
+      ]
+    },
+    {
+      "name": "non-monotonic-counter",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/2/metrics/4/sum/isMonotonic",
+          "value": false
+        }
+      ],
+      "expected_errors": [
+        "isMonotonic does not match the contract"
+      ]
+    },
+    {
+      "name": "forbidden-url-query",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "url.query",
+            "value": {
+              "stringValue": "account=123"
+            }
+          }
+        }
+      ],
+      "expected_errors": [
+        "prohibited metric attributes present"
+      ]
+    },
+    {
+      "name": "forbidden-url-full",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "url.full",
+            "value": {
+              "stringValue": "https://orders.example.test/orders/123?account=456"
+            }
+          }
+        }
+      ],
+      "expected_errors": [
+        "prohibited metric attributes present"
+      ]
+    },
+    {
+      "name": "forbidden-db-query-text",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/1/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "db.query.text",
+            "value": {
+              "stringValue": "select * from orders where customer_id = 456"
+            }
+          }
+        }
+      ],
+      "expected_errors": [
+        "prohibited metric attributes present"
+      ]
+    },
+    {
+      "name": "forbidden-exception-message",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/1/attributes/-",
+          "value": {
+            "key": "exception.message",
+            "value": {
+              "stringValue": "customer 456 failed checkout"
+            }
+          }
+        }
+      ],
+      "expected_errors": [
+        "prohibited metric attributes present"
+      ]
+    },
+    {
+      "name": "forbidden-trace-id",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "trace_id",
+            "value": {
+              "stringValue": "102030405060708090a0b0c0d0e0f000"
+            }
+          }
+        }
+      ],
+      "expected_errors": [
+        "prohibited metric attributes present"
+      ]
+    },
+    {
+      "name": "missing-required-point-attribute",
+      "patch": [
+        {
+          "op": "remove",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/0"
+        }
+      ],
+      "expected_errors": [
+        "missing required attributes"
+      ]
+    },
+    {
+      "name": "missing-start-time",
+      "patch": [
+        {
+          "op": "remove",
+          "path": "/resourceMetrics/0/scopeMetrics/2/metrics/4/sum/dataPoints/0/startTimeUnixNano"
+        }
+      ],
+      "expected_errors": [
+        "cumulative point must declare startTimeUnixNano"
+      ]
+    },
+    {
+      "name": "missing-resource",
+      "patch": [
+        {
+          "op": "remove",
+          "path": "/resourceMetrics/0/resource/attributes/1"
+        }
+      ],
+      "expected_errors": [
+        "missing required Resource attributes"
+      ]
+    },
+    {
+      "name": "bad-exemplar-id",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/exemplars/0/traceId",
+          "value": "AAAAAAAAAAAAAAAAAAAAAA=="
+        }
+      ],
+      "expected_errors": [
+        "identifier must not be all zeroes"
+      ]
+    },
+    {
+      "name": "bad-bucket-total",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/positive/bucketCounts",
+          "value": [
+            "0",
+            "1",
+            "1"
+          ]
+        }
+      ],
+      "expected_errors": [
+        "histogram bucket counts total 2, expected 3"
+      ]
+    },
+    {
+      "name": "negative-duration-bucket",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/negative",
+          "value": {
+            "offset": -5,
+            "bucketCounts": [
+              "1"
+            ]
+          }
+        }
+      ],
+      "expected_errors": [
+        "duration histogram must not contain negative bucket counts"
+      ]
+    },
+    {
+      "name": "attribute-type",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/2/value",
+          "value": {
+            "stringValue": "200"
+          }
+        }
+      ],
+      "expected_errors": [
+        "attribute http.response.status_code must use intValue"
+      ]
+    },
+    {
+      "name": "nonempty-resource",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/resource/attributes/1/value/stringValue",
+          "value": ""
+        }
+      ],
+      "expected_errors": [
+        "attribute service.name must not be empty"
+      ]
+    },
+    {
+      "name": "non-finite-value",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/2/metrics/6/gauge/dataPoints/0/asDouble",
+          "value_kind": "nan"
+        }
+      ],
+      "expected_errors": [
+        "value must be a finite number"
+      ]
+    },
+    {
+      "name": "too-many-attributes",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.0",
+            "value": {
+              "stringValue": "value-0"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.1",
+            "value": {
+              "stringValue": "value-1"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.2",
+            "value": {
+              "stringValue": "value-2"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.3",
+            "value": {
+              "stringValue": "value-3"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.4",
+            "value": {
+              "stringValue": "value-4"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.5",
+            "value": {
+              "stringValue": "value-5"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.6",
+            "value": {
+              "stringValue": "value-6"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.7",
+            "value": {
+              "stringValue": "value-7"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.8",
+            "value": {
+              "stringValue": "value-8"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.9",
+            "value": {
+              "stringValue": "value-9"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.10",
+            "value": {
+              "stringValue": "value-10"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/-",
+          "value": {
+            "key": "test.dimension.11",
+            "value": {
+              "stringValue": "value-11"
+            }
+          }
+        }
+      ],
+      "expected_errors": [
+        "maximum is 16"
+      ]
+    },
+    {
+      "name": "oversized-string",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/attributes/3/value/stringValue",
+          "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      ],
+      "expected_errors": [
+        "exceeds 256 UTF-8 bytes"
+      ]
+    }
+  ]
+}

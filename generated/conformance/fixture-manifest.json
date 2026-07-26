@@ -108,10 +108,11 @@
   ],
   "format_version": 1,
   "protocols": {
-    "apm_extension": "1.0.0-draft.1",
+    "apm_extension": "1.1.0-draft.0",
+    "apm_metrics": "1.1.0-draft.0",
     "control_plane_config": "1.0.0-draft.1",
     "rutp": "1.0.0-draft.1"
   },
-  "release": "2026.07.5-draft.0",
-  "spec_version": "0.5.0-draft.0"
+  "release": "2026.07.6-draft.0",
+  "spec_version": "0.6.0-draft.0"
 }

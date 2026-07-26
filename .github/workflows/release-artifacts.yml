@@ -17,10 +17,14 @@ jobs:
           python-version: "3.13"
           cache: pip
       - run: python -m pip install -r tools/requirements.txt
-      - name: Verify specification and RUTP Receiver contract
+      - name: Verify specification contracts
         run: |
           python tools/spec_tool.py lint
           python tools/spec_tool.py verify-receiver-contract
+          python tools/spec_tool.py verify-control-plane-contract
+          python tools/spec_tool.py verify-apm-metrics-contract
+          python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.5.0-draft.0.json
+          python tools/spec_tool.py breaking-apm-metrics --against compatibility/baselines/apm-metrics-1.1.0-draft.0.json
       - name: Verify tag matches VERSION
         shell: bash
         run: test "${GITHUB_REF_NAME}" = "spec-v$(cat VERSION)"
@@ -64,6 +68,9 @@ jobs:
           npx --yes --package typescript@5.9.3 tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck false index.d.ts
           node --input-type=module -e 'import { readFileSync } from "node:fs"; import { create } from "@bufbuild/protobuf"; import { ProtocolVersion, RumBatchSchema, SpecVersion, encodeRumBatch, decodeRumBatch } from "./index.js"; const packageVersion = JSON.parse(readFileSync("./package.json", "utf8")).version; const source = create(RumBatchSchema, { protocolVersion: ProtocolVersion, batchId: "release-check" }); const decoded = decodeRumBatch(encodeRumBatch(source)); if (SpecVersion !== packageVersion || decoded.protocolVersion !== ProtocolVersion || decoded.batchId !== source.batchId) process.exit(1)'
           npm pack --ignore-scripts --pack-destination ../../artifacts
+      - name: Pack APM Metrics contract
+        working-directory: generated/apm-metrics-contract
+        run: npm pack --ignore-scripts --pack-destination ../../artifacts
       - name: Pack RUM conformance fixtures
         working-directory: generated/conformance
         run: npm pack --ignore-scripts --pack-destination ../../artifacts
@@ -78,6 +85,11 @@ jobs:
           VERSION="$(cat VERSION)"
           cd generated/conformance
           zip -r "../../artifacts/rum-conformance-fixtures-${VERSION}.zip" .
+      - name: Archive APM Metrics contract
+        run: |
+          VERSION="$(cat VERSION)"
+          cd generated/apm-metrics-contract
+          zip -r "../../artifacts/apm-metrics-contract-${VERSION}.zip" .
       - name: Archive Go RUTP module
         run: |
           VERSION="$(cat VERSION)"

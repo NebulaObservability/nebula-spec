@@ -27,12 +27,16 @@ jobs:
         run: python tools/spec_tool.py verify-receiver-contract
       - name: Verify Control Plane configuration conformance
         run: python tools/spec_tool.py verify-control-plane-contract
+      - name: Verify APM Metrics conformance
+        run: python tools/spec_tool.py verify-apm-metrics-contract
       - name: Verify generated artifacts
         run: python tools/spec_tool.py generate --check
       - name: Verify distributable artifacts
         run: python tools/spec_tool.py verify-artifacts
       - name: Check semantic compatibility
-        run: python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.2.0-draft.0.json
+        run: python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.5.0-draft.0.json
+      - name: Check APM Metrics compatibility
+        run: python tools/spec_tool.py breaking-apm-metrics --against compatibility/baselines/apm-metrics-1.1.0-draft.0.json
       - uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.72.0
@@ -72,6 +76,7 @@ jobs:
           (cd generated/typescript && npm pack --dry-run --ignore-scripts)
           (cd generated/typescript-rutp && npm pack --dry-run --ignore-scripts)
           (cd generated/conformance && npm pack --dry-run --ignore-scripts)
+          (cd generated/apm-metrics-contract && npm pack --dry-run --ignore-scripts)
       - uses: dtolnay/rust-toolchain@stable
       - name: Compile and package generated Rust registry
         shell: bash

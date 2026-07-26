@@ -10,10 +10,11 @@
 - `rust/nebula-semantic-registry/`：可直接打包的 Cargo crate。
 - `go/`：可消费的 Go module，包含 `rum/rutp/v1` Protobuf 和 `semantic` registry。
 - `conformance/`：带 SHA-256 `fixture-manifest.json` 的 npm fixture bundle。
+- `apm-metrics-contract/`：带逐文件 SHA-256 的独立 APM Metrics 契约、Schema 与 Fixture bundle。
 - `java/`：供对应实现仓库消费的源码级 registry。
 
 所有制品的版本都来自根目录 `VERSION`。发布 `spec-v*` tag 时，
-`release-artifacts` workflow 会生成 npm tarball、Rust crate、Go module zip、Fixture zip 和
+`release-artifacts` workflow 会生成 npm tarball、Rust crate、Go module zip、RUM Fixture zip、APM Metrics zip 和
 `SHA256SUMS`，并作为 GitHub Release assets 上传。实现仓库必须消费版本化
 制品，不能复制 registry 或 fixture。
 

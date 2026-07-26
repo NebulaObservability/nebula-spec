@@ -51,3 +51,10 @@ Control Plane Config 的服务端修订记录与 SDK delivery 封套也随 `VERS
 管理元数据或 SDK capability 可以提升 Minor；改变 delivery 的认证 scope、active
 revision、ETag 或默认拒绝隐私边界属于不兼容的运行时语义变更。服务端 scope 和
 审计字段不得出现在 SDK delivery 中，也不得由浏览器或遥测正文选择。
+
+## APM Metrics 契约
+
+APM Metrics profile 使用独立的 `metrics_contract_version`，并在 Release Manifest 的
+`protocols.apm_metrics` 中声明。新增向后兼容的指标或可选维度提升 Minor；删除指标、改变
+单位、instrument、temporality、monotonicity、必填维度或 exemplar 语义属于不兼容变更。
+OTel Schema 版本独立记录，消费者必须同时校验 Metrics contract 与 OTel Schema。

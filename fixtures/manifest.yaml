@@ -67,3 +67,12 @@ fixtures:
     valid: false
     expected_error_paths:
       - <root>
+  - path: fixtures/metrics/apm-metrics-mvp.json
+    schema: schemas/otlp-metrics-export.schema.json
+    valid: true
+  - path: fixtures/metrics/apm-metrics-explicit-histogram.json
+    schema: schemas/otlp-metrics-export.schema.json
+    valid: true
+  - path: fixtures/metrics/apm-metrics-negative-cases.json
+    validator: apm_metrics_negative_suite
+    valid: true

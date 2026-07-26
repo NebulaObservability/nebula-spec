@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/spec/apm-metrics.schema.json",
+  "type": "object",
+  "required": ["schema_version", "contract_version", "otel_schema_url", "transport", "red", "resource", "attribute_policy", "metrics"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract_version": { "$ref": "#/$defs/semver" },
+    "otel_schema_url": { "type": "string", "format": "uri" },
+    "transport": {
+      "type": "object",
+      "required": ["temporality", "histogram", "exemplars"],
+      "properties": {
+        "temporality": { "const": "cumulative" },
+        "histogram": {
+          "type": "object",
+          "required": ["preferred", "accepted"],
+          "properties": {
+            "preferred": { "const": "exponential_histogram" },
+            "accepted": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "enum": ["exponential_histogram", "explicit_histogram"] },
+              "contains": { "const": "exponential_histogram" }
+            }
+          },
+          "additionalProperties": false
+        },
+        "exemplars": {
+          "type": "object",
+          "required": ["preserve", "synthesize"],
+          "properties": {
+            "preserve": { "const": true },
+            "synthesize": { "const": false }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "red": {
+      "type": "object",
+      "required": ["metric", "throughput", "errors", "latency", "trace_sampling", "vendor_counters"],
+      "properties": {
+        "metric": { "const": "http.server.request.duration" },
+        "throughput": { "const": "histogram_count" },
+        "errors": {
+          "type": "object",
+          "required": ["operation", "attribute"],
+          "properties": {
+            "operation": { "const": "count_when_present" },
+            "attribute": { "const": "error.type" }
+          },
+          "additionalProperties": false
+        },
+        "latency": { "const": "histogram_distribution" },
+        "trace_sampling": { "const": "independent" },
+        "vendor_counters": { "const": "forbidden" }
+      },
+      "additionalProperties": false
+    },
+    "resource": {
+      "type": "object",
+      "required": ["attributes"],
+      "properties": {
+        "attributes": {
+          "type": "array",
+          "minItems": 11,
+          "maxItems": 11,
+          "items": { "$ref": "#/$defs/resourceAttribute" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "attribute_policy": {
+      "type": "object",
+      "required": ["mode", "unknown_attributes", "max_attributes_per_point", "max_string_value_bytes", "forbidden"],
+      "properties": {
+        "mode": { "const": "allowlist" },
+        "unknown_attributes": { "const": "reject" },
+        "max_attributes_per_point": { "const": 16 },
+        "max_string_value_bytes": { "const": 256 },
+        "forbidden": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z_][a-z0-9_.]*$" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": { "$ref": "#/$defs/metric" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "attribute": {
+      "type": "object",
+      "required": ["ref", "requirement"],
+      "properties": {
+        "ref": { "type": "string", "pattern": "^[a-z][a-z0-9_.]*$" },
+        "requirement": { "enum": ["required", "recommended", "conditional", "opt_in"] }
+      },
+      "additionalProperties": false
+    },
+    "resourceAttribute": {
+      "type": "object",
+      "required": ["ref", "type", "requirement"],
+      "properties": {
+        "ref": { "type": "string", "pattern": "^[a-z][a-z0-9_.]*$" },
+        "type": { "enum": ["string", "int"] },
+        "requirement": { "const": "required" },
+        "non_empty": { "const": true },
+        "minimum": { "type": "integer", "minimum": 0 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "string" } }, "required": ["type"] },
+          "then": { "required": ["non_empty"], "not": { "required": ["minimum"] } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "int" } }, "required": ["type"] },
+          "then": { "required": ["minimum"], "not": { "required": ["non_empty"] } }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "exemplars": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["policy"],
+          "properties": { "policy": { "const": "none" } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["policy", "trace_id_bytes", "span_id_bytes"],
+          "properties": {
+            "policy": { "const": "sampled_trace_context_if_available" },
+            "trace_id_bytes": { "const": 16 },
+            "span_id_bytes": { "const": 8 }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "metric": {
+      "type": "object",
+      "required": ["name", "requirement", "source", "stability", "instrument", "value_type", "unit", "temporality", "attributes", "exemplars"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9_.]*$" },
+        "requirement": { "const": "required" },
+        "source": { "const": "otel" },
+        "stability": { "enum": ["stable", "release_candidate", "development"] },
+        "instrument": { "enum": ["counter", "updowncounter", "gauge", "histogram"] },
+        "value_type": { "enum": ["int", "double"] },
+        "unit": { "type": "string", "minLength": 1 },
+        "temporality": { "enum": ["cumulative", "none"] },
+        "monotonic": { "type": "boolean" },
+        "aggregations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["exponential_histogram", "explicit_histogram"] },
+          "minItems": 1
+        },
+        "attributes": { "type": "array", "items": { "$ref": "#/$defs/attribute" } },
+        "forbidden_attributes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_.]*$" }
+        },
+        "exemplars": { "$ref": "#/$defs/exemplars" },
+        "value_range": {
+          "type": "object",
+          "required": ["minimum"],
+          "properties": {
+            "minimum": { "type": "number" },
+            "maximum": { "type": "number" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "instrument": { "const": "histogram" } }, "required": ["instrument"] },
+          "then": { "required": ["aggregations"], "properties": { "temporality": { "const": "cumulative" } } },
+          "else": { "not": { "required": ["aggregations"] } }
+        },
+        {
+          "if": { "properties": { "instrument": { "enum": ["counter", "updowncounter"] } }, "required": ["instrument"] },
+          "then": { "required": ["monotonic"], "properties": { "temporality": { "const": "cumulative" } } },
+          "else": { "not": { "required": ["monotonic"] } }
+        },
+        {
+          "if": { "properties": { "instrument": { "const": "counter" } }, "required": ["instrument"] },
+          "then": { "properties": { "monotonic": { "const": true } } }
+        },
+        {
+          "if": { "properties": { "instrument": { "const": "updowncounter" } }, "required": ["instrument"] },
+          "then": { "properties": { "monotonic": { "const": false } } }
+        },
+        {
+          "if": { "properties": { "instrument": { "const": "gauge" } }, "required": ["instrument"] },
+          "then": { "properties": { "temporality": { "const": "none" } } }
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}

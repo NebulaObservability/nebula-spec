@@ -11,6 +11,7 @@
       "properties": {
         "rutp": { "$ref": "#/$defs/semver" },
         "apm_extension": { "$ref": "#/$defs/semver" },
+        "apm_metrics": { "$ref": "#/$defs/semver" },
         "control_plane_config": { "$ref": "#/$defs/semver" }
       },
       "additionalProperties": false

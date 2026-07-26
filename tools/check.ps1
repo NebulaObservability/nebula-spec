@@ -9,6 +9,9 @@ if ($LASTEXITCODE -ne 0) { throw 'RUTP Receiver conformance check failed.' }
 python tools/spec_tool.py verify-control-plane-contract
 if ($LASTEXITCODE -ne 0) { throw 'Control Plane configuration conformance check failed.' }
 
+python tools/spec_tool.py verify-apm-metrics-contract
+if ($LASTEXITCODE -ne 0) { throw 'APM Metrics conformance check failed.' }
+
 $protobufGeneratedBefore = (git status --porcelain -- generated/go generated/typescript-rutp) -join "`n"
 npx --yes @bufbuild/buf@1.72.0 generate --template buf.gen.yaml
 if ($LASTEXITCODE -ne 0) { throw 'RUTP Protobuf generation failed.' }
@@ -23,8 +26,11 @@ if ($LASTEXITCODE -ne 0) { throw 'Generated artifact check failed.' }
 python tools/spec_tool.py verify-artifacts
 if ($LASTEXITCODE -ne 0) { throw 'Distributable artifact check failed.' }
 
-python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.2.0-draft.0.json
+python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.5.0-draft.0.json
 if ($LASTEXITCODE -ne 0) { throw 'Compatibility check failed.' }
+
+python tools/spec_tool.py breaking-apm-metrics --against compatibility/baselines/apm-metrics-1.1.0-draft.0.json
+if ($LASTEXITCODE -ne 0) { throw 'APM Metrics compatibility check failed.' }
 
 npx --yes @bufbuild/buf@1.72.0 lint
 if ($LASTEXITCODE -ne 0) { throw 'Protobuf lint failed.' }

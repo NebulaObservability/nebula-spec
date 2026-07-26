@@ -4,11 +4,16 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
+import copy
 import hashlib
 import json
+import math
 import re
 import shutil
 import sys
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -30,6 +35,15 @@ RECEIVER_FIXTURE_SCHEMA = SCHEMAS / "rutp-receiver-conformance.schema.json"
 CONTROL_PLANE_FIXTURES = FIXTURES / "control-plane"
 CONTROL_PLANE_REVISION_SCHEMA = SCHEMAS / "control-plane-config-revision.schema.json"
 CONTROL_PLANE_DELIVERY_SCHEMA = SCHEMAS / "control-plane-config-delivery.schema.json"
+APM_METRICS_CONTRACT = ROOT / "specs" / "apm" / "v1" / "metrics.yaml"
+APM_METRICS_SCHEMA = SCHEMAS / "apm-metrics.schema.json"
+APM_METRICS_FIXTURES = FIXTURES / "metrics"
+APM_METRICS_FIXTURE = APM_METRICS_FIXTURES / "apm-metrics-mvp.json"
+APM_METRICS_EXPLICIT_FIXTURE = APM_METRICS_FIXTURES / "apm-metrics-explicit-histogram.json"
+APM_METRICS_NEGATIVE_FIXTURE = APM_METRICS_FIXTURES / "apm-metrics-negative-cases.json"
+OTLP_METRICS_SCHEMA = SCHEMAS / "otlp-metrics-export.schema.json"
+APM_METRICS_BASELINE = ROOT / "compatibility" / "baselines" / "apm-metrics-1.1.0-draft.0.json"
+APM_METRICS_BUNDLE = ROOT / "generated" / "apm-metrics-contract"
 GO_MODULE = ROOT / "generated" / "go"
 GO_MODULE_PATH = "github.com/NebulaObservability/nebula-spec/generated/go"
 GO_PROTOBUF_VERSION = "v1.36.6"
@@ -40,6 +54,79 @@ SEMVER_PATTERN = re.compile(
     r"(?:-([0-9A-Za-z-]+(?:[.][0-9A-Za-z-]+)*))?"
     r"(?:[+]([0-9A-Za-z-]+(?:[.][0-9A-Za-z-]+)*))?$"
 )
+
+APM_METRICS_CONTRACT_VERSION = "1.1.0-draft.0"
+APM_SEMANTIC_REGISTRY_VERSION = "1.1.0-draft.0"
+APM_METRICS_OTEL_SCHEMA_URL = "https://opentelemetry.io/schemas/1.43.0"
+APM_MVP_METRIC_NAMES = (
+    "http.server.request.duration",
+    "db.client.operation.duration",
+    "jvm.memory.used",
+    "jvm.memory.limit",
+    "jvm.gc.duration",
+    "jvm.thread.count",
+    "jvm.cpu.time",
+    "jvm.cpu.count",
+    "jvm.cpu.recent_utilization",
+    "process.cpu.time",
+    "process.memory.usage",
+    "process.uptime",
+)
+APM_HISTOGRAM_METRIC_NAMES = {
+    "http.server.request.duration",
+    "db.client.operation.duration",
+    "jvm.gc.duration",
+}
+EXPECTED_APM_RESOURCE_ATTRIBUTES = [
+    {"ref": "service.name", "type": "string", "requirement": "required", "non_empty": True},
+    {"ref": "service.namespace", "type": "string", "requirement": "required", "non_empty": True},
+    {"ref": "service.instance.id", "type": "string", "requirement": "required", "non_empty": True},
+    {"ref": "service.version", "type": "string", "requirement": "required", "non_empty": True},
+    {"ref": "deployment.environment.name", "type": "string", "requirement": "required", "non_empty": True},
+    {"ref": "telemetry.sdk.name", "type": "string", "requirement": "required", "non_empty": True},
+    {"ref": "telemetry.sdk.language", "type": "string", "requirement": "required", "non_empty": True},
+    {"ref": "telemetry.sdk.version", "type": "string", "requirement": "required", "non_empty": True},
+    {"ref": "process.pid", "type": "int", "requirement": "required", "minimum": 1},
+    {"ref": "process.runtime.name", "type": "string", "requirement": "required", "non_empty": True},
+    {"ref": "process.runtime.version", "type": "string", "requirement": "required", "non_empty": True},
+]
+PROHIBITED_METRIC_ATTRIBUTES = (
+    "url.full",
+    "url.path",
+    "url.query",
+    "db.query.text",
+    "exception.message",
+    "exception.stacktrace",
+    "trace.id",
+    "span.id",
+    "trace_id",
+    "span_id",
+)
+EXPECTED_APM_NEGATIVE_CASES = {
+    "attribute-type",
+    "bad-bucket-total",
+    "bad-exemplar-id",
+    "delta-temporality",
+    "forbidden-db-query-text",
+    "forbidden-exception-message",
+    "forbidden-trace-id",
+    "forbidden-url-full",
+    "forbidden-url-query",
+    "missing-required-point-attribute",
+    "missing-resource",
+    "missing-start-time",
+    "non-finite-value",
+    "non-monotonic-counter",
+    "negative-duration-bucket",
+    "nonempty-resource",
+    "oversized-string",
+    "too-many-attributes",
+    "wrong-metric-type",
+    "wrong-unit",
+}
+EXPECTED_APM_METRICS_BASELINE_SHA256 = "298d80fad519d2622e9aeed60aa670074bde548b3fdd3c5779ae728946537dbd"
+OTLP_CUMULATIVE_TEMPORALITY = 2
+OTLP_UINT64_MAX = 2**64 - 1
 
 
 class SpecError(Exception):
@@ -403,6 +490,767 @@ def verify_control_plane_contract() -> None:
         raise SpecError("Control Plane configuration conformance failed:\n- " + "\n- ".join(errors))
     print("Control Plane configuration revision and delivery conformance passed.")
 
+def canonical_document_sha256(value: Any) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def apm_metrics_snapshot_data(contract: dict[str, Any] | None = None) -> dict[str, Any]:
+    return copy.deepcopy(contract if contract is not None else load_yaml(APM_METRICS_CONTRACT))
+
+
+def otlp_attribute_map(entries: Any, label: str, errors: list[str]) -> dict[str, dict[str, Any]]:
+    if not isinstance(entries, list):
+        errors.append(f"{label}: attributes must be an array")
+        return {}
+    value_types = {
+        "stringValue": "string",
+        "boolValue": "bool",
+        "intValue": "int",
+        "doubleValue": "double",
+    }
+    values: dict[str, dict[str, Any]] = {}
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict) or not isinstance(entry.get("key"), str) or not isinstance(entry.get("value"), dict):
+            errors.append(f"{label}: attribute {index} is malformed")
+            continue
+        key = entry["key"]
+        if key in values:
+            errors.append(f"{label}: duplicate attribute {key}")
+            continue
+        encoded = entry["value"]
+        if len(encoded) != 1:
+            errors.append(f"{label}: attribute {key} must contain exactly one AnyValue member")
+            continue
+        value_key, value = next(iter(encoded.items()))
+        value_type = value_types.get(value_key)
+        if value_type is None:
+            errors.append(f"{label}: attribute {key} uses unsupported AnyValue member {value_key}")
+            continue
+        if value_type == "int":
+            try:
+                value = int(value)
+            except (TypeError, ValueError):
+                errors.append(f"{label}: attribute {key} has an invalid intValue")
+                continue
+        elif value_type == "double" and (
+            isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
+        ):
+            errors.append(f"{label}: attribute {key} has a non-finite doubleValue")
+            continue
+        values[key] = {"type": value_type, "value": value}
+    return values
+
+
+def uint64_value(value: Any, label: str, errors: list[str]) -> int | None:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        errors.append(f"{label}: value must be an unsigned integer string")
+        return None
+    if parsed < 0 or parsed > OTLP_UINT64_MAX:
+        errors.append(f"{label}: value is outside the uint64 range")
+        return None
+    return parsed
+
+
+def finite_number(value: Any, label: str, errors: list[str]) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        errors.append(f"{label}: value must be a finite number")
+        return None
+    return float(value)
+
+
+def decode_otlp_id(value: Any, expected_length: int, label: str, errors: list[str]) -> None:
+    if not isinstance(value, str):
+        errors.append(f"{label}: identifier must be base64 text")
+        return
+    try:
+        decoded = base64.b64decode(value, validate=True)
+    except (binascii.Error, ValueError):
+        errors.append(f"{label}: identifier is not canonical base64")
+        return
+    if base64.b64encode(decoded).decode("ascii") != value:
+        errors.append(f"{label}: identifier is not canonical base64")
+    if len(decoded) != expected_length:
+        errors.append(f"{label}: identifier must decode to {expected_length} bytes")
+    elif not any(decoded):
+        errors.append(f"{label}: identifier must not be all zeroes")
+
+
+def metric_point_time_errors(point: dict[str, Any], label: str, cumulative: bool) -> list[str]:
+    errors: list[str] = []
+    timestamp = uint64_value(point.get("timeUnixNano"), f"{label}/timeUnixNano", errors)
+    start_value = point.get("startTimeUnixNano")
+    if cumulative and start_value is None:
+        errors.append(f"{label}: cumulative point must declare startTimeUnixNano")
+        return errors
+    if start_value is not None:
+        start = uint64_value(start_value, f"{label}/startTimeUnixNano", errors)
+        if start is not None and timestamp is not None and start > timestamp:
+            errors.append(f"{label}: startTimeUnixNano must not exceed timeUnixNano")
+    return errors
+
+
+def histogram_point_errors(point: dict[str, Any], signal_name: str, label: str) -> list[str]:
+    errors: list[str] = []
+    count = uint64_value(point.get("count"), f"{label}/count", errors)
+    if count is None:
+        return errors
+    bucket_total = 0
+    if signal_name == "exponentialHistogram":
+        zero_count = uint64_value(point.get("zeroCount", "0"), f"{label}/zeroCount", errors)
+        if zero_count is not None:
+            bucket_total += zero_count
+        for side in ("positive", "negative"):
+            buckets = point.get(side)
+            if buckets is None:
+                continue
+            if not isinstance(buckets, dict):
+                errors.append(f"{label}: {side} buckets must be an object")
+                continue
+            side_total = 0
+            for index, bucket_count in enumerate(buckets.get("bucketCounts", [])):
+                parsed = uint64_value(bucket_count, f"{label}/{side}/bucketCounts/{index}", errors)
+                if parsed is not None:
+                    side_total += parsed
+            bucket_total += side_total
+            if side == "negative" and side_total != 0:
+                errors.append(f"{label}: duration histogram must not contain negative bucket counts")
+    else:
+        bucket_counts: list[int] = []
+        for index, bucket_count in enumerate(point.get("bucketCounts", [])):
+            parsed = uint64_value(bucket_count, f"{label}/bucketCounts/{index}", errors)
+            if parsed is not None:
+                bucket_counts.append(parsed)
+        bucket_total = sum(bucket_counts)
+        raw_bounds = point.get("explicitBounds", [])
+        bounds: list[float] = []
+        for index, bound in enumerate(raw_bounds):
+            parsed = finite_number(bound, f"{label}/explicitBounds/{index}", errors)
+            if parsed is not None:
+                bounds.append(parsed)
+                if parsed < 0:
+                    errors.append(f"{label}: duration histogram boundary must be non-negative")
+        if len(bucket_counts) != len(raw_bounds) + 1:
+            errors.append(f"{label}: explicit histogram must have one more bucket count than boundary")
+        if any(left >= right for left, right in zip(bounds, bounds[1:])):
+            errors.append(f"{label}: explicit histogram boundaries must be strictly increasing")
+    if bucket_total != count:
+        errors.append(f"{label}: histogram bucket counts total {bucket_total}, expected {count}")
+
+    numeric: dict[str, float] = {}
+    for field in ("sum", "min", "max"):
+        if field in point:
+            parsed = finite_number(point[field], f"{label}/{field}", errors)
+            if parsed is not None:
+                numeric[field] = parsed
+                if parsed < 0:
+                    errors.append(f"{label}: duration histogram {field} must be non-negative")
+    if ("min" in numeric) != ("max" in numeric):
+        errors.append(f"{label}: histogram min and max must be present together")
+    if count == 0:
+        if "min" in point or "max" in point:
+            errors.append(f"{label}: empty histogram must not declare min or max")
+        if numeric.get("sum", 0) != 0:
+            errors.append(f"{label}: empty histogram sum must be zero when present")
+    elif "min" in numeric and "max" in numeric:
+        if numeric["min"] > numeric["max"]:
+            errors.append(f"{label}: histogram min must not exceed max")
+        if "sum" in numeric and (
+            numeric["sum"] < numeric["min"] * count or numeric["sum"] > numeric["max"] * count
+        ):
+            errors.append(f"{label}: histogram sum is inconsistent with count, min, and max")
+    return errors
+
+
+def semantic_otlp_type(semantic_type: str) -> str:
+    return "string" if semantic_type == "enum" else semantic_type
+
+
+def attribute_value_errors(
+    values: dict[str, dict[str, Any]],
+    definitions: dict[str, dict[str, Any]],
+    label: str,
+) -> list[str]:
+    errors: list[str] = []
+    for name, encoded in values.items():
+        definition = definitions.get(name)
+        if definition is None:
+            continue
+        expected_type = semantic_otlp_type(str(definition["type"]))
+        if encoded["type"] != expected_type:
+            errors.append(f"{label}: attribute {name} must use {expected_type}Value")
+            continue
+        value = encoded["value"]
+        if expected_type == "string" and definition.get("non_empty", True) and value == "":
+            errors.append(f"{label}: attribute {name} must not be empty")
+        minimum = definition.get("minimum")
+        if minimum is not None and isinstance(value, (int, float)) and value < minimum:
+            errors.append(f"{label}: attribute {name} is below minimum {minimum}")
+    return errors
+
+
+def point_attribute_policy_errors(
+    entries: Any,
+    values: dict[str, dict[str, Any]],
+    policy: dict[str, Any],
+    label: str,
+) -> list[str]:
+    errors: list[str] = []
+    if isinstance(entries, list) and len(entries) > policy["max_attributes_per_point"]:
+        errors.append(
+            f"{label}: metric point has {len(entries)} attributes, "
+            f"maximum is {policy['max_attributes_per_point']}"
+        )
+    maximum_bytes = policy["max_string_value_bytes"]
+    for name, encoded in values.items():
+        if encoded["type"] == "string" and len(encoded["value"].encode("utf-8")) > maximum_bytes:
+            errors.append(f"{label}: attribute {name} exceeds {maximum_bytes} UTF-8 bytes")
+    return errors
+
+
+def apm_metrics_fixture_errors(
+    contract: dict[str, Any],
+    fixture: dict[str, Any],
+    label: str,
+    expected_metric_names: tuple[str, ...],
+    expected_histogram_signal: str,
+    enforce_red_counts: bool,
+) -> list[str]:
+    errors = validate(fixture, OTLP_METRICS_SCHEMA, label)
+    if errors:
+        return errors
+    contract_by_name = {metric["name"]: metric for metric in contract["metrics"]}
+    semantic_attributes = {item["name"]: item for item in registry()["attributes"]}
+    resource_definitions = {item["ref"]: item for item in contract["resource"]["attributes"]}
+    expected_resources = set(resource_definitions)
+    global_forbidden = set(contract["attribute_policy"]["forbidden"])
+
+    resource_metrics = fixture["resourceMetrics"]
+    if len(resource_metrics) != 1:
+        errors.append(f"{label}: fixture must contain exactly one ResourceMetrics")
+    fixture_metrics: list[dict[str, Any]] = []
+    scope_profiles: list[tuple[str, ...]] = []
+    scope_names: list[str] = []
+    for resource_index, resource_metric in enumerate(resource_metrics):
+        resource_label = f"{label}/resourceMetrics/{resource_index}"
+        resource_attributes = otlp_attribute_map(resource_metric["resource"]["attributes"], resource_label, errors)
+        missing_resources = expected_resources - set(resource_attributes)
+        unexpected_resources = set(resource_attributes) - expected_resources
+        if missing_resources:
+            errors.append(f"{resource_label}: missing required Resource attributes {sorted(missing_resources)}")
+        if unexpected_resources:
+            errors.append(f"{resource_label}: golden fixture has unexpected Resource attributes {sorted(unexpected_resources)}")
+        errors.extend(attribute_value_errors(resource_attributes, resource_definitions, resource_label))
+        if resource_metric["schemaUrl"] != contract["otel_schema_url"]:
+            errors.append(f"{resource_label}: schemaUrl does not match the contract")
+        scope_metrics = resource_metric["scopeMetrics"]
+        for scope_index, scope_metric in enumerate(scope_metrics):
+            scope_label = f"{resource_label}/scopeMetrics/{scope_index}"
+            if scope_metric["schemaUrl"] != contract["otel_schema_url"]:
+                errors.append(f"{scope_label}: schemaUrl does not match the contract")
+            scope_name = scope_metric["scope"]["name"]
+            scope_version = scope_metric["scope"].get("version")
+            if not scope_name:
+                errors.append(f"{scope_label}: instrumentation scope name must not be empty")
+            if not isinstance(scope_version, str) or not scope_version:
+                errors.append(f"{scope_label}: instrumentation scope version must not be empty")
+            if scope_name.startswith("io.nebulaobservability"):
+                errors.append(f"{scope_label}: standard APM metrics must use producer instrumentation scopes")
+            scope_names.append(scope_name)
+            scope_profiles.append(tuple(metric["name"] for metric in scope_metric["metrics"]))
+            fixture_metrics.extend(scope_metric["metrics"])
+    expected_scope_profiles = (
+        tuple(name for name in expected_metric_names if name == "http.server.request.duration"),
+        tuple(name for name in expected_metric_names if name == "db.client.operation.duration"),
+        tuple(
+            name
+            for name in expected_metric_names
+            if name not in {"http.server.request.duration", "db.client.operation.duration"}
+        ),
+    )
+    expected_scope_profiles = tuple(profile for profile in expected_scope_profiles if profile)
+    if tuple(scope_profiles) != expected_scope_profiles:
+        errors.append(
+            f"{label}: fixture must split HTTP, DB, and runtime/process metrics across exact producer scopes; "
+            f"expected={expected_scope_profiles}, got={tuple(scope_profiles)}"
+        )
+    if len(scope_names) != len(set(scope_names)):
+        errors.append(f"{label}: producer instrumentation scope names must be distinct")
+
+    fixture_names = [metric["name"] for metric in fixture_metrics]
+    if len(fixture_names) != len(set(fixture_names)):
+        errors.append(f"{label}: fixture contains duplicate metric names across scopes")
+    if tuple(fixture_names) != expected_metric_names:
+        errors.append(f"{label}: metric order/profile must be {list(expected_metric_names)}, got {fixture_names}")
+
+    seen_series: set[tuple[str, tuple[tuple[str, str], ...]]] = set()
+    http_success_count = 0
+    http_error_count = 0
+    for metric in fixture_metrics:
+        name = metric["name"]
+        definition = contract_by_name.get(name)
+        if definition is None:
+            continue
+        metric_label = f"{label}/metric/{name}"
+        if metric["unit"] != definition["unit"]:
+            errors.append(f"{metric_label}: unit must be {definition['unit']}")
+        instrument = definition["instrument"]
+        if instrument == "histogram":
+            signal_names = [candidate for candidate in ("exponentialHistogram", "histogram") if candidate in metric]
+            if signal_names != [expected_histogram_signal]:
+                errors.append(f"{metric_label}: expected {expected_histogram_signal}")
+                continue
+            signal_name = signal_names[0]
+        elif instrument in ("counter", "updowncounter"):
+            signal_name = "sum"
+            if signal_name not in metric:
+                errors.append(f"{metric_label}: expected OTLP Sum")
+                continue
+        else:
+            signal_name = "gauge"
+            if signal_name not in metric:
+                errors.append(f"{metric_label}: expected OTLP Gauge")
+                continue
+
+        signal = metric[signal_name]
+        cumulative = definition["temporality"] == "cumulative"
+        if cumulative and signal.get("aggregationTemporality") != OTLP_CUMULATIVE_TEMPORALITY:
+            errors.append(f"{metric_label}: aggregation temporality must be cumulative")
+        if instrument in ("counter", "updowncounter") and signal.get("isMonotonic") != definition["monotonic"]:
+            errors.append(f"{metric_label}: isMonotonic does not match the contract")
+        attribute_definitions = {
+            item["ref"]: {**semantic_attributes[item["ref"]], "non_empty": True}
+            for item in definition["attributes"]
+            if item["ref"] in semantic_attributes
+        }
+        required_attributes = {item["ref"] for item in definition["attributes"] if item["requirement"] == "required"}
+        allowed_attributes = {item["ref"] for item in definition["attributes"]}
+        metric_has_exemplar = False
+        for point_index, point in enumerate(signal["dataPoints"]):
+            point_label = f"{metric_label}/dataPoints/{point_index}"
+            errors.extend(metric_point_time_errors(point, point_label, cumulative))
+            raw_point_attributes = point.get("attributes", [])
+            point_attributes = otlp_attribute_map(raw_point_attributes, point_label, errors)
+            errors.extend(
+                point_attribute_policy_errors(
+                    raw_point_attributes,
+                    point_attributes,
+                    contract["attribute_policy"],
+                    point_label,
+                )
+            )
+            missing_attributes = required_attributes - set(point_attributes)
+            unexpected_attributes = set(point_attributes) - allowed_attributes
+            prohibited_attributes = set(point_attributes).intersection(global_forbidden)
+            if missing_attributes:
+                errors.append(f"{point_label}: missing required attributes {sorted(missing_attributes)}")
+            if unexpected_attributes:
+                errors.append(f"{point_label}: attributes are not declared by the allowlist: {sorted(unexpected_attributes)}")
+            if prohibited_attributes:
+                errors.append(f"{point_label}: prohibited metric attributes present: {sorted(prohibited_attributes)}")
+            errors.extend(attribute_value_errors(point_attributes, attribute_definitions, point_label))
+            identity = (
+                name,
+                tuple(sorted((key, json.dumps(value, sort_keys=True)) for key, value in point_attributes.items())),
+            )
+            if identity in seen_series:
+                errors.append(f"{point_label}: duplicate metric timeseries")
+            seen_series.add(identity)
+
+            numeric_value: float | None = None
+            if signal_name in ("histogram", "exponentialHistogram"):
+                errors.extend(histogram_point_errors(point, signal_name, point_label))
+            elif definition["value_type"] == "int":
+                if "asInt" not in point:
+                    errors.append(f"{point_label}: integer metric must use asInt")
+                else:
+                    try:
+                        numeric_value = float(int(point["asInt"]))
+                    except (TypeError, ValueError):
+                        errors.append(f"{point_label}: asInt must be an integer string")
+            else:
+                if "asDouble" not in point:
+                    errors.append(f"{point_label}: double metric must use asDouble")
+                else:
+                    numeric_value = finite_number(point["asDouble"], f"{point_label}/asDouble", errors)
+            value_range = definition.get("value_range")
+            if value_range and numeric_value is not None:
+                if numeric_value < value_range["minimum"]:
+                    errors.append(f"{point_label}: value is below the contract minimum")
+                if "maximum" in value_range and numeric_value > value_range["maximum"]:
+                    errors.append(f"{point_label}: value is above the contract maximum")
+
+            exemplars = point.get("exemplars", [])
+            if exemplars:
+                metric_has_exemplar = True
+            if definition["exemplars"]["policy"] == "none" and exemplars:
+                errors.append(f"{point_label}: runtime metric must not synthesize exemplars")
+            for exemplar_index, exemplar in enumerate(exemplars):
+                exemplar_label = f"{point_label}/exemplars/{exemplar_index}"
+                decode_otlp_id(
+                    exemplar.get("traceId"),
+                    definition["exemplars"].get("trace_id_bytes", 16),
+                    f"{exemplar_label}/traceId",
+                    errors,
+                )
+                decode_otlp_id(
+                    exemplar.get("spanId"),
+                    definition["exemplars"].get("span_id_bytes", 8),
+                    f"{exemplar_label}/spanId",
+                    errors,
+                )
+                exemplar_value = exemplar.get("asDouble", exemplar.get("asInt"))
+                if "asInt" in exemplar:
+                    try:
+                        exemplar_value = int(exemplar_value)
+                    except (TypeError, ValueError):
+                        errors.append(f"{exemplar_label}: asInt must be an integer string")
+                        exemplar_value = None
+                if exemplar_value is not None:
+                    parsed_exemplar = finite_number(exemplar_value, f"{exemplar_label}/value", errors)
+                    if parsed_exemplar is not None and parsed_exemplar < 0:
+                        errors.append(f"{exemplar_label}: duration exemplar must be non-negative")
+                raw_filtered = exemplar.get("filteredAttributes", [])
+                filtered = otlp_attribute_map(raw_filtered, exemplar_label, errors)
+                errors.extend(
+                    point_attribute_policy_errors(
+                        raw_filtered,
+                        filtered,
+                        contract["attribute_policy"],
+                        exemplar_label,
+                    )
+                )
+                filtered_forbidden = set(filtered).intersection(global_forbidden)
+                if filtered_forbidden:
+                    errors.append(f"{exemplar_label}: prohibited filtered attributes present: {sorted(filtered_forbidden)}")
+
+            if enforce_red_counts and name == "http.server.request.duration":
+                point_count = uint64_value(point.get("count"), f"{point_label}/count", errors)
+                if point_count is not None:
+                    if "error.type" in point_attributes:
+                        http_error_count += point_count
+                        if point_attributes["error.type"]["value"] != "500":
+                            errors.append(f"{point_label}: error RED series must use error.type=500")
+                        if point_attributes.get("http.response.status_code", {}).get("value") != 500:
+                            errors.append(f"{point_label}: error RED series must use HTTP status 500")
+                    else:
+                        http_success_count += point_count
+        if definition["exemplars"]["policy"] == "sampled_trace_context_if_available" and not metric_has_exemplar:
+            errors.append(f"{metric_label}: sampled trace-context exemplar coverage is required")
+    if enforce_red_counts and (http_success_count != 3 or http_error_count != 2):
+        errors.append(
+            f"{label}: HTTP RED fixture must contain success count 3 and error count 2, "
+            f"got success={http_success_count}, error={http_error_count}"
+        )
+    return errors
+
+
+def apply_json_patch(document: dict[str, Any], patches: Any, label: str) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(patches, list) or not patches:
+        return [f"{label}: patch must be a non-empty array"]
+    for patch_index, patch in enumerate(patches):
+        patch_label = f"{label}/patch/{patch_index}"
+        if not isinstance(patch, dict) or patch.get("op") not in {"add", "remove", "replace"}:
+            errors.append(f"{patch_label}: unsupported patch operation")
+            continue
+        path = patch.get("path")
+        if not isinstance(path, str) or not path.startswith("/"):
+            errors.append(f"{patch_label}: path must be a JSON Pointer")
+            continue
+        tokens = [token.replace("~1", "/").replace("~0", "~") for token in path[1:].split("/")]
+        try:
+            parent: Any = document
+            for token in tokens[:-1]:
+                parent = parent[int(token)] if isinstance(parent, list) else parent[token]
+            final = tokens[-1]
+            operation = patch["op"]
+            patch_value = math.nan if patch.get("value_kind") == "nan" else copy.deepcopy(patch.get("value"))
+            if isinstance(parent, list):
+                if operation == "add" and final == "-":
+                    parent.append(patch_value)
+                elif operation == "add":
+                    parent.insert(int(final), patch_value)
+                elif operation == "remove":
+                    parent.pop(int(final))
+                else:
+                    parent[int(final)] = patch_value
+            elif operation == "remove":
+                del parent[final]
+            else:
+                parent[final] = patch_value
+        except (IndexError, KeyError, TypeError, ValueError) as error:
+            errors.append(f"{patch_label}: patch failed: {error}")
+    return errors
+
+
+def fixture_validation_profile(path: Path) -> tuple[tuple[str, ...], str, bool]:
+    if path == APM_METRICS_FIXTURE:
+        return APM_MVP_METRIC_NAMES, "exponentialHistogram", True
+    if path == APM_METRICS_EXPLICIT_FIXTURE:
+        histogram_names = tuple(name for name in APM_MVP_METRIC_NAMES if name in APM_HISTOGRAM_METRIC_NAMES)
+        return histogram_names, "histogram", False
+    raise SpecError(f"unsupported APM metrics fixture base: {path.relative_to(ROOT)}")
+
+
+def apm_metrics_negative_conformance_errors(contract: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    try:
+        suite = load_json(APM_METRICS_NEGATIVE_FIXTURE)
+    except (FileNotFoundError, json.JSONDecodeError, SpecError) as error:
+        return [f"invalid APM metrics negative fixture suite: {error}"]
+    if set(suite) != {"schema_version", "base_fixture", "cases"} or suite.get("schema_version") != 1:
+        return ["fixtures/metrics/apm-metrics-negative-cases.json: invalid suite envelope"]
+    base_name = suite.get("base_fixture")
+    cases = suite.get("cases")
+    if not isinstance(base_name, str) or not isinstance(cases, list):
+        return ["fixtures/metrics/apm-metrics-negative-cases.json: base_fixture and cases are required"]
+
+    seen_names: set[str] = set()
+    for case_index, case in enumerate(cases):
+        case_label = f"fixtures/metrics/apm-metrics-negative-cases.json/cases/{case_index}"
+        if not isinstance(case, dict):
+            errors.append(f"{case_label}: case must be an object")
+            continue
+        name = case.get("name")
+        if not isinstance(name, str) or not name:
+            errors.append(f"{case_label}: case name is required")
+            continue
+        if name in seen_names:
+            errors.append(f"{case_label}: duplicate case name {name}")
+            continue
+        seen_names.add(name)
+        relative_base = case.get("base_fixture", base_name)
+        if not isinstance(relative_base, str):
+            errors.append(f"{case_label}: base_fixture must be a path")
+            continue
+        base_path = (ROOT / relative_base).resolve()
+        if base_path not in {APM_METRICS_FIXTURE.resolve(), APM_METRICS_EXPLICIT_FIXTURE.resolve()}:
+            errors.append(f"{case_label}: unsupported base fixture {relative_base}")
+            continue
+        try:
+            base = load_json(base_path)
+        except (FileNotFoundError, json.JSONDecodeError, SpecError) as error:
+            errors.append(f"{case_label}: invalid base fixture: {error}")
+            continue
+        expected_names, histogram_signal, enforce_red = fixture_validation_profile(base_path)
+        base_errors = apm_metrics_fixture_errors(
+            contract, base, relative_base, expected_names, histogram_signal, enforce_red
+        )
+        mutated = copy.deepcopy(base)
+        patch_errors = apply_json_patch(mutated, case.get("patch"), case_label)
+        errors.extend(patch_errors)
+        if patch_errors:
+            continue
+        mutated_errors = apm_metrics_fixture_errors(
+            contract, mutated, relative_base, expected_names, histogram_signal, enforce_red
+        )
+        remaining = Counter(base_errors)
+        added_errors: list[str] = []
+        for error in mutated_errors:
+            if remaining[error]:
+                remaining[error] -= 1
+            else:
+                added_errors.append(error)
+        if not added_errors:
+            errors.append(f"{case_label}: mutation did not create a conformance failure")
+            continue
+        expected_errors = case.get("expected_errors")
+        if (
+            not isinstance(expected_errors, list)
+            or not expected_errors
+            or not all(isinstance(item, str) for item in expected_errors)
+        ):
+            errors.append(f"{case_label}: expected_errors must be a non-empty string array")
+            continue
+        for expected in expected_errors:
+            if not any(expected in actual for actual in added_errors):
+                errors.append(f"{case_label}: expected error containing {expected!r}, got {added_errors}")
+    missing = EXPECTED_APM_NEGATIVE_CASES - seen_names
+    unexpected = seen_names - EXPECTED_APM_NEGATIVE_CASES
+    if missing or unexpected:
+        errors.append(f"APM metrics negative cases differ: missing={sorted(missing)}, unexpected={sorted(unexpected)}")
+    return errors
+
+
+def apm_metrics_conformance_errors(
+    contract: dict[str, Any] | None = None,
+    fixture: dict[str, Any] | None = None,
+) -> list[str]:
+    errors: list[str] = []
+    contract = contract if contract is not None else load_yaml(APM_METRICS_CONTRACT)
+    contract_schema_errors = validate(contract, APM_METRICS_SCHEMA, "specs/apm/v1/metrics.yaml")
+    errors.extend(contract_schema_errors)
+    if contract_schema_errors:
+        return errors
+    if contract["contract_version"] != APM_METRICS_CONTRACT_VERSION:
+        errors.append(f"APM metrics contract version must be {APM_METRICS_CONTRACT_VERSION}")
+    if contract["otel_schema_url"] != APM_METRICS_OTEL_SCHEMA_URL:
+        errors.append(f"APM metrics contract OTel schema must be {APM_METRICS_OTEL_SCHEMA_URL}")
+    expected_transport = {
+        "temporality": "cumulative",
+        "histogram": {
+            "preferred": "exponential_histogram",
+            "accepted": ["exponential_histogram", "explicit_histogram"],
+        },
+        "exemplars": {"preserve": True, "synthesize": False},
+    }
+    if contract["transport"] != expected_transport:
+        errors.append("APM metrics transport profile differs from the frozen cumulative histogram profile")
+    expected_red = {
+        "metric": "http.server.request.duration",
+        "throughput": "histogram_count",
+        "errors": {"operation": "count_when_present", "attribute": "error.type"},
+        "latency": "histogram_distribution",
+        "trace_sampling": "independent",
+        "vendor_counters": "forbidden",
+    }
+    if contract["red"] != expected_red:
+        errors.append("APM RED derivation must use the HTTP duration histogram independently from trace sampling")
+    if contract["resource"]["attributes"] != EXPECTED_APM_RESOURCE_ATTRIBUTES:
+        errors.append("APM metrics Resource profile must contain the exact 11 typed required attributes")
+    expected_policy = {
+        "mode": "allowlist",
+        "unknown_attributes": "reject",
+        "max_attributes_per_point": 16,
+        "max_string_value_bytes": 256,
+        "forbidden": list(PROHIBITED_METRIC_ATTRIBUTES),
+    }
+    if contract["attribute_policy"] != expected_policy:
+        errors.append("APM metrics attribute policy differs from the frozen reject/forbidden profile")
+    contract_metrics = contract["metrics"]
+    contract_names = tuple(metric["name"] for metric in contract_metrics)
+    if contract_names != APM_MVP_METRIC_NAMES:
+        errors.append(f"APM Metrics MVP order/profile differs: expected={list(APM_MVP_METRIC_NAMES)}, got={list(contract_names)}")
+
+    try:
+        baseline = load_json(APM_METRICS_BASELINE)
+        if canonical_document_sha256(baseline) != EXPECTED_APM_METRICS_BASELINE_SHA256:
+            errors.append("APM metrics compatibility baseline hash is not the reviewed immutable value")
+        if apm_metrics_snapshot_data(contract) != baseline:
+            errors.append("APM metrics contract differs from the frozen compatibility baseline")
+    except (FileNotFoundError, json.JSONDecodeError, SpecError) as error:
+        errors.append(f"invalid APM metrics compatibility baseline: {error}")
+
+    semantic_registry = registry()
+    if semantic_registry["version"] != APM_SEMANTIC_REGISTRY_VERSION:
+        errors.append(f"semantic registry version must be {APM_SEMANTIC_REGISTRY_VERSION}")
+    semantic_metrics = {metric["name"]: metric for metric in semantic_registry["metrics"]}
+    semantic_attributes = {attribute["name"]: attribute for attribute in semantic_registry["attributes"]}
+    for resource_attribute in contract["resource"]["attributes"]:
+        semantic = semantic_attributes.get(resource_attribute["ref"])
+        if semantic is None:
+            errors.append(f"APM Resource attribute is not in the semantic registry: {resource_attribute['ref']}")
+        elif semantic_otlp_type(semantic["type"]) != resource_attribute["type"]:
+            errors.append(f"APM Resource attribute type disagrees with semantic registry: {resource_attribute['ref']}")
+    for metric in contract_metrics:
+        name = metric["name"]
+        semantic = semantic_metrics.get(name)
+        if semantic is None:
+            errors.append(f"APM metric is not in the semantic registry: {name}")
+            continue
+        for field in ("instrument", "value_type", "unit", "stability"):
+            if semantic.get(field) != metric.get(field):
+                errors.append(f"APM metric {name} disagrees with semantic registry field {field}")
+        allowed_refs = [attribute["ref"] for attribute in metric["attributes"]]
+        if len(allowed_refs) != len(set(allowed_refs)):
+            errors.append(f"APM metric {name} declares a duplicate attribute")
+        if semantic.get("attributes") != allowed_refs:
+            errors.append(f"APM metric {name} attributes must match semantic registry order")
+        for ref in allowed_refs:
+            if ref not in semantic_attributes:
+                errors.append(f"APM metric {name} references unknown attribute {ref}")
+        prohibited = set(PROHIBITED_METRIC_ATTRIBUTES).intersection(allowed_refs)
+        if prohibited:
+            errors.append(f"APM metric {name} allows prohibited high-cardinality attributes: {sorted(prohibited)}")
+
+    apm_manifest = load_yaml(ROOT / "specs" / "apm" / "v1" / "manifest.yaml")
+    if contract["contract_version"] != apm_manifest.get("metrics_contract_version"):
+        errors.append("APM metrics contract version must match specs/apm/v1/manifest.yaml")
+    if apm_manifest.get("semantic_rules", {}).get("metrics_independent_from_trace_sampling") is not True:
+        errors.append("APM manifest must keep Metrics independent from Trace sampling")
+    if (
+        contract["otel_schema_url"] != semantic_registry["otel_schema_url"]
+        or contract["otel_schema_url"] != apm_manifest["otel_schema_url"]
+    ):
+        errors.append("APM metrics contract must use the registered OTel schema URL")
+    manifest_resources = apm_manifest.get("resource", {}).get("required", [])
+    if manifest_resources != [item["ref"] for item in contract["resource"]["attributes"]]:
+        errors.append("APM metrics Resource profile must match the APM manifest required Resource order")
+
+    primary_fixture = fixture if fixture is not None else load_json(APM_METRICS_FIXTURE)
+    errors.extend(
+        apm_metrics_fixture_errors(
+            contract,
+            primary_fixture,
+            "fixtures/metrics/apm-metrics-mvp.json",
+            APM_MVP_METRIC_NAMES,
+            "exponentialHistogram",
+            True,
+        )
+    )
+    histogram_names = tuple(name for name in APM_MVP_METRIC_NAMES if name in APM_HISTOGRAM_METRIC_NAMES)
+    errors.extend(
+        apm_metrics_fixture_errors(
+            contract,
+            load_json(APM_METRICS_EXPLICIT_FIXTURE),
+            "fixtures/metrics/apm-metrics-explicit-histogram.json",
+            histogram_names,
+            "histogram",
+            False,
+        )
+    )
+    errors.extend(apm_metrics_negative_conformance_errors(contract))
+
+    fixture_manifest = load_yaml(FIXTURES / "manifest.yaml")
+    entries = {entry.get("path"): entry for entry in fixture_manifest.get("fixtures", []) if isinstance(entry, dict)}
+    expected_entries = {
+        "fixtures/metrics/apm-metrics-mvp.json": {
+            "schema": "schemas/otlp-metrics-export.schema.json",
+            "valid": True,
+        },
+        "fixtures/metrics/apm-metrics-explicit-histogram.json": {
+            "schema": "schemas/otlp-metrics-export.schema.json",
+            "valid": True,
+        },
+        "fixtures/metrics/apm-metrics-negative-cases.json": {
+            "validator": "apm_metrics_negative_suite",
+            "valid": True,
+        },
+    }
+    for path, expected in expected_entries.items():
+        entry = entries.get(path)
+        if entry is None or any(entry.get(key) != value for key, value in expected.items()):
+            errors.append(f"fixtures/manifest.yaml must register {path} with {expected}")
+    return errors
+
+
+def verify_apm_metrics_contract() -> None:
+    errors = apm_metrics_conformance_errors()
+    if errors:
+        raise SpecError("APM Metrics conformance failed:\n- " + "\n- ".join(errors))
+    print("APM Metrics contract, OTLP fixtures, negative cases, and frozen profile conformance passed.")
+
+
+def write_apm_metrics_snapshot(output: Path) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(apm_metrics_snapshot_data(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    print(f"Wrote APM metrics compatibility snapshot: {output.relative_to(ROOT)}")
+
+
+def breaking_apm_metrics(against: Path) -> None:
+    baseline = load_json(against)
+    current = apm_metrics_snapshot_data()
+    if current != baseline:
+        raise SpecError(f"APM Metrics contract differs from frozen baseline {against.relative_to(ROOT)}")
+    print(f"No APM Metrics contract changes against {against.relative_to(ROOT)}.")
+
 
 def lint() -> None:
     data = registry()
@@ -485,6 +1333,53 @@ def lint() -> None:
     except SpecError as error:
         errors.append(str(error))
 
+    apm_manifest = load_yaml(ROOT / "specs" / "apm" / "v1" / "manifest.yaml")
+    matrix_apm_extension = protocol_matrix.get("protocols", {}).get("apm_extension", {})
+    release_apm_extension = active_release.get("protocols", {}).get("apm_extension")
+    if release_apm_extension != matrix_apm_extension.get("current"):
+        errors.append("current release APM extension version must match compatibility/protocol-matrix.yaml")
+    if release_apm_extension != apm_manifest.get("apm_extension_version"):
+        errors.append("current release APM extension version must match specs/apm/v1/manifest.yaml")
+    accepted_apm_extension_ranges = matrix_apm_extension.get("accepts", [])
+    try:
+        parse_semver(str(release_apm_extension))
+        if not isinstance(accepted_apm_extension_ranges, list) or not accepted_apm_extension_ranges:
+            errors.append("compatibility/protocol-matrix.yaml must declare accepted APM extension ranges")
+        elif not any(
+            semver_satisfies(str(release_apm_extension), str(expression))
+            for expression in accepted_apm_extension_ranges
+        ):
+            errors.append("current release APM extension version must be included in its compatibility range")
+    except SpecError as error:
+        errors.append(str(error))
+
+    matrix_apm_metrics = protocol_matrix.get("protocols", {}).get("apm_metrics", {})
+    release_apm_metrics = active_release.get("protocols", {}).get("apm_metrics")
+    if release_apm_metrics != matrix_apm_metrics.get("current"):
+        errors.append("current release APM Metrics version must match compatibility/protocol-matrix.yaml")
+    if release_apm_metrics != apm_manifest.get("metrics_contract_version"):
+        errors.append("current release APM Metrics version must match specs/apm/v1/manifest.yaml")
+    accepted_apm_metrics_ranges = matrix_apm_metrics.get("accepts", [])
+    try:
+        parse_semver(str(release_apm_metrics))
+        if not isinstance(accepted_apm_metrics_ranges, list) or not accepted_apm_metrics_ranges:
+            errors.append("compatibility/protocol-matrix.yaml must declare accepted APM Metrics ranges")
+        elif not any(
+            semver_satisfies(str(release_apm_metrics), str(expression))
+            for expression in accepted_apm_metrics_ranges
+        ):
+            errors.append("current release APM Metrics version must be included in its compatibility range")
+    except SpecError as error:
+        errors.append(str(error))
+
+    otel_matrix = load_yaml(ROOT / "compatibility" / "otel-schema-matrix.yaml")
+    release_otel_schema = active_release.get("otel_schema")
+    expected_otel_schema = str(apm_manifest.get("otel_schema_url", "")).rsplit("/", 1)[-1]
+    if release_otel_schema != otel_matrix.get("current") or release_otel_schema != expected_otel_schema:
+        errors.append("current release OTel Schema must match the APM manifest and OTel schema matrix")
+    if matrix_apm_metrics.get("otel_schema") != release_otel_schema:
+        errors.append("APM Metrics compatibility profile must pin the current release OTel Schema")
+
     matrix_control_plane = protocol_matrix.get("protocols", {}).get("control_plane_config", {})
     matrix_control_plane_version = matrix_control_plane.get("current")
     accepted_control_plane_ranges = matrix_control_plane.get("accepts", [])
@@ -526,11 +1421,21 @@ def lint() -> None:
     fixture_manifest = load_yaml(ROOT / "fixtures" / "manifest.yaml")
     for fixture in fixture_manifest.get("fixtures", []):
         fixture_path = ROOT / fixture["path"]
-        schema_path = ROOT / fixture["schema"]
         if not fixture_path.is_file():
             errors.append(f"fixture does not exist: {fixture['path']}")
             continue
         fixture_data = load_json(fixture_path)
+        custom_validator = fixture.get("validator")
+        if custom_validator is not None:
+            if custom_validator != "apm_metrics_negative_suite":
+                errors.append(f"unknown fixture validator {custom_validator}: {fixture['path']}")
+            if "schema" in fixture:
+                errors.append(f"custom-validated fixture must not also declare schema: {fixture['path']}")
+            continue
+        if not isinstance(fixture.get("schema"), str):
+            errors.append(f"fixture must declare schema or validator: {fixture['path']}")
+            continue
+        schema_path = ROOT / fixture["schema"]
         fixture_errors = validate(fixture_data, schema_path, fixture["path"])
         expected_valid = fixture.get("valid", True)
         if expected_valid:
@@ -579,6 +1484,7 @@ def lint() -> None:
 
     errors.extend(receiver_conformance_errors())
     errors.extend(control_plane_conformance_errors())
+    errors.extend(apm_metrics_conformance_errors())
 
     if errors:
         raise SpecError("Specification lint failed:\n- " + "\n- ".join(errors))
@@ -987,10 +1893,14 @@ def normalized_fixture_content(path: Path) -> str:
     return path.read_text(encoding="utf-8").rstrip() + "\n"
 
 
+def rum_conformance_fixture_paths() -> list[Path]:
+    return [path for path in sorted(FIXTURES.rglob("*.json")) if fixture_kind(path) != "metrics"]
+
+
 def conformance_manifest_output() -> str:
     release = current_release()
     fixtures: list[dict[str, str]] = []
-    for path in sorted(FIXTURES.rglob("*.json")):
+    for path in rum_conformance_fixture_paths():
         relative = path.relative_to(ROOT).as_posix()
         fixtures.append(
             {
@@ -1041,10 +1951,116 @@ def conformance_fixture_outputs() -> dict[Path, str]:
         ROOT / "generated" / "conformance" / "README.md": conformance_readme_output(),
         ROOT / "generated" / "conformance" / "fixture-manifest.json": conformance_manifest_output(),
     }
-    for path in sorted(FIXTURES.rglob("*.json")):
+    for path in rum_conformance_fixture_paths():
         relative = path.relative_to(FIXTURES)
         output[ROOT / "generated" / "conformance" / "fixtures" / relative] = normalized_fixture_content(path)
     return output
+
+
+def apm_metrics_package_json_output() -> str:
+    return json.dumps(
+        {
+            "name": "@nebula-observability/apm-metrics-contract",
+            "version": artifact_version(),
+            "description": "Versioned Nebula APM Metrics OTLP contract and conformance fixtures.",
+            "license": "Apache-2.0",
+            "type": "module",
+            "files": [
+                "asset-manifest.json",
+                "contract.json",
+                "schemas",
+                "fixtures",
+                "compatibility",
+                "README.md",
+            ],
+            "exports": {
+                "./contract.json": "./contract.json",
+                "./asset-manifest.json": "./asset-manifest.json",
+                "./schemas/apm-metrics.schema.json": "./schemas/apm-metrics.schema.json",
+                "./schemas/otlp-metrics-export.schema.json": "./schemas/otlp-metrics-export.schema.json",
+                "./fixtures/apm-metrics-mvp.json": "./fixtures/apm-metrics-mvp.json",
+                "./fixtures/apm-metrics-explicit-histogram.json": "./fixtures/apm-metrics-explicit-histogram.json",
+                "./fixtures/apm-metrics-negative-cases.json": "./fixtures/apm-metrics-negative-cases.json",
+                "./compatibility/apm-metrics.json": "./compatibility/apm-metrics.json",
+            },
+        },
+        indent=2,
+    ) + "\n"
+
+
+def apm_metrics_package_readme_output() -> str:
+    release = current_release()
+    return f"""# @nebula-observability/apm-metrics-contract
+
+Generated, immutable APM Metrics contract for Spec `{artifact_version()}` and
+platform release `{release['release']}`. The bundle contains the exact 12-metric
+OTLP profile, its schemas, ExponentialHistogram and explicit Histogram fixtures,
+negative conformance cases, and the frozen compatibility snapshot.
+
+Verify every file against `asset-manifest.json` before consuming it. Runtime
+repositories must pin the matching release asset and must not copy or extend the
+profile locally.
+"""
+
+
+def apm_metrics_bundle_payload_outputs() -> dict[Path, str]:
+    return {
+        APM_METRICS_BUNDLE / "package.json": apm_metrics_package_json_output(),
+        APM_METRICS_BUNDLE / "README.md": apm_metrics_package_readme_output(),
+        APM_METRICS_BUNDLE / "contract.json": json.dumps(
+            load_yaml(APM_METRICS_CONTRACT), indent=2, sort_keys=True
+        ) + "\n",
+        APM_METRICS_BUNDLE / "schemas" / "apm-metrics.schema.json": normalized_fixture_content(
+            APM_METRICS_SCHEMA
+        ),
+        APM_METRICS_BUNDLE / "schemas" / "otlp-metrics-export.schema.json": normalized_fixture_content(
+            OTLP_METRICS_SCHEMA
+        ),
+        APM_METRICS_BUNDLE / "fixtures" / "apm-metrics-mvp.json": normalized_fixture_content(
+            APM_METRICS_FIXTURE
+        ),
+        APM_METRICS_BUNDLE / "fixtures" / "apm-metrics-explicit-histogram.json": normalized_fixture_content(
+            APM_METRICS_EXPLICIT_FIXTURE
+        ),
+        APM_METRICS_BUNDLE / "fixtures" / "apm-metrics-negative-cases.json": normalized_fixture_content(
+            APM_METRICS_NEGATIVE_FIXTURE
+        ),
+        APM_METRICS_BUNDLE / "compatibility" / "apm-metrics.json": normalized_fixture_content(
+            APM_METRICS_BASELINE
+        ),
+    }
+
+
+def apm_metrics_asset_manifest_output(payload: dict[Path, str]) -> str:
+    release = current_release()
+    files = [
+        {
+            "path": path.relative_to(APM_METRICS_BUNDLE).as_posix(),
+            "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+        }
+        for path, content in sorted(payload.items(), key=lambda item: item[0].as_posix())
+    ]
+    return json.dumps(
+        {
+            "format_version": 1,
+            "spec_version": artifact_version(),
+            "release": release["release"],
+            "metrics_contract_version": release["protocols"]["apm_metrics"],
+            "otel_schema": release["otel_schema"],
+            "contract_sha256": canonical_document_sha256(load_yaml(APM_METRICS_CONTRACT)),
+            "files": files,
+        },
+        indent=2,
+        sort_keys=True,
+    ) + "\n"
+
+
+def apm_metrics_bundle_outputs() -> dict[Path, str]:
+    payload = apm_metrics_bundle_payload_outputs()
+    return {
+        **payload,
+        APM_METRICS_BUNDLE / "asset-manifest.json": apm_metrics_asset_manifest_output(payload),
+    }
 
 
 def generated_files(data: dict[str, Any]) -> dict[Path, str]:
@@ -1073,6 +2089,7 @@ def generated_files(data: dict[str, Any]) -> dict[Path, str]:
         ROOT / "generated" / "rust" / "nebula-semantic-registry" / "src" / "lib.rs": rust_output(data),
     }
     output.update(conformance_fixture_outputs())
+    output.update(apm_metrics_bundle_outputs())
     return output
 
 
@@ -1084,6 +2101,7 @@ def verify_artifacts() -> None:
         (ROOT / "generated" / "typescript" / "package.json", "@nebula-observability/semantic-registry"),
         (TYPESCRIPT_RUTP / "package.json", "@nebula-observability/rutp-protobuf"),
         (ROOT / "generated" / "conformance" / "package.json", "@nebula-observability/rum-conformance"),
+        (APM_METRICS_BUNDLE / "package.json", "@nebula-observability/apm-metrics-contract"),
     ):
         try:
             package = load_json(package_path)
@@ -1207,9 +2225,64 @@ def verify_artifacts() -> None:
     except (FileNotFoundError, json.JSONDecodeError, SpecError, KeyError, TypeError) as error:
         errors.append(f"invalid conformance bundle: {error}")
 
+    metrics_manifest_path = APM_METRICS_BUNDLE / "asset-manifest.json"
+    try:
+        metrics_manifest = load_json(metrics_manifest_path)
+        release = current_release()
+        expected_metadata = {
+            "format_version": 1,
+            "spec_version": version,
+            "release": release["release"],
+            "metrics_contract_version": release["protocols"]["apm_metrics"],
+            "otel_schema": release["otel_schema"],
+            "contract_sha256": EXPECTED_APM_METRICS_BASELINE_SHA256,
+        }
+        for field, expected in expected_metadata.items():
+            if metrics_manifest.get(field) != expected:
+                errors.append(f"APM Metrics bundle manifest {field} must be {expected}")
+        payload_paths = {
+            path.relative_to(APM_METRICS_BUNDLE).as_posix()
+            for path in apm_metrics_bundle_payload_outputs()
+        }
+        manifest_files = metrics_manifest.get("files")
+        if not isinstance(manifest_files, list):
+            errors.append("APM Metrics bundle manifest files must be an array")
+        else:
+            declared_paths: set[str] = set()
+            for entry in manifest_files:
+                if not isinstance(entry, dict) or set(entry) != {"path", "sha256"}:
+                    errors.append("APM Metrics bundle manifest contains an invalid file entry")
+                    continue
+                relative = entry.get("path")
+                if not isinstance(relative, str) or not relative or Path(relative).is_absolute() or ".." in Path(relative).parts:
+                    errors.append(f"APM Metrics bundle manifest contains an unsafe path: {relative}")
+                    continue
+                if relative in declared_paths:
+                    errors.append(f"APM Metrics bundle manifest contains a duplicate path: {relative}")
+                    continue
+                declared_paths.add(relative)
+                bundled = APM_METRICS_BUNDLE / Path(relative)
+                if not bundled.is_file():
+                    errors.append(f"APM Metrics bundle file is missing: {relative}")
+                    continue
+                actual_sha256 = hashlib.sha256(bundled.read_bytes()).hexdigest()
+                if entry.get("sha256") != actual_sha256:
+                    errors.append(f"APM Metrics bundle checksum mismatch: {relative}")
+            if declared_paths != payload_paths:
+                errors.append(
+                    "APM Metrics bundle manifest file set differs: "
+                    f"missing={sorted(payload_paths - declared_paths)}, "
+                    f"unexpected={sorted(declared_paths - payload_paths)}"
+                )
+        bundled_contract = load_json(APM_METRICS_BUNDLE / "contract.json")
+        if bundled_contract != load_yaml(APM_METRICS_CONTRACT):
+            errors.append("APM Metrics bundled contract differs from specs/apm/v1/metrics.yaml")
+    except (FileNotFoundError, json.JSONDecodeError, SpecError, KeyError, TypeError) as error:
+        errors.append(f"invalid APM Metrics bundle: {error}")
+
     if errors:
         raise SpecError("Artifact verification failed:\n- " + "\n- ".join(errors))
-    print("Generated TypeScript, Rust, Go, and conformance artifacts are valid.")
+    print("Generated TypeScript, Rust, Go, RUM conformance, and APM Metrics artifacts are valid.")
 
 
 def generate(check: bool) -> None:
@@ -1218,6 +2291,8 @@ def generate(check: bool) -> None:
     conformance_fixtures = ROOT / "generated" / "conformance" / "fixtures"
     if not check and conformance_fixtures.exists():
         shutil.rmtree(conformance_fixtures)
+    if not check and APM_METRICS_BUNDLE.exists():
+        shutil.rmtree(APM_METRICS_BUNDLE)
     for path, content in expected.items():
         content = content.rstrip() + "\n"
         if check:
@@ -1228,15 +2303,19 @@ def generate(check: bool) -> None:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8", newline="\n")
     if check:
-        generated_conformance = ROOT / "generated" / "conformance"
-        expected_conformance = {path for path in expected if generated_conformance in path.parents}
-        if generated_conformance.exists():
-            for actual in generated_conformance.rglob("*"):
-                if actual.is_file() and actual not in expected_conformance:
-                    failures.append(str(actual.relative_to(ROOT)))
+        for managed_directory in (ROOT / "generated" / "conformance", APM_METRICS_BUNDLE):
+            expected_managed = {path for path in expected if managed_directory in path.parents}
+            if managed_directory.exists():
+                for actual in managed_directory.rglob("*"):
+                    if actual.is_file() and actual not in expected_managed:
+                        failures.append(str(actual.relative_to(ROOT)))
     if failures:
         raise SpecError("Generated files are stale: " + ", ".join(failures))
-    print("Generated files are current." if check else "Generated language registries and conformance bundle.")
+    print(
+        "Generated files are current."
+        if check
+        else "Generated language registries, RUM conformance, and APM Metrics bundles."
+    )
 
 
 def snapshot_data(data: dict[str, Any]) -> dict[str, Any]:
@@ -1299,13 +2378,18 @@ def main() -> int:
     subparsers.add_parser("lint")
     subparsers.add_parser("verify-receiver-contract")
     subparsers.add_parser("verify-control-plane-contract")
+    subparsers.add_parser("verify-apm-metrics-contract")
     generate_parser = subparsers.add_parser("generate")
     generate_parser.add_argument("--check", action="store_true")
     subparsers.add_parser("verify-artifacts")
     snapshot_parser = subparsers.add_parser("snapshot")
     snapshot_parser.add_argument("--output", type=Path, required=True)
+    apm_metrics_snapshot_parser = subparsers.add_parser("snapshot-apm-metrics")
+    apm_metrics_snapshot_parser.add_argument("--output", type=Path, required=True)
     breaking_parser = subparsers.add_parser("breaking")
     breaking_parser.add_argument("--against", type=Path, required=True)
+    apm_metrics_breaking_parser = subparsers.add_parser("breaking-apm-metrics")
+    apm_metrics_breaking_parser.add_argument("--against", type=Path, required=True)
     args = parser.parse_args()
 
     try:
@@ -1315,14 +2399,20 @@ def main() -> int:
             verify_receiver_contract()
         elif args.command == "verify-control-plane-contract":
             verify_control_plane_contract()
+        elif args.command == "verify-apm-metrics-contract":
+            verify_apm_metrics_contract()
         elif args.command == "generate":
             generate(args.check)
         elif args.command == "verify-artifacts":
             verify_artifacts()
         elif args.command == "snapshot":
             write_snapshot(args.output.resolve())
+        elif args.command == "snapshot-apm-metrics":
+            write_apm_metrics_snapshot(args.output.resolve())
         elif args.command == "breaking":
             breaking(args.against.resolve())
+        elif args.command == "breaking-apm-metrics":
+            breaking_apm_metrics(args.against.resolve())
     except SpecError as error:
         print(error, file=sys.stderr)
         return 1

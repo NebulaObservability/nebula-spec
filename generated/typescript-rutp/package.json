@@ -1,6 +1,6 @@
 {
   "name": "@nebula-observability/rutp-protobuf",
-  "version": "0.5.0-draft.0",
+  "version": "0.6.0-draft.0",
   "description": "Generated browser-compatible Nebula RUTP v1 Protobuf codec.",
   "license": "Apache-2.0",
   "type": "module",

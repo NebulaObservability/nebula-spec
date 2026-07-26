@@ -16,3 +16,9 @@ version，并保留未来的 `schema_url` 和未知成员，用于防止接收�
 `control-plane/` 同时覆盖服务端不可变修订、回滚到更高 revision，以及 SDK 投递
 封套不携带客户端可控的 tenant/project scope。远程配置必须继续使用默认拒绝的
 隐私策略，相关反例用于阻止配置升级为 `allow`。
+
+## APM Metrics
+
+`metrics/apm-metrics-mvp.json` 是包含完整 APM Resource、12 项受支持指标、累计
+Histogram/Sum、Gauge 和 HTTP/JDBC Exemplar 的标准 OTLP Golden Fixture。Collector、
+Backend、Agent 与 Dashboard 必须从版本化 conformance bundle 消费该 Fixture。

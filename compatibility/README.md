@@ -11,3 +11,10 @@ RUTP Receiver 的认证主体绑定和 JSON 调试规则属于版本化运行时
 Control Plane Config 的管理修订与 SDK delivery 封套同样是版本化运行时契约。
 兼容矩阵固定服务端认证 scope、active-only delivery、opaque ETag 和本地默认拒绝
 隐私策略；正反用例位于 `fixtures/control-plane/`。
+
+## APM Metrics
+
+`protocol-matrix.yaml` 固定 APM extension 与 APM Metrics contract 的独立兼容范围；
+`otel-schema-matrix.yaml` 固定 Semantic Conventions Schema。Metrics 发布必须以
+`semantic-registry-0.5.0-draft.0.json` 检查新增语义相对上一 Spec Release 的兼容性，
+并通过标准 OTLP Golden Fixture 的正反向 conformance 检查。

@@ -1,0 +1,223 @@
+schema_version: 1
+contract_version: 1.1.0-draft.0
+otel_schema_url: https://opentelemetry.io/schemas/1.43.0
+transport:
+  temporality: cumulative
+  histogram:
+    preferred: exponential_histogram
+    accepted: [exponential_histogram, explicit_histogram]
+  exemplars:
+    preserve: true
+    synthesize: false
+red:
+  metric: http.server.request.duration
+  throughput: histogram_count
+  errors:
+    operation: count_when_present
+    attribute: error.type
+  latency: histogram_distribution
+  trace_sampling: independent
+  vendor_counters: forbidden
+resource:
+  attributes:
+    - { ref: service.name, type: string, requirement: required, non_empty: true }
+    - { ref: service.namespace, type: string, requirement: required, non_empty: true }
+    - { ref: service.instance.id, type: string, requirement: required, non_empty: true }
+    - { ref: service.version, type: string, requirement: required, non_empty: true }
+    - { ref: deployment.environment.name, type: string, requirement: required, non_empty: true }
+    - { ref: telemetry.sdk.name, type: string, requirement: required, non_empty: true }
+    - { ref: telemetry.sdk.language, type: string, requirement: required, non_empty: true }
+    - { ref: telemetry.sdk.version, type: string, requirement: required, non_empty: true }
+    - { ref: process.pid, type: int, requirement: required, minimum: 1 }
+    - { ref: process.runtime.name, type: string, requirement: required, non_empty: true }
+    - { ref: process.runtime.version, type: string, requirement: required, non_empty: true }
+attribute_policy:
+  mode: allowlist
+  unknown_attributes: reject
+  max_attributes_per_point: 16
+  max_string_value_bytes: 256
+  forbidden:
+    - url.full
+    - url.path
+    - url.query
+    - db.query.text
+    - exception.message
+    - exception.stacktrace
+    - trace.id
+    - span.id
+    - trace_id
+    - span_id
+metrics:
+  - name: http.server.request.duration
+    requirement: required
+    source: otel
+    stability: stable
+    instrument: histogram
+    value_type: double
+    unit: s
+    temporality: cumulative
+    aggregations: [exponential_histogram, explicit_histogram]
+    value_range: { minimum: 0 }
+    attributes:
+      - { ref: http.request.method, requirement: required }
+      - { ref: url.scheme, requirement: required }
+      - { ref: http.response.status_code, requirement: conditional }
+      - { ref: error.type, requirement: conditional }
+      - { ref: http.route, requirement: conditional }
+      - { ref: network.protocol.version, requirement: recommended }
+      - { ref: server.address, requirement: opt_in }
+      - { ref: server.port, requirement: opt_in }
+    exemplars:
+      policy: sampled_trace_context_if_available
+      trace_id_bytes: 16
+      span_id_bytes: 8
+  - name: db.client.operation.duration
+    requirement: required
+    source: otel
+    stability: stable
+    instrument: histogram
+    value_type: double
+    unit: s
+    temporality: cumulative
+    aggregations: [exponential_histogram, explicit_histogram]
+    value_range: { minimum: 0 }
+    attributes:
+      - { ref: db.system.name, requirement: required }
+      - { ref: db.operation.name, requirement: conditional }
+      - { ref: db.namespace, requirement: conditional }
+      - { ref: error.type, requirement: conditional }
+      - { ref: db.response.status_code, requirement: conditional }
+      - { ref: db.query.summary, requirement: recommended }
+      - { ref: server.address, requirement: recommended }
+    exemplars:
+      policy: sampled_trace_context_if_available
+      trace_id_bytes: 16
+      span_id_bytes: 8
+  - name: jvm.memory.used
+    requirement: required
+    source: otel
+    stability: stable
+    instrument: updowncounter
+    value_type: int
+    unit: By
+    temporality: cumulative
+    monotonic: false
+    value_range: { minimum: 0 }
+    attributes:
+      - { ref: jvm.memory.type, requirement: required }
+      - { ref: jvm.memory.pool.name, requirement: required }
+    exemplars: { policy: none }
+  - name: jvm.memory.limit
+    requirement: required
+    source: otel
+    stability: stable
+    instrument: updowncounter
+    value_type: int
+    unit: By
+    temporality: cumulative
+    monotonic: false
+    value_range: { minimum: 0 }
+    attributes:
+      - { ref: jvm.memory.type, requirement: required }
+      - { ref: jvm.memory.pool.name, requirement: required }
+    exemplars: { policy: none }
+  - name: jvm.gc.duration
+    requirement: required
+    source: otel
+    stability: stable
+    instrument: histogram
+    value_type: double
+    unit: s
+    temporality: cumulative
+    aggregations: [exponential_histogram, explicit_histogram]
+    value_range: { minimum: 0 }
+    attributes:
+      - { ref: jvm.gc.name, requirement: required }
+      - { ref: jvm.gc.action, requirement: required }
+      - { ref: jvm.gc.cause, requirement: opt_in }
+    exemplars: { policy: none }
+  - name: jvm.thread.count
+    requirement: required
+    source: otel
+    stability: stable
+    instrument: updowncounter
+    value_type: int
+    unit: "{thread}"
+    temporality: cumulative
+    monotonic: false
+    value_range: { minimum: 0 }
+    attributes:
+      - { ref: jvm.thread.daemon, requirement: required }
+      - { ref: jvm.thread.state, requirement: required }
+    exemplars: { policy: none }
+  - name: jvm.cpu.time
+    requirement: required
+    source: otel
+    stability: stable
+    instrument: counter
+    value_type: double
+    unit: s
+    temporality: cumulative
+    monotonic: true
+    value_range: { minimum: 0 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: jvm.cpu.count
+    requirement: required
+    source: otel
+    stability: stable
+    instrument: updowncounter
+    value_type: int
+    unit: "{cpu}"
+    temporality: cumulative
+    monotonic: false
+    value_range: { minimum: 0 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: jvm.cpu.recent_utilization
+    requirement: required
+    source: otel
+    stability: stable
+    instrument: gauge
+    value_type: double
+    unit: "1"
+    temporality: none
+    value_range: { minimum: 0, maximum: 1 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: process.cpu.time
+    requirement: required
+    source: otel
+    stability: release_candidate
+    instrument: counter
+    value_type: double
+    unit: s
+    temporality: cumulative
+    monotonic: true
+    value_range: { minimum: 0 }
+    attributes:
+      - { ref: cpu.mode, requirement: required }
+    exemplars: { policy: none }
+  - name: process.memory.usage
+    requirement: required
+    source: otel
+    stability: release_candidate
+    instrument: updowncounter
+    value_type: int
+    unit: By
+    temporality: cumulative
+    monotonic: false
+    value_range: { minimum: 0 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: process.uptime
+    requirement: required
+    source: otel
+    stability: release_candidate
+    instrument: gauge
+    value_type: double
+    unit: s
+    temporality: none
+    value_range: { minimum: 0 }
+    attributes: []
+    exemplars: { policy: none }

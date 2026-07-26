@@ -1,0 +1,46 @@
+{
+  "contract_sha256": "298d80fad519d2622e9aeed60aa670074bde548b3fdd3c5779ae728946537dbd",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "b85c09327bfd559c3cc40f8cd58c94dffa0a6b54d80f40eb0ea4178c19271448"
+    },
+    {
+      "path": "compatibility/apm-metrics.json",
+      "sha256": "8b175622c9563fcd0459b4f59ab970729fb3fea304dc199acdd6d27b2d825efe"
+    },
+    {
+      "path": "contract.json",
+      "sha256": "8b175622c9563fcd0459b4f59ab970729fb3fea304dc199acdd6d27b2d825efe"
+    },
+    {
+      "path": "fixtures/apm-metrics-explicit-histogram.json",
+      "sha256": "957aec929afa9ddc01fce74b63b9599571f0abf9be21ac1204a75e701b49e502"
+    },
+    {
+      "path": "fixtures/apm-metrics-mvp.json",
+      "sha256": "717b72db2446a8ede2594792c282991639491e32885c365407bdb13a72ddc8e2"
+    },
+    {
+      "path": "fixtures/apm-metrics-negative-cases.json",
+      "sha256": "c83eee1b45c32845eafe642805a8256780c2a9791bae937101d3db7cac76a68f"
+    },
+    {
+      "path": "package.json",
+      "sha256": "54e81bebd53da2ad4bb11377324e52b8f9e264440efa9448b8edb85256e6af8c"
+    },
+    {
+      "path": "schemas/apm-metrics.schema.json",
+      "sha256": "e66706d49210553d7bbcab0b5ec4c23bb91fe47b24a07aa6bd191bfa4d8fc4f5"
+    },
+    {
+      "path": "schemas/otlp-metrics-export.schema.json",
+      "sha256": "761c37e448d788020ece8e1e6e33bf67ffc7c87039b8b3330a05496293bb6614"
+    }
+  ],
+  "format_version": 1,
+  "metrics_contract_version": "1.1.0-draft.0",
+  "otel_schema": "1.43.0",
+  "release": "2026.07.6-draft.0",
+  "spec_version": "0.6.0-draft.0"
+}
