@@ -89,3 +89,8 @@ python tools/spec_tool.py generate
 提供跨仓库 Golden Fixture。Release `2026.07.6-draft.0` 将 Spec `0.6.0-draft.0`、APM
 extension 和 Metrics contract `1.1.0-draft.0` 绑定到 OTel Schema `1.43.0`。消费者必须按
 Release Manifest 固定版本，不得复制或私有扩展标准指标。
+
+连续 export conformance 另外冻结累计 reset、同 start time 回退和跨 scale bucket 比较；
+OTLP JSON Exemplar ID 使用小写 hex，且禁止 `filteredAttributes` 携带额外维度。
+源 Schema URL 可为空/省略或为不高于 `1.43.0` 的 OpenTelemetry 官方 semver URL，
+并统一归一化到目标 Schema `1.43.0`。

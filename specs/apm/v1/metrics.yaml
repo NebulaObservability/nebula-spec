@@ -1,6 +1,12 @@
 schema_version: 1
 contract_version: 1.1.0-draft.0
 otel_schema_url: https://opentelemetry.io/schemas/1.43.0
+schema_url_policy:
+  normalization_target: https://opentelemetry.io/schemas/1.43.0
+  accepted_source:
+    empty: allowed
+    prefix: https://opentelemetry.io/schemas/
+    maximum_version: 1.43.0
 transport:
   temporality: cumulative
   histogram:
@@ -9,6 +15,22 @@ transport:
   exemplars:
     preserve: true
     synthesize: false
+    filtered_attributes: forbidden
+accumulation:
+  series_identity: [resource_attributes, instrumentation_scope, metric_name, point_attributes]
+  reset:
+    trigger: start_time_unix_nano_change
+    start_time: strictly_increasing
+  same_start:
+    histogram_count: non_decreasing
+    histogram_sum: non_decreasing
+    histogram_buckets: non_decreasing_at_common_scale
+    monotonic_sum_value: non_decreasing
+    identical_timestamp: idempotent_only
+  exponential_histogram:
+    scale_change: allowed
+    comparison_scale: minimum_of_previous_and_current
+  non_monotonic_sum_value: unconstrained
 red:
   metric: http.server.request.duration
   throughput: histogram_count

@@ -76,3 +76,9 @@ fixtures:
   - path: fixtures/metrics/apm-metrics-negative-cases.json
     validator: apm_metrics_negative_suite
     valid: true
+  - path: fixtures/metrics/apm-metrics-cumulative-sequence.json
+    schema: schemas/apm-metrics-cumulative-sequence.schema.json
+    valid: true
+  - path: fixtures/metrics/apm-metrics-cumulative-sequence-negative-cases.json
+    schema: schemas/apm-metrics-cumulative-sequence.schema.json
+    valid: true

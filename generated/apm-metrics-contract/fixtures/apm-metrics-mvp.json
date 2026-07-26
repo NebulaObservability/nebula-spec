@@ -138,8 +138,8 @@
                         "filteredAttributes": [],
                         "timeUnixNano": "1753401600900000000",
                         "asDouble": 0.3,
-                        "traceId": "AQIDBAUGBwgJCgsMDQ4PEA==",
-                        "spanId": "ERITFBUWFxg="
+                        "traceId": "0102030405060708090a0b0c0d0e0f10",
+                        "spanId": "1112131415161718"
                       }
                     ]
                   },
@@ -203,8 +203,8 @@
                         "filteredAttributes": [],
                         "timeUnixNano": "1753401600950000000",
                         "asDouble": 0.5,
-                        "traceId": "QUJDREVGR0hJSktMTU5PUA==",
-                        "spanId": "UVJTVFVWV1g="
+                        "traceId": "4142434445464748494a4b4c4d4e4f50",
+                        "spanId": "5152535455565758"
                       }
                     ]
                   }
@@ -279,8 +279,8 @@
                         "filteredAttributes": [],
                         "timeUnixNano": "1753401600800000000",
                         "asDouble": 0.05,
-                        "traceId": "ICEiIyQlJicoKSorLC0uLw==",
-                        "spanId": "MDEyMzQ1Njc="
+                        "traceId": "202122232425262728292a2b2c2d2e2f",
+                        "spanId": "3031323334353637"
                       }
                     ]
                   }

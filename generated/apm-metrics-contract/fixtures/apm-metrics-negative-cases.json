@@ -29,6 +29,32 @@
       ]
     },
     {
+      "name": "non-official-schema-url",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/schemaUrl",
+          "value": "https://example.test/schemas/1.43.0"
+        }
+      ],
+      "expected_errors": [
+        "schemaUrl"
+      ]
+    },
+    {
+      "name": "future-schema-url",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/schemaUrl",
+          "value": "https://opentelemetry.io/schemas/1.44.0"
+        }
+      ],
+      "expected_errors": [
+        "exceeds 1.43.0"
+      ]
+    },
+    {
       "name": "wrong-metric-type",
       "patch": [
         {
@@ -190,11 +216,94 @@
         {
           "op": "replace",
           "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/exemplars/0/traceId",
-          "value": "AAAAAAAAAAAAAAAAAAAAAA=="
+          "value": "00000000000000000000000000000000"
         }
       ],
       "expected_errors": [
         "identifier must not be all zeroes"
+      ]
+    },
+    {
+      "name": "base64-exemplar-id",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/exemplars/0/traceId",
+          "value": "AQIDBAUGBwgJCgsMDQ4PEA=="
+        }
+      ],
+      "expected_errors": [
+        "traceId"
+      ]
+    },
+    {
+      "name": "short-exemplar-id",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/exemplars/0/traceId",
+          "value": "010203"
+        }
+      ],
+      "expected_errors": [
+        "traceId"
+      ]
+    },
+    {
+      "name": "uppercase-exemplar-id",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/exemplars/0/traceId",
+          "value": "0102030405060708090A0B0C0D0E0F10"
+        }
+      ],
+      "expected_errors": [
+        "traceId"
+      ]
+    },
+    {
+      "name": "exemplar-filtered-attributes",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/exemplars/0/filteredAttributes/-",
+          "value": {
+            "key": "enduser.pseudo.id",
+            "value": {
+              "stringValue": "customer-456"
+            }
+          }
+        }
+      ],
+      "expected_errors": [
+        "filteredAttributes"
+      ]
+    },
+    {
+      "name": "empty-scope-version",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/scope/version",
+          "value": ""
+        }
+      ],
+      "expected_errors": [
+        "scope/version"
+      ]
+    },
+    {
+      "name": "oversized-scope-version",
+      "patch": [
+        {
+          "op": "replace",
+          "path": "/resourceMetrics/0/scopeMetrics/0/scope/version",
+          "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      ],
+      "expected_errors": [
+        "scope/version"
       ]
     },
     {

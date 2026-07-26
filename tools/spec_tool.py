@@ -4,8 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import base64
-import binascii
 import copy
 import hashlib
 import json
@@ -41,7 +39,12 @@ APM_METRICS_FIXTURES = FIXTURES / "metrics"
 APM_METRICS_FIXTURE = APM_METRICS_FIXTURES / "apm-metrics-mvp.json"
 APM_METRICS_EXPLICIT_FIXTURE = APM_METRICS_FIXTURES / "apm-metrics-explicit-histogram.json"
 APM_METRICS_NEGATIVE_FIXTURE = APM_METRICS_FIXTURES / "apm-metrics-negative-cases.json"
+APM_METRICS_SEQUENCE_FIXTURE = APM_METRICS_FIXTURES / "apm-metrics-cumulative-sequence.json"
+APM_METRICS_SEQUENCE_NEGATIVE_FIXTURE = (
+    APM_METRICS_FIXTURES / "apm-metrics-cumulative-sequence-negative-cases.json"
+)
 OTLP_METRICS_SCHEMA = SCHEMAS / "otlp-metrics-export.schema.json"
+APM_METRICS_SEQUENCE_SCHEMA = SCHEMAS / "apm-metrics-cumulative-sequence.schema.json"
 APM_METRICS_BASELINE = ROOT / "compatibility" / "baselines" / "apm-metrics-1.1.0-draft.0.json"
 APM_METRICS_BUNDLE = ROOT / "generated" / "apm-metrics-contract"
 GO_MODULE = ROOT / "generated" / "go"
@@ -104,9 +107,12 @@ PROHIBITED_METRIC_ATTRIBUTES = (
 )
 EXPECTED_APM_NEGATIVE_CASES = {
     "attribute-type",
+    "base64-exemplar-id",
     "bad-bucket-total",
     "bad-exemplar-id",
     "delta-temporality",
+    "empty-scope-version",
+    "exemplar-filtered-attributes",
     "forbidden-db-query-text",
     "forbidden-exception-message",
     "forbidden-trace-id",
@@ -115,16 +121,35 @@ EXPECTED_APM_NEGATIVE_CASES = {
     "missing-required-point-attribute",
     "missing-resource",
     "missing-start-time",
+    "non-official-schema-url",
     "non-finite-value",
     "non-monotonic-counter",
     "negative-duration-bucket",
     "nonempty-resource",
     "oversized-string",
+    "oversized-scope-version",
+    "short-exemplar-id",
     "too-many-attributes",
+    "uppercase-exemplar-id",
+    "future-schema-url",
     "wrong-metric-type",
     "wrong-unit",
 }
-EXPECTED_APM_METRICS_BASELINE_SHA256 = "298d80fad519d2622e9aeed60aa670074bde548b3fdd3c5779ae728946537dbd"
+EXPECTED_APM_SEQUENCE_CASES = {
+    "cumulative-growth",
+    "start-time-reset",
+    "exponential-scale-transition",
+    "agent-source-schema-compatibility",
+}
+EXPECTED_APM_SEQUENCE_NEGATIVE_CASES = {
+    "same-start-bucket-regression",
+    "same-start-count-regression",
+    "same-start-monotonic-value-regression",
+    "same-start-scale-transition-regression",
+    "same-start-sum-regression",
+    "start-time-regression",
+}
+EXPECTED_APM_METRICS_BASELINE_SHA256 = "925fc1ef3b831ebe8a116545d7fad91b72ab1f1705a3dc6cb9514efc3ffaa286"
 OTLP_CUMULATIVE_TEMPORALITY = 2
 OTLP_UINT64_MAX = 2**64 - 1
 
@@ -563,18 +588,14 @@ def finite_number(value: Any, label: str, errors: list[str]) -> float | None:
 
 def decode_otlp_id(value: Any, expected_length: int, label: str, errors: list[str]) -> None:
     if not isinstance(value, str):
-        errors.append(f"{label}: identifier must be base64 text")
+        errors.append(f"{label}: identifier must be lowercase hexadecimal text")
         return
-    try:
-        decoded = base64.b64decode(value, validate=True)
-    except (binascii.Error, ValueError):
-        errors.append(f"{label}: identifier is not canonical base64")
+    expected_characters = expected_length * 2
+    if re.fullmatch(f"[0-9a-f]{{{expected_characters}}}", value) is None:
+        errors.append(f"{label}: identifier must contain exactly {expected_characters} lowercase hexadecimal characters")
         return
-    if base64.b64encode(decoded).decode("ascii") != value:
-        errors.append(f"{label}: identifier is not canonical base64")
-    if len(decoded) != expected_length:
-        errors.append(f"{label}: identifier must decode to {expected_length} bytes")
-    elif not any(decoded):
+    decoded = bytes.fromhex(value)
+    if not any(decoded):
         errors.append(f"{label}: identifier must not be all zeroes")
 
 
@@ -668,6 +689,25 @@ def semantic_otlp_type(semantic_type: str) -> str:
     return "string" if semantic_type == "enum" else semantic_type
 
 
+def source_otel_schema_url_errors(value: Any, contract: dict[str, Any], label: str) -> list[str]:
+    if value is None or value == "":
+        return []
+    if not isinstance(value, str):
+        return [f"{label}: source OTel schema URL must be text"]
+    policy = contract["schema_url_policy"]["accepted_source"]
+    prefix = policy["prefix"]
+    if not value.startswith(prefix):
+        return [f"{label}: source OTel schema URL must use the official {prefix} prefix"]
+    version = value[len(prefix) :]
+    try:
+        parse_semver(version)
+        if compare_semver(version, policy["maximum_version"]) > 0:
+            return [f"{label}: source OTel schema version {version} exceeds {policy['maximum_version']}"]
+    except SpecError as error:
+        return [f"{label}: source OTel schema URL has an invalid semantic version: {error}"]
+    return []
+
+
 def attribute_value_errors(
     values: dict[str, dict[str, Any]],
     definitions: dict[str, dict[str, Any]],
@@ -717,6 +757,7 @@ def apm_metrics_fixture_errors(
     expected_metric_names: tuple[str, ...],
     expected_histogram_signal: str,
     enforce_red_counts: bool,
+    require_target_schema: bool = False,
 ) -> list[str]:
     errors = validate(fixture, OTLP_METRICS_SCHEMA, label)
     if errors:
@@ -743,19 +784,26 @@ def apm_metrics_fixture_errors(
         if unexpected_resources:
             errors.append(f"{resource_label}: golden fixture has unexpected Resource attributes {sorted(unexpected_resources)}")
         errors.extend(attribute_value_errors(resource_attributes, resource_definitions, resource_label))
-        if resource_metric["schemaUrl"] != contract["otel_schema_url"]:
-            errors.append(f"{resource_label}: schemaUrl does not match the contract")
+        resource_schema_url = resource_metric.get("schemaUrl")
+        errors.extend(source_otel_schema_url_errors(resource_schema_url, contract, f"{resource_label}/schemaUrl"))
+        if require_target_schema and resource_schema_url != contract["otel_schema_url"]:
+            errors.append(f"{resource_label}: Golden Fixture schemaUrl must match the normalization target")
         scope_metrics = resource_metric["scopeMetrics"]
         for scope_index, scope_metric in enumerate(scope_metrics):
             scope_label = f"{resource_label}/scopeMetrics/{scope_index}"
-            if scope_metric["schemaUrl"] != contract["otel_schema_url"]:
-                errors.append(f"{scope_label}: schemaUrl does not match the contract")
+            scope_schema_url = scope_metric.get("schemaUrl")
+            errors.extend(source_otel_schema_url_errors(scope_schema_url, contract, f"{scope_label}/schemaUrl"))
+            if require_target_schema and scope_schema_url != contract["otel_schema_url"]:
+                errors.append(f"{scope_label}: Golden Fixture schemaUrl must match the normalization target")
             scope_name = scope_metric["scope"]["name"]
             scope_version = scope_metric["scope"].get("version")
             if not scope_name:
                 errors.append(f"{scope_label}: instrumentation scope name must not be empty")
-            if not isinstance(scope_version, str) or not scope_version:
-                errors.append(f"{scope_label}: instrumentation scope version must not be empty")
+            if scope_version is not None:
+                if not isinstance(scope_version, str) or not scope_version:
+                    errors.append(f"{scope_label}: instrumentation scope version must not be empty when present")
+                elif len(scope_version) > 128:
+                    errors.append(f"{scope_label}: instrumentation scope version must not exceed 128 characters")
             if scope_name.startswith("io.nebulaobservability"):
                 errors.append(f"{scope_label}: standard APM metrics must use producer instrumentation scopes")
             scope_names.append(scope_name)
@@ -913,6 +961,8 @@ def apm_metrics_fixture_errors(
                     if parsed_exemplar is not None and parsed_exemplar < 0:
                         errors.append(f"{exemplar_label}: duration exemplar must be non-negative")
                 raw_filtered = exemplar.get("filteredAttributes", [])
+                if raw_filtered:
+                    errors.append(f"{exemplar_label}: exemplar filteredAttributes must be empty")
                 filtered = otlp_attribute_map(raw_filtered, exemplar_label, errors)
                 errors.extend(
                     point_attribute_policy_errors(
@@ -1075,6 +1125,297 @@ def apm_metrics_negative_conformance_errors(contract: dict[str, Any]) -> list[st
     return errors
 
 
+def metric_series_states(
+    fixture: dict[str, Any],
+    label: str,
+) -> tuple[dict[tuple[str, ...], dict[str, Any]], list[str]]:
+    errors: list[str] = []
+    states: dict[tuple[str, ...], dict[str, Any]] = {}
+    for resource_index, resource_metric in enumerate(fixture["resourceMetrics"]):
+        resource_values = otlp_attribute_map(
+            resource_metric["resource"]["attributes"],
+            f"{label}/resourceMetrics/{resource_index}",
+            errors,
+        )
+        resource_identity = json.dumps(resource_values, sort_keys=True, separators=(",", ":"))
+        for scope_index, scope_metric in enumerate(resource_metric["scopeMetrics"]):
+            scope = scope_metric["scope"]
+            scope_identity = json.dumps(
+                {
+                    "name": scope["name"],
+                    "version": scope.get("version"),
+                    "schema_url": scope_metric.get("schemaUrl"),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            for metric_index, metric in enumerate(scope_metric["metrics"]):
+                signal_names = [
+                    name for name in ("exponentialHistogram", "histogram", "sum", "gauge") if name in metric
+                ]
+                if len(signal_names) != 1:
+                    errors.append(
+                        f"{label}/resourceMetrics/{resource_index}/scopeMetrics/{scope_index}/metrics/{metric_index}: "
+                        "metric must contain exactly one signal"
+                    )
+                    continue
+                signal_name = signal_names[0]
+                signal = metric[signal_name]
+                for point_index, point in enumerate(signal["dataPoints"]):
+                    point_label = (
+                        f"{label}/resourceMetrics/{resource_index}/scopeMetrics/{scope_index}/"
+                        f"metrics/{metric_index}/dataPoints/{point_index}"
+                    )
+                    point_values = otlp_attribute_map(point.get("attributes", []), point_label, errors)
+                    point_identity = json.dumps(point_values, sort_keys=True, separators=(",", ":"))
+                    key = (resource_identity, scope_identity, metric["name"], point_identity)
+                    if key in states:
+                        errors.append(f"{point_label}: duplicate cumulative series identity")
+                        continue
+                    states[key] = {
+                        "metric_name": metric["name"],
+                        "signal_name": signal_name,
+                        "signal": signal,
+                        "point": point,
+                    }
+    return states, errors
+
+
+def exponential_bucket_map(
+    point: dict[str, Any],
+    side: str,
+    target_scale: int,
+    label: str,
+    errors: list[str],
+) -> dict[int, int]:
+    source_scale = int(point["scale"])
+    if source_scale < target_scale:
+        errors.append(f"{label}: comparison scale must not exceed the source scale")
+        return {}
+    buckets = point.get(side)
+    if not isinstance(buckets, dict):
+        return {}
+    divisor = 1 << (source_scale - target_scale)
+    offset = int(buckets["offset"])
+    result: dict[int, int] = {}
+    for index, raw_count in enumerate(buckets["bucketCounts"]):
+        count = uint64_value(raw_count, f"{label}/{side}/bucketCounts/{index}", errors)
+        if count is None:
+            continue
+        projected_index = (offset + index) // divisor
+        result[projected_index] = result.get(projected_index, 0) + count
+    return result
+
+
+def histogram_accumulation_errors(
+    previous: dict[str, Any],
+    current: dict[str, Any],
+    signal_name: str,
+    label: str,
+) -> list[str]:
+    errors: list[str] = []
+    previous_count = uint64_value(previous.get("count"), f"{label}/previous/count", errors)
+    current_count = uint64_value(current.get("count"), f"{label}/current/count", errors)
+    if previous_count is not None and current_count is not None and current_count < previous_count:
+        errors.append(f"{label}: cumulative histogram count regressed with an unchanged start time")
+
+    if "sum" in previous:
+        if "sum" not in current:
+            errors.append(f"{label}: cumulative histogram sum disappeared with an unchanged start time")
+        else:
+            previous_sum = finite_number(previous["sum"], f"{label}/previous/sum", errors)
+            current_sum = finite_number(current["sum"], f"{label}/current/sum", errors)
+            if previous_sum is not None and current_sum is not None and current_sum < previous_sum:
+                errors.append(f"{label}: cumulative histogram sum regressed with an unchanged start time")
+
+    if signal_name == "exponentialHistogram":
+        previous_zero = uint64_value(previous.get("zeroCount", "0"), f"{label}/previous/zeroCount", errors)
+        current_zero = uint64_value(current.get("zeroCount", "0"), f"{label}/current/zeroCount", errors)
+        if previous_zero is not None and current_zero is not None and current_zero < previous_zero:
+            errors.append(f"{label}: cumulative histogram bucket regressed with an unchanged start time")
+        common_scale = min(int(previous["scale"]), int(current["scale"]))
+        for side in ("positive", "negative"):
+            previous_buckets = exponential_bucket_map(previous, side, common_scale, f"{label}/previous", errors)
+            current_buckets = exponential_bucket_map(current, side, common_scale, f"{label}/current", errors)
+            for bucket_index, previous_value in previous_buckets.items():
+                if current_buckets.get(bucket_index, 0) < previous_value:
+                    errors.append(
+                        f"{label}: cumulative histogram bucket regressed with an unchanged start time "
+                        f"after projection to scale {common_scale}"
+                    )
+                    break
+    else:
+        if previous.get("explicitBounds") != current.get("explicitBounds"):
+            errors.append(f"{label}: explicit histogram boundaries changed with an unchanged start time")
+        previous_buckets = [
+            uint64_value(value, f"{label}/previous/bucketCounts/{index}", errors)
+            for index, value in enumerate(previous.get("bucketCounts", []))
+        ]
+        current_buckets = [
+            uint64_value(value, f"{label}/current/bucketCounts/{index}", errors)
+            for index, value in enumerate(current.get("bucketCounts", []))
+        ]
+        if len(previous_buckets) == len(current_buckets) and any(
+            current_value is not None and previous_value is not None and current_value < previous_value
+            for previous_value, current_value in zip(previous_buckets, current_buckets)
+        ):
+            errors.append(f"{label}: cumulative histogram bucket regressed with an unchanged start time")
+    return errors
+
+
+def cumulative_sequence_errors(exports: list[dict[str, Any]], label: str) -> list[str]:
+    errors: list[str] = []
+    previous_states: dict[tuple[str, ...], dict[str, Any]] | None = None
+    for export_index, fixture in enumerate(exports):
+        states, state_errors = metric_series_states(fixture, f"{label}/exports/{export_index}")
+        errors.extend(state_errors)
+        if previous_states is None:
+            previous_states = states
+            continue
+        if set(states) != set(previous_states):
+            errors.append(f"{label}/exports/{export_index}: cumulative series identities changed between exports")
+            previous_states = states
+            continue
+        for key, current_state in states.items():
+            previous_state = previous_states[key]
+            metric_name = current_state["metric_name"]
+            series_label = f"{label}/exports/{export_index}/metric/{metric_name}"
+            if current_state["signal_name"] != previous_state["signal_name"]:
+                errors.append(f"{series_label}: metric signal changed between cumulative exports")
+                continue
+            current_point = current_state["point"]
+            previous_point = previous_state["point"]
+            current_time = uint64_value(current_point.get("timeUnixNano"), f"{series_label}/timeUnixNano", errors)
+            previous_time = uint64_value(
+                previous_point.get("timeUnixNano"), f"{series_label}/previous/timeUnixNano", errors
+            )
+            if current_time is None or previous_time is None:
+                continue
+            if current_time < previous_time:
+                errors.append(f"{series_label}: export time regressed")
+                continue
+            if current_time == previous_time:
+                if current_point != previous_point:
+                    errors.append(f"{series_label}: identical export timestamp is only valid for an idempotent point")
+                continue
+
+            signal_name = current_state["signal_name"]
+            if signal_name == "gauge":
+                continue
+            current_start = uint64_value(
+                current_point.get("startTimeUnixNano"), f"{series_label}/startTimeUnixNano", errors
+            )
+            previous_start = uint64_value(
+                previous_point.get("startTimeUnixNano"), f"{series_label}/previous/startTimeUnixNano", errors
+            )
+            if current_start is None or previous_start is None:
+                continue
+            if current_start != previous_start:
+                if current_start <= previous_start:
+                    errors.append(f"{series_label}: cumulative reset start time must strictly advance")
+                continue
+
+            if signal_name in ("exponentialHistogram", "histogram"):
+                errors.extend(
+                    histogram_accumulation_errors(
+                        previous_point,
+                        current_point,
+                        signal_name,
+                        series_label,
+                    )
+                )
+            elif signal_name == "sum" and current_state["signal"].get("isMonotonic") is True:
+                previous_value = previous_point.get("asDouble", previous_point.get("asInt"))
+                current_value = current_point.get("asDouble", current_point.get("asInt"))
+                try:
+                    if float(current_value) < float(previous_value):
+                        errors.append(
+                            f"{series_label}: cumulative monotonic sum value regressed with an unchanged start time"
+                        )
+                except (TypeError, ValueError):
+                    errors.append(f"{series_label}: cumulative monotonic sum values must be numeric")
+        previous_states = states
+    return errors
+
+
+def materialize_sequence_exports(
+    base: dict[str, Any],
+    case: dict[str, Any],
+    label: str,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    errors: list[str] = []
+    exports: list[dict[str, Any]] = []
+    for export_index, export in enumerate(case["exports"]):
+        materialized = copy.deepcopy(base)
+        patches = export.get("patch")
+        if patches is not None:
+            errors.extend(apply_json_patch(materialized, patches, f"{label}/exports/{export_index}"))
+        exports.append(materialized)
+    return exports, errors
+
+
+def apm_metrics_accumulation_conformance_errors(contract: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    suites = (
+        (APM_METRICS_SEQUENCE_FIXTURE, EXPECTED_APM_SEQUENCE_CASES, True),
+        (APM_METRICS_SEQUENCE_NEGATIVE_FIXTURE, EXPECTED_APM_SEQUENCE_NEGATIVE_CASES, False),
+    )
+    for path, expected_names, expected_validity in suites:
+        label = path.relative_to(ROOT).as_posix()
+        try:
+            suite = load_json(path)
+        except (FileNotFoundError, json.JSONDecodeError, SpecError) as error:
+            errors.append(f"invalid APM metrics accumulation fixture suite {label}: {error}")
+            continue
+        schema_errors = validate(suite, APM_METRICS_SEQUENCE_SCHEMA, label)
+        if schema_errors:
+            errors.extend(schema_errors)
+            continue
+        base_path = (ROOT / suite["base_fixture"]).resolve()
+        if base_path != APM_METRICS_FIXTURE.resolve():
+            errors.append(f"{label}: sequence suite must use the APM Metrics MVP fixture")
+            continue
+        base = load_json(base_path)
+        seen_names: set[str] = set()
+        for case_index, case in enumerate(suite["cases"]):
+            case_label = f"{label}/cases/{case_index}/{case['name']}"
+            if case["name"] in seen_names:
+                errors.append(f"{case_label}: duplicate case name")
+                continue
+            seen_names.add(case["name"])
+            if case["valid"] is not expected_validity:
+                errors.append(f"{case_label}: case validity does not match its suite")
+            exports, case_errors = materialize_sequence_exports(base, case, case_label)
+            for export_index, export in enumerate(exports):
+                case_errors.extend(
+                    apm_metrics_fixture_errors(
+                        contract,
+                        export,
+                        f"{case_label}/exports/{export_index}",
+                        APM_MVP_METRIC_NAMES,
+                        "exponentialHistogram",
+                        False,
+                    )
+                )
+            case_errors.extend(cumulative_sequence_errors(exports, case_label))
+            if case["valid"]:
+                if case_errors:
+                    errors.extend(case_errors)
+                continue
+            if not case_errors:
+                errors.append(f"{case_label}: invalid accumulation sequence did not fail")
+                continue
+            for expected_error in case["expected_errors"]:
+                if not any(expected_error in actual for actual in case_errors):
+                    errors.append(f"{case_label}: expected error containing {expected_error!r}, got {case_errors}")
+        if seen_names != expected_names:
+            errors.append(
+                f"{label}: accumulation cases differ: "
+                f"missing={sorted(expected_names - seen_names)}, unexpected={sorted(seen_names - expected_names)}"
+            )
+    return errors
+
+
 def apm_metrics_conformance_errors(
     contract: dict[str, Any] | None = None,
     fixture: dict[str, Any] | None = None,
@@ -1089,16 +1430,52 @@ def apm_metrics_conformance_errors(
         errors.append(f"APM metrics contract version must be {APM_METRICS_CONTRACT_VERSION}")
     if contract["otel_schema_url"] != APM_METRICS_OTEL_SCHEMA_URL:
         errors.append(f"APM metrics contract OTel schema must be {APM_METRICS_OTEL_SCHEMA_URL}")
+    expected_schema_url_policy = {
+        "normalization_target": APM_METRICS_OTEL_SCHEMA_URL,
+        "accepted_source": {
+            "empty": "allowed",
+            "prefix": "https://opentelemetry.io/schemas/",
+            "maximum_version": "1.43.0",
+        },
+    }
+    if contract["schema_url_policy"] != expected_schema_url_policy:
+        errors.append("APM metrics source OTel schema URL policy differs from the frozen target/maximum profile")
     expected_transport = {
         "temporality": "cumulative",
         "histogram": {
             "preferred": "exponential_histogram",
             "accepted": ["exponential_histogram", "explicit_histogram"],
         },
-        "exemplars": {"preserve": True, "synthesize": False},
+        "exemplars": {"preserve": True, "synthesize": False, "filtered_attributes": "forbidden"},
     }
     if contract["transport"] != expected_transport:
         errors.append("APM metrics transport profile differs from the frozen cumulative histogram profile")
+    expected_accumulation = {
+        "series_identity": [
+            "resource_attributes",
+            "instrumentation_scope",
+            "metric_name",
+            "point_attributes",
+        ],
+        "reset": {
+            "trigger": "start_time_unix_nano_change",
+            "start_time": "strictly_increasing",
+        },
+        "same_start": {
+            "histogram_count": "non_decreasing",
+            "histogram_sum": "non_decreasing",
+            "histogram_buckets": "non_decreasing_at_common_scale",
+            "monotonic_sum_value": "non_decreasing",
+            "identical_timestamp": "idempotent_only",
+        },
+        "exponential_histogram": {
+            "scale_change": "allowed",
+            "comparison_scale": "minimum_of_previous_and_current",
+        },
+        "non_monotonic_sum_value": "unconstrained",
+    }
+    if contract["accumulation"] != expected_accumulation:
+        errors.append("APM metrics accumulation profile differs from the frozen cumulative state rules")
     expected_red = {
         "metric": "http.server.request.duration",
         "throughput": "histogram_count",
@@ -1189,6 +1566,7 @@ def apm_metrics_conformance_errors(
             APM_MVP_METRIC_NAMES,
             "exponentialHistogram",
             True,
+            True,
         )
     )
     histogram_names = tuple(name for name in APM_MVP_METRIC_NAMES if name in APM_HISTOGRAM_METRIC_NAMES)
@@ -1200,9 +1578,11 @@ def apm_metrics_conformance_errors(
             histogram_names,
             "histogram",
             False,
+            True,
         )
     )
     errors.extend(apm_metrics_negative_conformance_errors(contract))
+    errors.extend(apm_metrics_accumulation_conformance_errors(contract))
 
     fixture_manifest = load_yaml(FIXTURES / "manifest.yaml")
     entries = {entry.get("path"): entry for entry in fixture_manifest.get("fixtures", []) if isinstance(entry, dict)}
@@ -1219,6 +1599,14 @@ def apm_metrics_conformance_errors(
             "validator": "apm_metrics_negative_suite",
             "valid": True,
         },
+        "fixtures/metrics/apm-metrics-cumulative-sequence.json": {
+            "schema": "schemas/apm-metrics-cumulative-sequence.schema.json",
+            "valid": True,
+        },
+        "fixtures/metrics/apm-metrics-cumulative-sequence-negative-cases.json": {
+            "schema": "schemas/apm-metrics-cumulative-sequence.schema.json",
+            "valid": True,
+        },
     }
     for path, expected in expected_entries.items():
         entry = entries.get(path)
@@ -1231,7 +1619,10 @@ def verify_apm_metrics_contract() -> None:
     errors = apm_metrics_conformance_errors()
     if errors:
         raise SpecError("APM Metrics conformance failed:\n- " + "\n- ".join(errors))
-    print("APM Metrics contract, OTLP fixtures, negative cases, and frozen profile conformance passed.")
+    print(
+        "APM Metrics contract, OTLP fixtures, cumulative sequences, negative cases, "
+        "and frozen profile conformance passed."
+    )
 
 
 def write_apm_metrics_snapshot(output: Path) -> None:
@@ -1978,9 +2369,12 @@ def apm_metrics_package_json_output() -> str:
                 "./asset-manifest.json": "./asset-manifest.json",
                 "./schemas/apm-metrics.schema.json": "./schemas/apm-metrics.schema.json",
                 "./schemas/otlp-metrics-export.schema.json": "./schemas/otlp-metrics-export.schema.json",
+                "./schemas/apm-metrics-cumulative-sequence.schema.json": "./schemas/apm-metrics-cumulative-sequence.schema.json",
                 "./fixtures/apm-metrics-mvp.json": "./fixtures/apm-metrics-mvp.json",
                 "./fixtures/apm-metrics-explicit-histogram.json": "./fixtures/apm-metrics-explicit-histogram.json",
                 "./fixtures/apm-metrics-negative-cases.json": "./fixtures/apm-metrics-negative-cases.json",
+                "./fixtures/apm-metrics-cumulative-sequence.json": "./fixtures/apm-metrics-cumulative-sequence.json",
+                "./fixtures/apm-metrics-cumulative-sequence-negative-cases.json": "./fixtures/apm-metrics-cumulative-sequence-negative-cases.json",
                 "./compatibility/apm-metrics.json": "./compatibility/apm-metrics.json",
             },
         },
@@ -1995,7 +2389,10 @@ def apm_metrics_package_readme_output() -> str:
 Generated, immutable APM Metrics contract for Spec `{artifact_version()}` and
 platform release `{release['release']}`. The bundle contains the exact 12-metric
 OTLP profile, its schemas, ExponentialHistogram and explicit Histogram fixtures,
-negative conformance cases, and the frozen compatibility snapshot.
+continuous cumulative export sequences, negative conformance cases, and the
+frozen compatibility snapshot. OTLP exemplar trace/span IDs use lowercase hex;
+filtered attributes are forbidden. Source Schema URLs may be empty or official
+OpenTelemetry semver URLs up to the `1.43.0` normalization target.
 
 Verify every file against `asset-manifest.json` before consuming it. Runtime
 repositories must pin the matching release asset and must not copy or extend the
@@ -2016,6 +2413,9 @@ def apm_metrics_bundle_payload_outputs() -> dict[Path, str]:
         APM_METRICS_BUNDLE / "schemas" / "otlp-metrics-export.schema.json": normalized_fixture_content(
             OTLP_METRICS_SCHEMA
         ),
+        APM_METRICS_BUNDLE
+        / "schemas"
+        / "apm-metrics-cumulative-sequence.schema.json": normalized_fixture_content(APM_METRICS_SEQUENCE_SCHEMA),
         APM_METRICS_BUNDLE / "fixtures" / "apm-metrics-mvp.json": normalized_fixture_content(
             APM_METRICS_FIXTURE
         ),
@@ -2024,6 +2424,14 @@ def apm_metrics_bundle_payload_outputs() -> dict[Path, str]:
         ),
         APM_METRICS_BUNDLE / "fixtures" / "apm-metrics-negative-cases.json": normalized_fixture_content(
             APM_METRICS_NEGATIVE_FIXTURE
+        ),
+        APM_METRICS_BUNDLE
+        / "fixtures"
+        / "apm-metrics-cumulative-sequence.json": normalized_fixture_content(APM_METRICS_SEQUENCE_FIXTURE),
+        APM_METRICS_BUNDLE
+        / "fixtures"
+        / "apm-metrics-cumulative-sequence-negative-cases.json": normalized_fixture_content(
+            APM_METRICS_SEQUENCE_NEGATIVE_FIXTURE
         ),
         APM_METRICS_BUNDLE / "compatibility" / "apm-metrics.json": normalized_fixture_content(
             APM_METRICS_BASELINE

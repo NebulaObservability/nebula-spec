@@ -17,9 +17,12 @@
     "./asset-manifest.json": "./asset-manifest.json",
     "./schemas/apm-metrics.schema.json": "./schemas/apm-metrics.schema.json",
     "./schemas/otlp-metrics-export.schema.json": "./schemas/otlp-metrics-export.schema.json",
+    "./schemas/apm-metrics-cumulative-sequence.schema.json": "./schemas/apm-metrics-cumulative-sequence.schema.json",
     "./fixtures/apm-metrics-mvp.json": "./fixtures/apm-metrics-mvp.json",
     "./fixtures/apm-metrics-explicit-histogram.json": "./fixtures/apm-metrics-explicit-histogram.json",
     "./fixtures/apm-metrics-negative-cases.json": "./fixtures/apm-metrics-negative-cases.json",
+    "./fixtures/apm-metrics-cumulative-sequence.json": "./fixtures/apm-metrics-cumulative-sequence.json",
+    "./fixtures/apm-metrics-cumulative-sequence-negative-cases.json": "./fixtures/apm-metrics-cumulative-sequence-negative-cases.json",
     "./compatibility/apm-metrics.json": "./compatibility/apm-metrics.json"
   }
 }

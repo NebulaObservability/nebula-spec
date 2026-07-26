@@ -2,11 +2,29 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.nebula-observability.io/spec/apm-metrics.schema.json",
   "type": "object",
-  "required": ["schema_version", "contract_version", "otel_schema_url", "transport", "red", "resource", "attribute_policy", "metrics"],
+  "required": ["schema_version", "contract_version", "otel_schema_url", "schema_url_policy", "transport", "accumulation", "red", "resource", "attribute_policy", "metrics"],
   "properties": {
     "schema_version": { "const": 1 },
     "contract_version": { "$ref": "#/$defs/semver" },
     "otel_schema_url": { "type": "string", "format": "uri" },
+    "schema_url_policy": {
+      "type": "object",
+      "required": ["normalization_target", "accepted_source"],
+      "properties": {
+        "normalization_target": { "const": "https://opentelemetry.io/schemas/1.43.0" },
+        "accepted_source": {
+          "type": "object",
+          "required": ["empty", "prefix", "maximum_version"],
+          "properties": {
+            "empty": { "const": "allowed" },
+            "prefix": { "const": "https://opentelemetry.io/schemas/" },
+            "maximum_version": { "const": "1.43.0" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "transport": {
       "type": "object",
       "required": ["temporality", "histogram", "exemplars"],
@@ -28,13 +46,55 @@
         },
         "exemplars": {
           "type": "object",
-          "required": ["preserve", "synthesize"],
+          "required": ["preserve", "synthesize", "filtered_attributes"],
           "properties": {
             "preserve": { "const": true },
-            "synthesize": { "const": false }
+            "synthesize": { "const": false },
+            "filtered_attributes": { "const": "forbidden" }
           },
           "additionalProperties": false
         }
+      },
+      "additionalProperties": false
+    },
+    "accumulation": {
+      "type": "object",
+      "required": ["series_identity", "reset", "same_start", "exponential_histogram", "non_monotonic_sum_value"],
+      "properties": {
+        "series_identity": {
+          "const": ["resource_attributes", "instrumentation_scope", "metric_name", "point_attributes"]
+        },
+        "reset": {
+          "type": "object",
+          "required": ["trigger", "start_time"],
+          "properties": {
+            "trigger": { "const": "start_time_unix_nano_change" },
+            "start_time": { "const": "strictly_increasing" }
+          },
+          "additionalProperties": false
+        },
+        "same_start": {
+          "type": "object",
+          "required": ["histogram_count", "histogram_sum", "histogram_buckets", "monotonic_sum_value", "identical_timestamp"],
+          "properties": {
+            "histogram_count": { "const": "non_decreasing" },
+            "histogram_sum": { "const": "non_decreasing" },
+            "histogram_buckets": { "const": "non_decreasing_at_common_scale" },
+            "monotonic_sum_value": { "const": "non_decreasing" },
+            "identical_timestamp": { "const": "idempotent_only" }
+          },
+          "additionalProperties": false
+        },
+        "exponential_histogram": {
+          "type": "object",
+          "required": ["scale_change", "comparison_scale"],
+          "properties": {
+            "scale_change": { "const": "allowed" },
+            "comparison_scale": { "const": "minimum_of_previous_and_current" }
+          },
+          "additionalProperties": false
+        },
+        "non_monotonic_sum_value": { "const": "unconstrained" }
       },
       "additionalProperties": false
     },

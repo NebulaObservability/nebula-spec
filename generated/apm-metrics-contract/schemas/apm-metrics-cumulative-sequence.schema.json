@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/spec/apm-metrics-cumulative-sequence.schema.json",
+  "type": "object",
+  "required": ["schema_version", "base_fixture", "cases"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "base_fixture": { "const": "fixtures/metrics/apm-metrics-mvp.json" },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/case" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "patch": {
+      "type": "object",
+      "required": ["op", "path"],
+      "properties": {
+        "op": { "enum": ["add", "remove", "replace"] },
+        "path": { "type": "string", "pattern": "^/" },
+        "value": {},
+        "value_kind": { "const": "nan" }
+      },
+      "additionalProperties": false
+    },
+    "export": {
+      "type": "object",
+      "properties": {
+        "patch": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/patch" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "case": {
+      "type": "object",
+      "required": ["name", "valid", "exports"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "valid": { "type": "boolean" },
+        "exports": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/export" }
+        },
+        "expected_errors": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "valid": { "const": false } }, "required": ["valid"] },
+          "then": { "required": ["expected_errors"] },
+          "else": { "not": { "required": ["expected_errors"] } }
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}

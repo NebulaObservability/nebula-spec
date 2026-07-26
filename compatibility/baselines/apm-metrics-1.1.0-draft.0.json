@@ -1,4 +1,28 @@
 {
+  "accumulation": {
+    "exponential_histogram": {
+      "comparison_scale": "minimum_of_previous_and_current",
+      "scale_change": "allowed"
+    },
+    "non_monotonic_sum_value": "unconstrained",
+    "reset": {
+      "start_time": "strictly_increasing",
+      "trigger": "start_time_unix_nano_change"
+    },
+    "same_start": {
+      "histogram_buckets": "non_decreasing_at_common_scale",
+      "histogram_count": "non_decreasing",
+      "histogram_sum": "non_decreasing",
+      "identical_timestamp": "idempotent_only",
+      "monotonic_sum_value": "non_decreasing"
+    },
+    "series_identity": [
+      "resource_attributes",
+      "instrumentation_scope",
+      "metric_name",
+      "point_attributes"
+    ]
+  },
   "attribute_policy": {
     "forbidden": [
       "url.full",
@@ -437,9 +461,18 @@
       }
     ]
   },
+  "schema_url_policy": {
+    "accepted_source": {
+      "empty": "allowed",
+      "maximum_version": "1.43.0",
+      "prefix": "https://opentelemetry.io/schemas/"
+    },
+    "normalization_target": "https://opentelemetry.io/schemas/1.43.0"
+  },
   "schema_version": 1,
   "transport": {
     "exemplars": {
+      "filtered_attributes": "forbidden",
       "preserve": true,
       "synthesize": false
     },

@@ -1,41 +1,53 @@
 {
-  "contract_sha256": "298d80fad519d2622e9aeed60aa670074bde548b3fdd3c5779ae728946537dbd",
+  "contract_sha256": "925fc1ef3b831ebe8a116545d7fad91b72ab1f1705a3dc6cb9514efc3ffaa286",
   "files": [
     {
       "path": "README.md",
-      "sha256": "b85c09327bfd559c3cc40f8cd58c94dffa0a6b54d80f40eb0ea4178c19271448"
+      "sha256": "bdf118cc1083eeedcb76a3f98ad48a100c424421758dc3d3a08496b88419689b"
     },
     {
       "path": "compatibility/apm-metrics.json",
-      "sha256": "8b175622c9563fcd0459b4f59ab970729fb3fea304dc199acdd6d27b2d825efe"
+      "sha256": "4e1bcde73509c9640c642b96b8eeb625d6c4ed84b2c51004394589cf43da5cf4"
     },
     {
       "path": "contract.json",
-      "sha256": "8b175622c9563fcd0459b4f59ab970729fb3fea304dc199acdd6d27b2d825efe"
+      "sha256": "4e1bcde73509c9640c642b96b8eeb625d6c4ed84b2c51004394589cf43da5cf4"
+    },
+    {
+      "path": "fixtures/apm-metrics-cumulative-sequence-negative-cases.json",
+      "sha256": "316dc59c30d734e619248467a0048a522d1e715f7a3ed16633a9ab5ccac41152"
+    },
+    {
+      "path": "fixtures/apm-metrics-cumulative-sequence.json",
+      "sha256": "4744a25b050da610cd83a07a797ef4d7e48459950eeacee34edeac6a955b0150"
     },
     {
       "path": "fixtures/apm-metrics-explicit-histogram.json",
-      "sha256": "957aec929afa9ddc01fce74b63b9599571f0abf9be21ac1204a75e701b49e502"
+      "sha256": "386187c165ab6f10701ee0949f4641abd114f16556ebaf0a0b185e67f5a47e40"
     },
     {
       "path": "fixtures/apm-metrics-mvp.json",
-      "sha256": "717b72db2446a8ede2594792c282991639491e32885c365407bdb13a72ddc8e2"
+      "sha256": "34e62587a11850b01bd148407e27ed7c4db3e4a6dd3432360986554ece42a404"
     },
     {
       "path": "fixtures/apm-metrics-negative-cases.json",
-      "sha256": "c83eee1b45c32845eafe642805a8256780c2a9791bae937101d3db7cac76a68f"
+      "sha256": "539d5786774d33d05a06e03e16217785a0d8790715ec6799c891122b29373f9e"
     },
     {
       "path": "package.json",
-      "sha256": "54e81bebd53da2ad4bb11377324e52b8f9e264440efa9448b8edb85256e6af8c"
+      "sha256": "a5e7f4a0f97c216d4372207503a30b9c5751441701e56c69eef26764ea0d3fde"
+    },
+    {
+      "path": "schemas/apm-metrics-cumulative-sequence.schema.json",
+      "sha256": "82de9899bb698e828f95d03d9ed5498b5bd9eb616bbc1a8d681ee929c0020e2a"
     },
     {
       "path": "schemas/apm-metrics.schema.json",
-      "sha256": "e66706d49210553d7bbcab0b5ec4c23bb91fe47b24a07aa6bd191bfa4d8fc4f5"
+      "sha256": "796a2b7049cc2618592e38418e93695598842001678bc28b87495d65da120a76"
     },
     {
       "path": "schemas/otlp-metrics-export.schema.json",
-      "sha256": "761c37e448d788020ece8e1e6e33bf67ffc7c87039b8b3330a05496293bb6614"
+      "sha256": "7ce48fc1d16d6890a2c0172281e5ad2cc1a1e4704c9f5cc62370e0b1908b3f33"
     }
   ],
   "format_version": 1,

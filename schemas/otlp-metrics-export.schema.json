@@ -41,17 +41,26 @@
       "type": "object",
       "required": ["timeUnixNano", "traceId", "spanId"],
       "properties": {
-        "filteredAttributes": { "$ref": "#/$defs/attributes" },
+        "filteredAttributes": { "type": "array", "maxItems": 0 },
         "timeUnixNano": { "$ref": "#/$defs/uint64" },
         "asDouble": { "type": "number" },
         "asInt": { "type": "string", "pattern": "^-?[0-9]+$" },
-        "traceId": { "type": "string", "minLength": 1 },
-        "spanId": { "type": "string", "minLength": 1 }
+        "traceId": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+        "spanId": { "type": "string", "pattern": "^[0-9a-f]{16}$" }
       },
       "oneOf": [{ "required": ["asDouble"] }, { "required": ["asInt"] }],
       "additionalProperties": false
     },
     "uint64": { "type": "string", "pattern": "^[0-9]+$" },
+    "otelSchemaUrl": {
+      "oneOf": [
+        { "const": "" },
+        {
+          "type": "string",
+          "pattern": "^https://opentelemetry[.]io/schemas/(0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:[.][0-9A-Za-z-]+)*)?(?:[+][0-9A-Za-z-]+(?:[.][0-9A-Za-z-]+)*)?$"
+        }
+      ]
+    },
     "numberPoint": {
       "type": "object",
       "required": ["timeUnixNano"],
@@ -167,25 +176,25 @@
     },
     "scopeMetrics": {
       "type": "object",
-      "required": ["scope", "metrics", "schemaUrl"],
+      "required": ["scope", "metrics"],
       "properties": {
         "scope": {
           "type": "object",
           "required": ["name"],
           "properties": {
             "name": { "type": "string", "minLength": 1 },
-            "version": { "type": "string", "minLength": 1 }
+            "version": { "type": "string", "minLength": 1, "maxLength": 128 }
           },
           "additionalProperties": false
         },
         "metrics": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/metric" } },
-        "schemaUrl": { "type": "string", "format": "uri" }
+        "schemaUrl": { "$ref": "#/$defs/otelSchemaUrl" }
       },
       "additionalProperties": false
     },
     "resourceMetrics": {
       "type": "object",
-      "required": ["resource", "scopeMetrics", "schemaUrl"],
+      "required": ["resource", "scopeMetrics"],
       "properties": {
         "resource": {
           "type": "object",
@@ -194,7 +203,7 @@
           "additionalProperties": false
         },
         "scopeMetrics": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/scopeMetrics" } },
-        "schemaUrl": { "type": "string", "format": "uri" }
+        "schemaUrl": { "$ref": "#/$defs/otelSchemaUrl" }
       },
       "additionalProperties": false
     }
