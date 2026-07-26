@@ -1,0 +1,488 @@
+{
+  "accumulation": {
+    "exponential_histogram": {
+      "comparison_scale": "minimum_of_previous_and_current",
+      "scale_change": "allowed"
+    },
+    "non_monotonic_sum_value": "unconstrained",
+    "reset": {
+      "start_time": "strictly_increasing",
+      "trigger": "start_time_unix_nano_change"
+    },
+    "same_start": {
+      "histogram_buckets": "non_decreasing_at_common_scale",
+      "histogram_count": "non_decreasing",
+      "histogram_sum": "non_decreasing",
+      "identical_timestamp": "idempotent_only",
+      "monotonic_sum_value": "non_decreasing"
+    },
+    "series_identity": [
+      "resource_attributes",
+      "instrumentation_scope",
+      "metric_name",
+      "point_attributes"
+    ]
+  },
+  "attribute_policy": {
+    "forbidden": [
+      "url.full",
+      "url.path",
+      "url.query",
+      "db.query.text",
+      "exception.message",
+      "exception.stacktrace",
+      "trace.id",
+      "span.id",
+      "trace_id",
+      "span_id"
+    ],
+    "max_attributes_per_point": 16,
+    "max_string_value_bytes": 256,
+    "mode": "allowlist",
+    "unknown_attributes": "reject"
+  },
+  "contract_version": "1.1.0-draft.0",
+  "metrics": [
+    {
+      "aggregations": [
+        "exponential_histogram",
+        "explicit_histogram"
+      ],
+      "attributes": [
+        {
+          "ref": "http.request.method",
+          "requirement": "required"
+        },
+        {
+          "ref": "url.scheme",
+          "requirement": "required"
+        },
+        {
+          "ref": "http.response.status_code",
+          "requirement": "conditional"
+        },
+        {
+          "ref": "error.type",
+          "requirement": "conditional"
+        },
+        {
+          "ref": "http.route",
+          "requirement": "conditional"
+        },
+        {
+          "ref": "network.protocol.version",
+          "requirement": "recommended"
+        },
+        {
+          "ref": "server.address",
+          "requirement": "opt_in"
+        },
+        {
+          "ref": "server.port",
+          "requirement": "opt_in"
+        }
+      ],
+      "exemplars": {
+        "policy": "sampled_trace_context_if_available",
+        "span_id_bytes": 8,
+        "trace_id_bytes": 16
+      },
+      "instrument": "histogram",
+      "name": "http.server.request.duration",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "stable",
+      "temporality": "cumulative",
+      "unit": "s",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "double"
+    },
+    {
+      "aggregations": [
+        "exponential_histogram",
+        "explicit_histogram"
+      ],
+      "attributes": [
+        {
+          "ref": "db.system.name",
+          "requirement": "required"
+        },
+        {
+          "ref": "db.operation.name",
+          "requirement": "conditional"
+        },
+        {
+          "ref": "db.namespace",
+          "requirement": "conditional"
+        },
+        {
+          "ref": "error.type",
+          "requirement": "conditional"
+        },
+        {
+          "ref": "db.response.status_code",
+          "requirement": "conditional"
+        },
+        {
+          "ref": "db.query.summary",
+          "requirement": "recommended"
+        },
+        {
+          "ref": "server.address",
+          "requirement": "recommended"
+        }
+      ],
+      "exemplars": {
+        "policy": "sampled_trace_context_if_available",
+        "span_id_bytes": 8,
+        "trace_id_bytes": 16
+      },
+      "instrument": "histogram",
+      "name": "db.client.operation.duration",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "stable",
+      "temporality": "cumulative",
+      "unit": "s",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "double"
+    },
+    {
+      "attributes": [
+        {
+          "ref": "jvm.memory.type",
+          "requirement": "required"
+        },
+        {
+          "ref": "jvm.memory.pool.name",
+          "requirement": "required"
+        }
+      ],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "updowncounter",
+      "monotonic": false,
+      "name": "jvm.memory.used",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "stable",
+      "temporality": "cumulative",
+      "unit": "By",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "int"
+    },
+    {
+      "attributes": [
+        {
+          "ref": "jvm.memory.type",
+          "requirement": "required"
+        },
+        {
+          "ref": "jvm.memory.pool.name",
+          "requirement": "required"
+        }
+      ],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "updowncounter",
+      "monotonic": false,
+      "name": "jvm.memory.limit",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "stable",
+      "temporality": "cumulative",
+      "unit": "By",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "int"
+    },
+    {
+      "aggregations": [
+        "exponential_histogram",
+        "explicit_histogram"
+      ],
+      "attributes": [
+        {
+          "ref": "jvm.gc.name",
+          "requirement": "required"
+        },
+        {
+          "ref": "jvm.gc.action",
+          "requirement": "required"
+        },
+        {
+          "ref": "jvm.gc.cause",
+          "requirement": "opt_in"
+        }
+      ],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "histogram",
+      "name": "jvm.gc.duration",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "stable",
+      "temporality": "cumulative",
+      "unit": "s",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "double"
+    },
+    {
+      "attributes": [
+        {
+          "ref": "jvm.thread.daemon",
+          "requirement": "required"
+        },
+        {
+          "ref": "jvm.thread.state",
+          "requirement": "required"
+        }
+      ],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "updowncounter",
+      "monotonic": false,
+      "name": "jvm.thread.count",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "stable",
+      "temporality": "cumulative",
+      "unit": "{thread}",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "int"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "counter",
+      "monotonic": true,
+      "name": "jvm.cpu.time",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "stable",
+      "temporality": "cumulative",
+      "unit": "s",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "double"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "updowncounter",
+      "monotonic": false,
+      "name": "jvm.cpu.count",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "stable",
+      "temporality": "cumulative",
+      "unit": "{cpu}",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "int"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "gauge",
+      "name": "jvm.cpu.recent_utilization",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "stable",
+      "temporality": "none",
+      "unit": "1",
+      "value_range": {
+        "maximum": 1,
+        "minimum": 0
+      },
+      "value_type": "double"
+    },
+    {
+      "attributes": [
+        {
+          "ref": "cpu.mode",
+          "requirement": "required"
+        }
+      ],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "counter",
+      "monotonic": true,
+      "name": "process.cpu.time",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "release_candidate",
+      "temporality": "cumulative",
+      "unit": "s",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "double"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "updowncounter",
+      "monotonic": false,
+      "name": "process.memory.usage",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "release_candidate",
+      "temporality": "cumulative",
+      "unit": "By",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "int"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "gauge",
+      "name": "process.uptime",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "release_candidate",
+      "temporality": "none",
+      "unit": "s",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "double"
+    }
+  ],
+  "otel_schema_url": "https://opentelemetry.io/schemas/1.43.0",
+  "red": {
+    "errors": {
+      "attribute": "error.type",
+      "operation": "count_when_present"
+    },
+    "latency": "histogram_distribution",
+    "metric": "http.server.request.duration",
+    "throughput": "histogram_count",
+    "trace_sampling": "independent",
+    "vendor_counters": "forbidden"
+  },
+  "resource": {
+    "attributes": [
+      {
+        "non_empty": true,
+        "ref": "service.name",
+        "requirement": "required",
+        "type": "string"
+      },
+      {
+        "non_empty": true,
+        "ref": "service.namespace",
+        "requirement": "required",
+        "type": "string"
+      },
+      {
+        "non_empty": true,
+        "ref": "service.instance.id",
+        "requirement": "required",
+        "type": "string"
+      },
+      {
+        "non_empty": true,
+        "ref": "service.version",
+        "requirement": "required",
+        "type": "string"
+      },
+      {
+        "non_empty": true,
+        "ref": "deployment.environment.name",
+        "requirement": "required",
+        "type": "string"
+      },
+      {
+        "non_empty": true,
+        "ref": "telemetry.sdk.name",
+        "requirement": "required",
+        "type": "string"
+      },
+      {
+        "non_empty": true,
+        "ref": "telemetry.sdk.language",
+        "requirement": "required",
+        "type": "string"
+      },
+      {
+        "non_empty": true,
+        "ref": "telemetry.sdk.version",
+        "requirement": "required",
+        "type": "string"
+      },
+      {
+        "minimum": 1,
+        "ref": "process.pid",
+        "requirement": "required",
+        "type": "int"
+      },
+      {
+        "non_empty": true,
+        "ref": "process.runtime.name",
+        "requirement": "required",
+        "type": "string"
+      },
+      {
+        "non_empty": true,
+        "ref": "process.runtime.version",
+        "requirement": "required",
+        "type": "string"
+      }
+    ]
+  },
+  "schema_url_policy": {
+    "accepted_source": {
+      "empty": "allowed",
+      "maximum_version": "1.43.0",
+      "prefix": "https://opentelemetry.io/schemas/"
+    },
+    "normalization_target": "https://opentelemetry.io/schemas/1.43.0"
+  },
+  "schema_version": 1,
+  "transport": {
+    "exemplars": {
+      "filtered_attributes": "forbidden",
+      "preserve": true,
+      "synthesize": false
+    },
+    "histogram": {
+      "accepted": [
+        "exponential_histogram",
+        "explicit_histogram"
+      ],
+      "preferred": "exponential_histogram"
+    },
+    "temporality": "cumulative"
+  }
+}

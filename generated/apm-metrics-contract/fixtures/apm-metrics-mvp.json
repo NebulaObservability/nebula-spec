@@ -1,0 +1,529 @@
+{
+  "resourceMetrics": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.namespace",
+            "value": {
+              "stringValue": "shop"
+            }
+          },
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "orders"
+            }
+          },
+          {
+            "key": "service.instance.id",
+            "value": {
+              "stringValue": "orders-01"
+            }
+          },
+          {
+            "key": "service.version",
+            "value": {
+              "stringValue": "1.2.3"
+            }
+          },
+          {
+            "key": "deployment.environment.name",
+            "value": {
+              "stringValue": "test"
+            }
+          },
+          {
+            "key": "telemetry.sdk.name",
+            "value": {
+              "stringValue": "opentelemetry"
+            }
+          },
+          {
+            "key": "telemetry.sdk.language",
+            "value": {
+              "stringValue": "java"
+            }
+          },
+          {
+            "key": "telemetry.sdk.version",
+            "value": {
+              "stringValue": "1.64.0"
+            }
+          },
+          {
+            "key": "process.pid",
+            "value": {
+              "intValue": "4242"
+            }
+          },
+          {
+            "key": "process.runtime.name",
+            "value": {
+              "stringValue": "OpenJDK Runtime Environment"
+            }
+          },
+          {
+            "key": "process.runtime.version",
+            "value": {
+              "stringValue": "21.0.8"
+            }
+          }
+        ]
+      },
+      "scopeMetrics": [
+        {
+          "scope": {
+            "name": "io.opentelemetry.tomcat-10.0",
+            "version": "2.29.0-alpha"
+          },
+          "metrics": [
+            {
+              "name": "http.server.request.duration",
+              "unit": "s",
+              "exponentialHistogram": {
+                "aggregationTemporality": 2,
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "200"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/orders/{id}"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1753401600000000000",
+                    "timeUnixNano": "1753401601000000000",
+                    "count": "3",
+                    "sum": 0.42,
+                    "scale": 3,
+                    "zeroCount": "0",
+                    "positive": {
+                      "offset": -5,
+                      "bucketCounts": [
+                        "0",
+                        "1",
+                        "2"
+                      ]
+                    },
+                    "min": 0.02,
+                    "max": 0.3,
+                    "exemplars": [
+                      {
+                        "filteredAttributes": [],
+                        "timeUnixNano": "1753401600900000000",
+                        "asDouble": 0.3,
+                        "traceId": "0102030405060708090a0b0c0d0e0f10",
+                        "spanId": "1112131415161718"
+                      }
+                    ]
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "500"
+                        }
+                      },
+                      {
+                        "key": "error.type",
+                        "value": {
+                          "stringValue": "500"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/orders/{id}"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1753401600000000000",
+                    "timeUnixNano": "1753401601000000000",
+                    "count": "2",
+                    "sum": 0.7,
+                    "scale": 3,
+                    "zeroCount": "0",
+                    "positive": {
+                      "offset": -5,
+                      "bucketCounts": [
+                        "0",
+                        "0",
+                        "2"
+                      ]
+                    },
+                    "min": 0.2,
+                    "max": 0.5,
+                    "exemplars": [
+                      {
+                        "filteredAttributes": [],
+                        "timeUnixNano": "1753401600950000000",
+                        "asDouble": 0.5,
+                        "traceId": "4142434445464748494a4b4c4d4e4f50",
+                        "spanId": "5152535455565758"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "schemaUrl": "https://opentelemetry.io/schemas/1.43.0"
+        },
+        {
+          "scope": {
+            "name": "io.opentelemetry.jdbc",
+            "version": "2.29.0-alpha"
+          },
+          "metrics": [
+            {
+              "name": "db.client.operation.duration",
+              "unit": "s",
+              "exponentialHistogram": {
+                "aggregationTemporality": 2,
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "db.system.name",
+                        "value": {
+                          "stringValue": "h2"
+                        }
+                      },
+                      {
+                        "key": "db.operation.name",
+                        "value": {
+                          "stringValue": "SELECT"
+                        }
+                      },
+                      {
+                        "key": "db.namespace",
+                        "value": {
+                          "stringValue": "orders"
+                        }
+                      },
+                      {
+                        "key": "db.query.summary",
+                        "value": {
+                          "stringValue": "SELECT orders"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "localhost"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1753401600000000000",
+                    "timeUnixNano": "1753401601000000000",
+                    "count": "2",
+                    "sum": 0.08,
+                    "scale": 3,
+                    "zeroCount": "0",
+                    "positive": {
+                      "offset": -7,
+                      "bucketCounts": [
+                        "1",
+                        "1"
+                      ]
+                    },
+                    "min": 0.03,
+                    "max": 0.05,
+                    "exemplars": [
+                      {
+                        "filteredAttributes": [],
+                        "timeUnixNano": "1753401600800000000",
+                        "asDouble": 0.05,
+                        "traceId": "202122232425262728292a2b2c2d2e2f",
+                        "spanId": "3031323334353637"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "schemaUrl": "https://opentelemetry.io/schemas/1.43.0"
+        },
+        {
+          "scope": {
+            "name": "io.opentelemetry.runtime-telemetry",
+            "version": "2.29.0-alpha"
+          },
+          "metrics": [
+            {
+              "name": "jvm.memory.used",
+              "unit": "By",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": false,
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "jvm.memory.type",
+                        "value": {
+                          "stringValue": "heap"
+                        }
+                      },
+                      {
+                        "key": "jvm.memory.pool.name",
+                        "value": {
+                          "stringValue": "G1 Old Gen"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1753401600000000000",
+                    "timeUnixNano": "1753401601000000000",
+                    "asInt": "134217728"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "jvm.memory.limit",
+              "unit": "By",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": false,
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "jvm.memory.type",
+                        "value": {
+                          "stringValue": "heap"
+                        }
+                      },
+                      {
+                        "key": "jvm.memory.pool.name",
+                        "value": {
+                          "stringValue": "G1 Old Gen"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1753401600000000000",
+                    "timeUnixNano": "1753401601000000000",
+                    "asInt": "536870912"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "jvm.gc.duration",
+              "unit": "s",
+              "exponentialHistogram": {
+                "aggregationTemporality": 2,
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "jvm.gc.name",
+                        "value": {
+                          "stringValue": "G1 Young Generation"
+                        }
+                      },
+                      {
+                        "key": "jvm.gc.action",
+                        "value": {
+                          "stringValue": "end of minor GC"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1753401600000000000",
+                    "timeUnixNano": "1753401601000000000",
+                    "count": "1",
+                    "sum": 0.012,
+                    "scale": 3,
+                    "zeroCount": "0",
+                    "positive": {
+                      "offset": -8,
+                      "bucketCounts": [
+                        "1"
+                      ]
+                    },
+                    "min": 0.012,
+                    "max": 0.012
+                  }
+                ]
+              }
+            },
+            {
+              "name": "jvm.thread.count",
+              "unit": "{thread}",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": false,
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "jvm.thread.daemon",
+                        "value": {
+                          "boolValue": false
+                        }
+                      },
+                      {
+                        "key": "jvm.thread.state",
+                        "value": {
+                          "stringValue": "runnable"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1753401600000000000",
+                    "timeUnixNano": "1753401601000000000",
+                    "asInt": "24"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "jvm.cpu.time",
+              "unit": "s",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": true,
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "startTimeUnixNano": "1753401600000000000",
+                    "timeUnixNano": "1753401601000000000",
+                    "asDouble": 8.25
+                  }
+                ]
+              }
+            },
+            {
+              "name": "jvm.cpu.count",
+              "unit": "{cpu}",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": false,
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "startTimeUnixNano": "1753401600000000000",
+                    "timeUnixNano": "1753401601000000000",
+                    "asInt": "8"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "jvm.cpu.recent_utilization",
+              "unit": "1",
+              "gauge": {
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "timeUnixNano": "1753401601000000000",
+                    "asDouble": 0.22
+                  }
+                ]
+              }
+            },
+            {
+              "name": "process.cpu.time",
+              "unit": "s",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": true,
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "cpu.mode",
+                        "value": {
+                          "stringValue": "user"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1753401600000000000",
+                    "timeUnixNano": "1753401601000000000",
+                    "asDouble": 6.5
+                  }
+                ]
+              }
+            },
+            {
+              "name": "process.memory.usage",
+              "unit": "By",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": false,
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "startTimeUnixNano": "1753401600000000000",
+                    "timeUnixNano": "1753401601000000000",
+                    "asInt": "268435456"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "process.uptime",
+              "unit": "s",
+              "gauge": {
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "timeUnixNano": "1753401601000000000",
+                    "asDouble": 3600.5
+                  }
+                ]
+              }
+            }
+          ],
+          "schemaUrl": "https://opentelemetry.io/schemas/1.43.0"
+        }
+      ],
+      "schemaUrl": "https://opentelemetry.io/schemas/1.43.0"
+    }
+  ]
+}

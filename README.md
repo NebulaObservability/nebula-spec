@@ -46,6 +46,7 @@ Phase 1 已提供：
 - `@nebula-observability/rutp-protobuf` browser-compatible npm tarball
 - `nebula-semantic-registry` Rust crate
 - `@nebula-observability/rum-conformance` npm tarball
+- `@nebula-observability/apm-metrics-contract` npm tarball and standalone zip
 - RUM conformance fixture zip 与 `SHA256SUMS`
 - 含 RUTP v1 Protobuf 和 Go 语义 registry 的 `nebula-rutp-go-module` zip
 
@@ -63,9 +64,12 @@ Go 消费者使用与其 `VERSION` 对应的 `generated/go/v<VERSION>` module ta
 python -m pip install -r tools/requirements.txt
 python tools/spec_tool.py lint
 python tools/spec_tool.py verify-receiver-contract
+python tools/spec_tool.py verify-control-plane-contract
+python tools/spec_tool.py verify-apm-metrics-contract
 python tools/spec_tool.py generate --check
 python tools/spec_tool.py verify-artifacts
-python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.2.0-draft.0.json
+python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.5.0-draft.0.json
+python tools/spec_tool.py breaking-apm-metrics --against compatibility/baselines/apm-metrics-1.1.0-draft.0.json
 npx --yes @bufbuild/buf@1.72.0 lint
 npx --yes @bufbuild/buf@1.72.0 generate --template buf.gen.yaml
 ```
@@ -77,3 +81,16 @@ python tools/spec_tool.py generate
 ```
 
 兼容性快照只能在准备新协议基线时更新，不能用更新快照来隐藏 Breaking Change。
+
+## APM Metrics MVP 发布入口
+
+`specs/apm/v1/metrics.yaml` 固定标准 OTLP Metrics profile，`schemas/apm-metrics.schema.json` 与
+`schemas/otlp-metrics-export.schema.json` 提供结构校验，`fixtures/metrics/apm-metrics-mvp.json`
+提供跨仓库 Golden Fixture。Release `2026.07.6-draft.0` 将 Spec `0.6.0-draft.0`、APM
+extension 和 Metrics contract `1.1.0-draft.0` 绑定到 OTel Schema `1.43.0`。消费者必须按
+Release Manifest 固定版本，不得复制或私有扩展标准指标。
+
+连续 export conformance 另外冻结累计 reset、同 start time 回退和跨 scale bucket 比较；
+OTLP JSON Exemplar ID 使用小写 hex，且禁止 `filteredAttributes` 携带额外维度。
+源 Schema URL 可为空/省略或为不高于 `1.43.0` 的 OpenTelemetry 官方 semver URL，
+并统一归一化到目标 Schema `1.43.0`。

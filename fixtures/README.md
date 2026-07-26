@@ -16,3 +16,16 @@ version，并保留未来的 `schema_url` 和未知成员，用于防止接收�
 `control-plane/` 同时覆盖服务端不可变修订、回滚到更高 revision，以及 SDK 投递
 封套不携带客户端可控的 tenant/project scope。远程配置必须继续使用默认拒绝的
 隐私策略，相关反例用于阻止配置升级为 `allow`。
+
+## APM Metrics
+
+`metrics/apm-metrics-mvp.json` 是包含完整 APM Resource、12 项受支持指标、累计
+Histogram/Sum、Gauge 和 HTTP/JDBC Exemplar 的标准 OTLP Golden Fixture。Collector、
+Backend、Agent 与 Dashboard 必须从版本化 conformance bundle 消费该 Fixture。
+
+`apm-metrics-cumulative-sequence*.json` 将 Golden Fixture 物化为连续 OTLP exports，
+覆盖同一 start time 的累计增长、合法 reset、ExponentialHistogram scale 转换，以及
+count/sum/bucket/monotonic value 回退反例。Exemplar Trace/Span ID 使用 32/16 位小写
+hex；`filteredAttributes` 必须为空。Instrumentation Scope `version` 可省略，但存在时
+必须是 1-128 个字符。真实 Agent 的源 Schema URL 可为空/省略，或为不高于 `1.43.0`
+的 OpenTelemetry 官方 semver URL；Golden Fixture 仍固定归一化目标 `1.43.0`。

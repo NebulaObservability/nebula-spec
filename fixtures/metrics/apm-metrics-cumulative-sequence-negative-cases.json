@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "base_fixture": "fixtures/metrics/apm-metrics-mvp.json",
+  "cases": [
+    {
+      "name": "same-start-count-regression",
+      "valid": false,
+      "exports": [
+        {},
+        {
+          "patch": [
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/timeUnixNano", "value": "1753401602000000000" },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/count", "value": "2" },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/sum", "value": 0.3 },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/positive/bucketCounts", "value": ["0", "1", "1"] }
+          ]
+        }
+      ],
+      "expected_errors": ["cumulative histogram count regressed with an unchanged start time"]
+    },
+    {
+      "name": "same-start-sum-regression",
+      "valid": false,
+      "exports": [
+        {},
+        {
+          "patch": [
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/timeUnixNano", "value": "1753401602000000000" },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/sum", "value": 0.3 }
+          ]
+        }
+      ],
+      "expected_errors": ["cumulative histogram sum regressed with an unchanged start time"]
+    },
+    {
+      "name": "same-start-bucket-regression",
+      "valid": false,
+      "exports": [
+        {},
+        {
+          "patch": [
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/timeUnixNano", "value": "1753401602000000000" },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/positive/bucketCounts", "value": ["0", "0", "3"] }
+          ]
+        }
+      ],
+      "expected_errors": ["cumulative histogram bucket regressed with an unchanged start time"]
+    },
+    {
+      "name": "same-start-monotonic-value-regression",
+      "valid": false,
+      "exports": [
+        {},
+        {
+          "patch": [
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/2/metrics/4/sum/dataPoints/0/timeUnixNano", "value": "1753401602000000000" },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/2/metrics/4/sum/dataPoints/0/asDouble", "value": 7.0 }
+          ]
+        }
+      ],
+      "expected_errors": ["cumulative monotonic sum value regressed with an unchanged start time"]
+    },
+    {
+      "name": "same-start-scale-transition-regression",
+      "valid": false,
+      "exports": [
+        {},
+        {
+          "patch": [
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/timeUnixNano", "value": "1753401602000000000" },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/scale", "value": 2 },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/positive/offset", "value": -3 },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/positive/bucketCounts", "value": ["1", "2"] }
+          ]
+        }
+      ],
+      "expected_errors": ["cumulative histogram bucket regressed with an unchanged start time"]
+    },
+    {
+      "name": "start-time-regression",
+      "valid": false,
+      "exports": [
+        {},
+        {
+          "patch": [
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/startTimeUnixNano", "value": "1753401599000000000" },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/timeUnixNano", "value": "1753401602000000000" },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/count", "value": "1" },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/sum", "value": 0.1 },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/positive/bucketCounts", "value": ["0", "1", "0"] },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/min", "value": 0.1 },
+            { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/max", "value": 0.1 }
+          ]
+        }
+      ],
+      "expected_errors": ["cumulative reset start time must strictly advance"]
+    }
+  ]
+}

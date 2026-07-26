@@ -1,5 +1,17 @@
 schema_version: 1
 metrics:
+  - { name: http.server.request.duration, unit: s, instrument: histogram, value_type: double, stability: stable, attributes: [http.request.method, url.scheme, http.response.status_code, error.type, http.route, network.protocol.version, server.address, server.port] }
+  - { name: db.client.operation.duration, unit: s, instrument: histogram, value_type: double, stability: stable, attributes: [db.system.name, db.operation.name, db.namespace, error.type, db.response.status_code, db.query.summary, server.address] }
+  - { name: jvm.memory.used, unit: By, instrument: updowncounter, value_type: int, stability: stable, attributes: [jvm.memory.type, jvm.memory.pool.name] }
+  - { name: jvm.memory.limit, unit: By, instrument: updowncounter, value_type: int, stability: stable, attributes: [jvm.memory.type, jvm.memory.pool.name] }
+  - { name: jvm.gc.duration, unit: s, instrument: histogram, value_type: double, stability: stable, attributes: [jvm.gc.name, jvm.gc.action, jvm.gc.cause] }
+  - { name: jvm.thread.count, unit: "{thread}", instrument: updowncounter, value_type: int, stability: stable, attributes: [jvm.thread.daemon, jvm.thread.state] }
+  - { name: jvm.cpu.time, unit: s, instrument: counter, value_type: double, stability: stable, attributes: [] }
+  - { name: jvm.cpu.count, unit: "{cpu}", instrument: updowncounter, value_type: int, stability: stable, attributes: [] }
+  - { name: jvm.cpu.recent_utilization, unit: "1", instrument: gauge, value_type: double, stability: stable, attributes: [] }
+  - { name: process.cpu.time, unit: s, instrument: counter, value_type: double, stability: release_candidate, attributes: [cpu.mode] }
+  - { name: process.memory.usage, unit: By, instrument: updowncounter, value_type: int, stability: release_candidate, attributes: [] }
+  - { name: process.uptime, unit: s, instrument: gauge, value_type: double, stability: release_candidate, attributes: [] }
   - { name: rum.session.count, unit: "{session}", instrument: counter, value_type: int, stability: stable, attributes: [service.name, deployment.environment.name] }
   - { name: rum.view.duration, unit: ms, instrument: histogram, value_type: double, stability: stable, attributes: [rum.view.name, service.name] }
   - { name: rum.http.client.duration, unit: ms, instrument: histogram, value_type: double, stability: stable, attributes: [http.request.method, server.address, http.response.status_code] }

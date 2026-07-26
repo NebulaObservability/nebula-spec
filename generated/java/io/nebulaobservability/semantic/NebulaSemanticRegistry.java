@@ -13,6 +13,13 @@ public final class NebulaSemanticRegistry {
     public static final String BROWSER_MOBILE = "browser.mobile";
     public static final String BROWSER_PLATFORM = "browser.platform";
     public static final String CONTAINER_ID = "container.id";
+    public static final String CPU_MODE = "cpu.mode";
+    public static final String DB_NAMESPACE = "db.namespace";
+    public static final String DB_OPERATION_NAME = "db.operation.name";
+    public static final String DB_QUERY_SUMMARY = "db.query.summary";
+    public static final String DB_QUERY_TEXT = "db.query.text";
+    public static final String DB_RESPONSE_STATUS_CODE = "db.response.status_code";
+    public static final String DB_SYSTEM_NAME = "db.system.name";
     public static final String DEPLOYMENT_ENVIRONMENT_NAME = "deployment.environment.name";
     public static final String ENDUSER_PSEUDO_ID = "enduser.pseudo.id";
     public static final String ERROR_TYPE = "error.type";
@@ -23,6 +30,14 @@ public final class NebulaSemanticRegistry {
     public static final String HOST_NAME = "host.name";
     public static final String HTTP_REQUEST_METHOD = "http.request.method";
     public static final String HTTP_RESPONSE_STATUS_CODE = "http.response.status_code";
+    public static final String HTTP_ROUTE = "http.route";
+    public static final String JVM_GC_ACTION = "jvm.gc.action";
+    public static final String JVM_GC_CAUSE = "jvm.gc.cause";
+    public static final String JVM_GC_NAME = "jvm.gc.name";
+    public static final String JVM_MEMORY_POOL_NAME = "jvm.memory.pool.name";
+    public static final String JVM_MEMORY_TYPE = "jvm.memory.type";
+    public static final String JVM_THREAD_DAEMON = "jvm.thread.daemon";
+    public static final String JVM_THREAD_STATE = "jvm.thread.state";
     public static final String K8S_CLUSTER_NAME = "k8s.cluster.name";
     public static final String K8S_CONTAINER_NAME = "k8s.container.name";
     public static final String K8S_NAMESPACE_NAME = "k8s.namespace.name";
@@ -88,6 +103,7 @@ public final class NebulaSemanticRegistry {
     public static final String TELEMETRY_SDK_VERSION = "telemetry.sdk.version";
     public static final String URL_FULL = "url.full";
     public static final String URL_PATH = "url.path";
+    public static final String URL_QUERY = "url.query";
     public static final String URL_SCHEME = "url.scheme";
     public static final String USER_AGENT_ORIGINAL = "user_agent.original";
   }
@@ -125,6 +141,18 @@ public final class NebulaSemanticRegistry {
 
   public static final class Metrics {
     private Metrics() {}
+    public static final String DB_CLIENT_OPERATION_DURATION = "db.client.operation.duration";
+    public static final String HTTP_SERVER_REQUEST_DURATION = "http.server.request.duration";
+    public static final String JVM_CPU_COUNT = "jvm.cpu.count";
+    public static final String JVM_CPU_RECENT_UTILIZATION = "jvm.cpu.recent_utilization";
+    public static final String JVM_CPU_TIME = "jvm.cpu.time";
+    public static final String JVM_GC_DURATION = "jvm.gc.duration";
+    public static final String JVM_MEMORY_LIMIT = "jvm.memory.limit";
+    public static final String JVM_MEMORY_USED = "jvm.memory.used";
+    public static final String JVM_THREAD_COUNT = "jvm.thread.count";
+    public static final String PROCESS_CPU_TIME = "process.cpu.time";
+    public static final String PROCESS_MEMORY_USAGE = "process.memory.usage";
+    public static final String PROCESS_UPTIME = "process.uptime";
     public static final String RUM_ERROR_COUNT = "rum.error.count";
     public static final String RUM_HTTP_CLIENT_DURATION = "rum.http.client.duration";
     public static final String RUM_LONG_TASK_DURATION = "rum.long_task.duration";

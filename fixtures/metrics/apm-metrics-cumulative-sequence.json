@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "base_fixture": "fixtures/metrics/apm-metrics-mvp.json",
+  "cases": [
+    {
+      "name": "cumulative-growth",
+      "valid": true,
+      "exports": [
+        {},
+        {
+          "patch": [
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/timeUnixNano",
+              "value": "1753401602000000000"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/count",
+              "value": "5"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/sum",
+              "value": 0.72
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/positive/bucketCounts",
+              "value": ["0", "2", "3"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "start-time-reset",
+      "valid": true,
+      "exports": [
+        {},
+        {
+          "patch": [
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/startTimeUnixNano",
+              "value": "1753401601500000000"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/timeUnixNano",
+              "value": "1753401602000000000"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/count",
+              "value": "1"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/sum",
+              "value": 0.1
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/positive/bucketCounts",
+              "value": ["0", "1", "0"]
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/min",
+              "value": 0.1
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/max",
+              "value": 0.1
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/exemplars/0/timeUnixNano",
+              "value": "1753401601900000000"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/exemplars/0/asDouble",
+              "value": 0.1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "exponential-scale-transition",
+      "valid": true,
+      "exports": [
+        {
+          "patch": [
+            {
+              "op": "remove",
+              "path": "/resourceMetrics/0/scopeMetrics/0/scope/version"
+            }
+          ]
+        },
+        {
+          "patch": [
+            {
+              "op": "remove",
+              "path": "/resourceMetrics/0/scopeMetrics/0/scope/version"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/timeUnixNano",
+              "value": "1753401602000000000"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/scale",
+              "value": 2
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/positive/offset",
+              "value": -3
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/exponentialHistogram/dataPoints/0/positive/bucketCounts",
+              "value": ["0", "3"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "agent-source-schema-compatibility",
+      "valid": true,
+      "exports": [
+        {
+          "patch": [
+            {
+              "op": "remove",
+              "path": "/resourceMetrics/0/scopeMetrics/1/scope/version"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/schemaUrl",
+              "value": "https://opentelemetry.io/schemas/1.24.0"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/schemaUrl",
+              "value": "https://opentelemetry.io/schemas/1.41.0"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/1/schemaUrl",
+              "value": ""
+            },
+            {
+              "op": "remove",
+              "path": "/resourceMetrics/0/scopeMetrics/2/schemaUrl"
+            }
+          ]
+        },
+        {
+          "patch": [
+            {
+              "op": "remove",
+              "path": "/resourceMetrics/0/scopeMetrics/1/scope/version"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/schemaUrl",
+              "value": "https://opentelemetry.io/schemas/1.24.0"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/schemaUrl",
+              "value": "https://opentelemetry.io/schemas/1.41.0"
+            },
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/1/schemaUrl",
+              "value": ""
+            },
+            {
+              "op": "remove",
+              "path": "/resourceMetrics/0/scopeMetrics/2/schemaUrl"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "scope-schema-url-transition",
+      "valid": true,
+      "exports": [
+        {},
+        {
+          "patch": [
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/schemaUrl",
+              "value": "https://opentelemetry.io/schemas/1.42.0"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

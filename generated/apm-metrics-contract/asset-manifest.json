@@ -1,0 +1,58 @@
+{
+  "contract_sha256": "925fc1ef3b831ebe8a116545d7fad91b72ab1f1705a3dc6cb9514efc3ffaa286",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "bdf118cc1083eeedcb76a3f98ad48a100c424421758dc3d3a08496b88419689b"
+    },
+    {
+      "path": "compatibility/apm-metrics.json",
+      "sha256": "4e1bcde73509c9640c642b96b8eeb625d6c4ed84b2c51004394589cf43da5cf4"
+    },
+    {
+      "path": "contract.json",
+      "sha256": "4e1bcde73509c9640c642b96b8eeb625d6c4ed84b2c51004394589cf43da5cf4"
+    },
+    {
+      "path": "fixtures/apm-metrics-cumulative-sequence-negative-cases.json",
+      "sha256": "316dc59c30d734e619248467a0048a522d1e715f7a3ed16633a9ab5ccac41152"
+    },
+    {
+      "path": "fixtures/apm-metrics-cumulative-sequence.json",
+      "sha256": "b721c418539071740bfe408fa8283f268bd90a29f8dee8bc2a424bbaddd6739e"
+    },
+    {
+      "path": "fixtures/apm-metrics-explicit-histogram.json",
+      "sha256": "386187c165ab6f10701ee0949f4641abd114f16556ebaf0a0b185e67f5a47e40"
+    },
+    {
+      "path": "fixtures/apm-metrics-mvp.json",
+      "sha256": "34e62587a11850b01bd148407e27ed7c4db3e4a6dd3432360986554ece42a404"
+    },
+    {
+      "path": "fixtures/apm-metrics-negative-cases.json",
+      "sha256": "539d5786774d33d05a06e03e16217785a0d8790715ec6799c891122b29373f9e"
+    },
+    {
+      "path": "package.json",
+      "sha256": "a5e7f4a0f97c216d4372207503a30b9c5751441701e56c69eef26764ea0d3fde"
+    },
+    {
+      "path": "schemas/apm-metrics-cumulative-sequence.schema.json",
+      "sha256": "82de9899bb698e828f95d03d9ed5498b5bd9eb616bbc1a8d681ee929c0020e2a"
+    },
+    {
+      "path": "schemas/apm-metrics.schema.json",
+      "sha256": "796a2b7049cc2618592e38418e93695598842001678bc28b87495d65da120a76"
+    },
+    {
+      "path": "schemas/otlp-metrics-export.schema.json",
+      "sha256": "7ce48fc1d16d6890a2c0172281e5ad2cc1a1e4704c9f5cc62370e0b1908b3f33"
+    }
+  ],
+  "format_version": 1,
+  "metrics_contract_version": "1.1.0-draft.0",
+  "otel_schema": "1.43.0",
+  "release": "2026.07.6-draft.0",
+  "spec_version": "0.6.0-draft.0"
+}

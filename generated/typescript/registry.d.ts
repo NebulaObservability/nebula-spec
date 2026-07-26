@@ -8,6 +8,13 @@ export declare const Attributes: {
   readonly BrowserMobile: "browser.mobile";
   readonly BrowserPlatform: "browser.platform";
   readonly ContainerId: "container.id";
+  readonly CpuMode: "cpu.mode";
+  readonly DbNamespace: "db.namespace";
+  readonly DbOperationName: "db.operation.name";
+  readonly DbQuerySummary: "db.query.summary";
+  readonly DbQueryText: "db.query.text";
+  readonly DbResponseStatusCode: "db.response.status_code";
+  readonly DbSystemName: "db.system.name";
   readonly DeploymentEnvironmentName: "deployment.environment.name";
   readonly EnduserPseudoId: "enduser.pseudo.id";
   readonly ErrorType: "error.type";
@@ -18,6 +25,14 @@ export declare const Attributes: {
   readonly HostName: "host.name";
   readonly HttpRequestMethod: "http.request.method";
   readonly HttpResponseStatusCode: "http.response.status_code";
+  readonly HttpRoute: "http.route";
+  readonly JvmGcAction: "jvm.gc.action";
+  readonly JvmGcCause: "jvm.gc.cause";
+  readonly JvmGcName: "jvm.gc.name";
+  readonly JvmMemoryPoolName: "jvm.memory.pool.name";
+  readonly JvmMemoryType: "jvm.memory.type";
+  readonly JvmThreadDaemon: "jvm.thread.daemon";
+  readonly JvmThreadState: "jvm.thread.state";
   readonly K8sClusterName: "k8s.cluster.name";
   readonly K8sContainerName: "k8s.container.name";
   readonly K8sNamespaceName: "k8s.namespace.name";
@@ -83,6 +98,7 @@ export declare const Attributes: {
   readonly TelemetrySdkVersion: "telemetry.sdk.version";
   readonly UrlFull: "url.full";
   readonly UrlPath: "url.path";
+  readonly UrlQuery: "url.query";
   readonly UrlScheme: "url.scheme";
   readonly UserAgentOriginal: "user_agent.original";
 };
@@ -118,6 +134,18 @@ export declare const Events: {
 };
 
 export declare const Metrics: {
+  readonly DbClientOperationDuration: "db.client.operation.duration";
+  readonly HttpServerRequestDuration: "http.server.request.duration";
+  readonly JvmCpuCount: "jvm.cpu.count";
+  readonly JvmCpuRecentUtilization: "jvm.cpu.recent_utilization";
+  readonly JvmCpuTime: "jvm.cpu.time";
+  readonly JvmGcDuration: "jvm.gc.duration";
+  readonly JvmMemoryLimit: "jvm.memory.limit";
+  readonly JvmMemoryUsed: "jvm.memory.used";
+  readonly JvmThreadCount: "jvm.thread.count";
+  readonly ProcessCpuTime: "process.cpu.time";
+  readonly ProcessMemoryUsage: "process.memory.usage";
+  readonly ProcessUptime: "process.uptime";
   readonly RumErrorCount: "rum.error.count";
   readonly RumHttpClientDuration: "rum.http.client.duration";
   readonly RumLongTaskDuration: "rum.long_task.duration";
