@@ -190,6 +190,22 @@
           ]
         }
       ]
+    },
+    {
+      "name": "scope-schema-url-transition",
+      "valid": true,
+      "exports": [
+        {},
+        {
+          "patch": [
+            {
+              "op": "replace",
+              "path": "/resourceMetrics/0/scopeMetrics/0/schemaUrl",
+              "value": "https://opentelemetry.io/schemas/1.42.0"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

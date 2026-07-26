@@ -1,5 +1,8 @@
 $ErrorActionPreference = 'Stop'
 
+python -m unittest tools/test_spec_tool.py
+if ($LASTEXITCODE -ne 0) { throw 'Specification validator unit tests failed.' }
+
 python tools/spec_tool.py lint
 if ($LASTEXITCODE -ne 0) { throw 'Specification lint failed.' }
 

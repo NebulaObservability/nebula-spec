@@ -19,7 +19,7 @@
     },
     {
       "path": "fixtures/apm-metrics-cumulative-sequence.json",
-      "sha256": "4744a25b050da610cd83a07a797ef4d7e48459950eeacee34edeac6a955b0150"
+      "sha256": "b721c418539071740bfe408fa8283f268bd90a29f8dee8bc2a424bbaddd6739e"
     },
     {
       "path": "fixtures/apm-metrics-explicit-histogram.json",

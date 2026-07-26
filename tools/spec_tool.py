@@ -140,6 +140,7 @@ EXPECTED_APM_SEQUENCE_CASES = {
     "start-time-reset",
     "exponential-scale-transition",
     "agent-source-schema-compatibility",
+    "scope-schema-url-transition",
 }
 EXPECTED_APM_SEQUENCE_NEGATIVE_CASES = {
     "same-start-bucket-regression",
@@ -1144,7 +1145,6 @@ def metric_series_states(
                 {
                     "name": scope["name"],
                     "version": scope.get("version"),
-                    "schema_url": scope_metric.get("schemaUrl"),
                 },
                 sort_keys=True,
                 separators=(",", ":"),
@@ -1263,6 +1263,30 @@ def histogram_accumulation_errors(
     return errors
 
 
+def monotonic_sum_accumulation_errors(
+    previous: dict[str, Any],
+    current: dict[str, Any],
+    label: str,
+) -> list[str]:
+    errors: list[str] = []
+    regressed = False
+    if "asInt" in previous and "asInt" in current:
+        try:
+            regressed = int(current["asInt"]) < int(previous["asInt"])
+        except (TypeError, ValueError):
+            errors.append(f"{label}: cumulative monotonic sum integer values must be numeric")
+    elif "asDouble" in previous and "asDouble" in current:
+        previous_value = finite_number(previous["asDouble"], f"{label}/previous/asDouble", errors)
+        current_value = finite_number(current["asDouble"], f"{label}/asDouble", errors)
+        if previous_value is not None and current_value is not None:
+            regressed = current_value < previous_value
+    else:
+        errors.append(f"{label}: cumulative monotonic sum numeric representation changed")
+    if regressed:
+        errors.append(f"{label}: cumulative monotonic sum value regressed with an unchanged start time")
+    return errors
+
+
 def cumulative_sequence_errors(exports: list[dict[str, Any]], label: str) -> list[str]:
     errors: list[str] = []
     previous_states: dict[tuple[str, ...], dict[str, Any]] | None = None
@@ -1325,15 +1349,7 @@ def cumulative_sequence_errors(exports: list[dict[str, Any]], label: str) -> lis
                     )
                 )
             elif signal_name == "sum" and current_state["signal"].get("isMonotonic") is True:
-                previous_value = previous_point.get("asDouble", previous_point.get("asInt"))
-                current_value = current_point.get("asDouble", current_point.get("asInt"))
-                try:
-                    if float(current_value) < float(previous_value):
-                        errors.append(
-                            f"{series_label}: cumulative monotonic sum value regressed with an unchanged start time"
-                        )
-                except (TypeError, ValueError):
-                    errors.append(f"{series_label}: cumulative monotonic sum values must be numeric")
+                errors.extend(monotonic_sum_accumulation_errors(previous_point, current_point, series_label))
         previous_states = states
     return errors
 
