@@ -17,7 +17,18 @@ protocols:
     accepts:
       - ">=1.0.0-draft.1 <2.0.0"
     base_protocol: OTLP 1.x
+  control_plane_config:
+    current: 1.0.0-draft.1
+    accepts:
+      - ">=1.0.0-draft.1 <2.0.0"
+    delivery:
+      scope: authenticated_server_context
+      active_only: true
+      etag: opaque_revision_representation
+    privacy:
+      local_default: deny
 config:
   rum: rutp-config/v1
+  control_plane: control-plane-config/v1
 diagnostics:
   status: deferred

@@ -10,7 +10,8 @@
       "required": ["rutp", "apm_extension"],
       "properties": {
         "rutp": { "$ref": "#/$defs/semver" },
-        "apm_extension": { "$ref": "#/$defs/semver" }
+        "apm_extension": { "$ref": "#/$defs/semver" },
+        "control_plane_config": { "$ref": "#/$defs/semver" }
       },
       "additionalProperties": false
     },

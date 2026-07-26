@@ -1,0 +1,53 @@
+{
+  "contract_version": "1.0.0-draft.1",
+  "revision": 12,
+  "etag": "cfg-rum-web-default-r12",
+  "status": "active",
+  "tenant_id": "tenant-shop",
+  "document": {
+    "config_version": "cfg-rum-web-default-r12",
+    "issued_at": "2026-07-26T08:01:00Z",
+    "expires_at": "2026-07-27T08:01:00Z",
+    "protocol_version": "1.0.0-draft.1",
+    "encoding": "protobuf",
+    "compression": "gzip",
+    "sampling": {
+      "session_rate": 0.2,
+      "trace_rate": 0.1,
+      "replay_rate": 0,
+      "always_keep_events": []
+    },
+    "privacy": {
+      "policy_id": "nebula-default-deny",
+      "policy_version": "1.0.0-draft.1",
+      "default_action": "drop"
+    },
+    "upload": {
+      "endpoint": "/rum/v1/batches",
+      "batch_max_records": 100,
+      "batch_max_bytes": 262144,
+      "flush_interval_millis": 5000
+    },
+    "instrumentation": {
+      "navigation": true,
+      "resource": true,
+      "web_vitals": true,
+      "long_tasks": true,
+      "fetch_xhr": true,
+      "errors": true,
+      "console": false,
+      "trace_allow_origins": [],
+      "trace_deny_origins": []
+    },
+    "kill_switch": {
+      "disable_all": false,
+      "disable_replay": true,
+      "disable_network_body": true,
+      "disable_console": true,
+      "disable_trace_propagation": false,
+      "disable_webview_bridge": true
+    },
+    "key_id": "config-key-2026-01",
+    "signature": "BASE64_SIGNATURE_FIXTURE"
+  }
+}

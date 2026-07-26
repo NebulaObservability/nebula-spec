@@ -34,6 +34,7 @@ Phase 1 已提供：
 - 语义、枚举和隐私注册表。
 - RUM Batch、ACK、配置、隐私和 Release Manifest JSON Schema。
 - RUTP Receiver 的认证主体 tenant/project 绑定和受限 JSON 调试边界。
+- Control Plane v1 的不可变配置修订、回滚与不含 scope 的 SDK delivery 封套。
 - TypeScript、Java、Go、Rust 语义常量生成，以及可消费的 Go RUTP v1 Protobuf module。
 - Golden Fixtures、协议 Lint 和兼容性快照检查。
 

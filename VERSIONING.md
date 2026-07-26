@@ -45,3 +45,9 @@ RUTP Receiver 的认证主体绑定、项目声明校验和 JSON 调试规则同
 发布。仅新增可选 JSON 字段、Fixture 或兼容接收语义时提升 Minor；只有改变
 Protobuf 编码、删除字段或改变既有字段语义时才提升 RUTP Major。Receiver 不能以
 客户端 `project_id` 选择 tenant/project，这一安全边界不得作为兼容性例外放宽。
+
+Control Plane Config 的服务端修订记录与 SDK delivery 封套也随 `VERSION` 发布，
+并在 Release Manifest 中声明独立的 `control_plane_config` 协议版本。新增可选的
+管理元数据或 SDK capability 可以提升 Minor；改变 delivery 的认证 scope、active
+revision、ETag 或默认拒绝隐私边界属于不兼容的运行时语义变更。服务端 scope 和
+审计字段不得出现在 SDK delivery 中，也不得由浏览器或遥测正文选择。
