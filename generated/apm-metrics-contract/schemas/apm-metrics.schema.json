@@ -125,8 +125,8 @@
       "properties": {
         "attributes": {
           "type": "array",
-          "minItems": 11,
-          "maxItems": 11,
+          "minItems": 13,
+          "maxItems": 13,
           "items": { "$ref": "#/$defs/resourceAttribute" }
         }
       },
@@ -151,8 +151,8 @@
     },
     "metrics": {
       "type": "array",
-      "minItems": 12,
-      "maxItems": 12,
+      "minItems": 21,
+      "maxItems": 21,
       "items": { "$ref": "#/$defs/metric" }
     }
   },
@@ -177,7 +177,7 @@
       "properties": {
         "ref": { "type": "string", "pattern": "^[a-z][a-z0-9_.]*$" },
         "type": { "enum": ["string", "int"] },
-        "requirement": { "const": "required" },
+        "requirement": { "enum": ["required", "optional"] },
         "non_empty": { "const": true },
         "minimum": { "type": "integer", "minimum": 0 }
       },
@@ -218,7 +218,7 @@
       "required": ["name", "requirement", "source", "stability", "instrument", "value_type", "unit", "temporality", "attributes", "exemplars"],
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z][a-z0-9_.]*$" },
-        "requirement": { "const": "required" },
+        "requirement": { "enum": ["required", "conditional"] },
         "source": { "const": "otel" },
         "stability": { "enum": ["stable", "release_candidate", "development"] },
         "instrument": { "enum": ["counter", "updowncounter", "gauge", "histogram"] },

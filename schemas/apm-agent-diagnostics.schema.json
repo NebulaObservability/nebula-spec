@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/spec/apm-agent-diagnostics.schema.json",
+  "type": "object",
+  "required": [
+    "state",
+    "noop",
+    "trace_queue_capacity",
+    "spans_ended",
+    "spans_exported",
+    "spans_dropped",
+    "trace_batches",
+    "trace_export_failures",
+    "metric_exports",
+    "metric_export_failures",
+    "flushes",
+    "flush_failures",
+    "shutdowns",
+    "shutdown_timeouts",
+    "last_error_code",
+    "last_export_success"
+  ],
+  "properties": {
+    "state": { "enum": ["disabled", "running", "shutting_down", "stopped"] },
+    "noop": { "type": "boolean" },
+    "trace_queue_capacity": { "$ref": "#/$defs/counter" },
+    "spans_ended": { "$ref": "#/$defs/counter" },
+    "spans_exported": { "$ref": "#/$defs/counter" },
+    "spans_dropped": { "$ref": "#/$defs/counter" },
+    "trace_batches": { "$ref": "#/$defs/counter" },
+    "trace_export_failures": { "$ref": "#/$defs/counter" },
+    "metric_exports": { "$ref": "#/$defs/counter" },
+    "metric_export_failures": { "$ref": "#/$defs/counter" },
+    "flushes": { "$ref": "#/$defs/counter" },
+    "flush_failures": { "$ref": "#/$defs/counter" },
+    "shutdowns": { "$ref": "#/$defs/counter" },
+    "shutdown_timeouts": { "$ref": "#/$defs/counter" },
+    "last_error_code": {
+      "enum": ["", "queue_full", "export_timeout", "export_canceled", "export_failed", "shutdown_timeout"]
+    },
+    "last_export_success": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "format": "date-time" }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "counter": { "type": "integer", "minimum": 0 }
+  }
+}

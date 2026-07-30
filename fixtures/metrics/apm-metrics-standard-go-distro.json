@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "base_fixture": "fixtures/metrics/apm-metrics-go-agent.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/resourceMetrics/0/resource/attributes/8/value/stringValue",
+      "value": "opentelemetry-go"
+    },
+    {
+      "op": "replace",
+      "path": "/resourceMetrics/0/resource/attributes/9/value/stringValue",
+      "value": "1.44.0"
+    }
+  ]
+}

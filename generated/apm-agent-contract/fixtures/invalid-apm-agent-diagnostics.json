@@ -1,0 +1,18 @@
+{
+  "state": "running",
+  "noop": false,
+  "trace_queue_capacity": 2048,
+  "spans_ended": 25,
+  "spans_exported": 20,
+  "spans_dropped": 5,
+  "trace_batches": 2,
+  "trace_export_failures": 1,
+  "metric_exports": 3,
+  "metric_export_failures": 1,
+  "flushes": 1,
+  "flush_failures": 0,
+  "shutdowns": 0,
+  "shutdown_timeouts": 0,
+  "last_error_code": "collector_token=not-allowed",
+  "last_export_success": null
+}

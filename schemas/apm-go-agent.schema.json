@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/spec/apm-go-agent.schema.json",
+  "type": "object",
+  "required": ["schema_version", "contract_version", "apm_extension_version", "metrics_contract_version", "module", "resource", "runtime_instrumentation", "config", "diagnostics"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract_version": { "const": "1.0.0-draft.0" },
+    "apm_extension_version": { "const": "1.2.0-draft.0" },
+    "metrics_contract_version": { "const": "1.2.0-draft.0" },
+    "module": {
+      "type": "object",
+      "required": ["path", "tag_prefix"],
+      "properties": {
+        "path": { "const": "github.com/NebulaObservability/nebula-apm-agent/go" },
+        "tag_prefix": { "const": "go/v" }
+      },
+      "additionalProperties": false
+    },
+    "resource": {
+      "type": "object",
+      "required": ["optional_pair", "first_party", "standard_distro_compatible"],
+      "properties": {
+        "optional_pair": { "const": ["telemetry.distro.name", "telemetry.distro.version"] },
+        "first_party": {
+          "type": "object",
+          "required": ["distro_name", "sdk_language"],
+          "properties": {
+            "distro_name": { "const": "nebula-go-agent" },
+            "sdk_language": { "const": "go" }
+          },
+          "additionalProperties": false
+        },
+        "standard_distro_compatible": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "runtime_instrumentation": {
+      "type": "object",
+      "required": ["module", "version", "scope", "metrics", "deprecated_runtime_metrics"],
+      "properties": {
+        "module": { "const": "go.opentelemetry.io/contrib/instrumentation/runtime" },
+        "version": { "const": "0.69.0" },
+        "scope": { "const": "go.opentelemetry.io/contrib/instrumentation/runtime" },
+        "metrics": {
+          "const": ["go.memory.used", "go.memory.limit", "go.memory.allocated", "go.memory.allocations", "go.memory.gc.goal", "go.goroutine.count", "go.processor.limit", "go.config.gogc", "go.schedule.duration"]
+        },
+        "deprecated_runtime_metrics": { "const": "forbidden" }
+      },
+      "additionalProperties": false
+    },
+    "config": {
+      "type": "object",
+      "required": ["version", "schema", "disabled_endpoint", "protocol", "runtime_failure", "invalid_config"],
+      "properties": {
+        "version": { "const": "1.0.0-draft.0" },
+        "schema": { "const": "schemas/apm-agent-config.schema.json" },
+        "disabled_endpoint": { "const": "" },
+        "protocol": { "const": "http/protobuf" },
+        "runtime_failure": { "const": "fail_open" },
+        "invalid_config": { "const": "fail_fast" }
+      },
+      "additionalProperties": false
+    },
+    "diagnostics": {
+      "type": "object",
+      "required": ["version", "schema", "secret_values", "exact_queue_occupancy", "exact_retry_attempts", "fields", "error_codes"],
+      "properties": {
+        "version": { "const": "1.0.0-draft.0" },
+        "schema": { "const": "schemas/apm-agent-diagnostics.schema.json" },
+        "secret_values": { "const": "forbidden" },
+        "exact_queue_occupancy": { "const": "unavailable" },
+        "exact_retry_attempts": { "const": "unavailable" },
+        "fields": {
+          "const": ["state", "noop", "trace_queue_capacity", "spans_ended", "spans_exported", "spans_dropped", "trace_batches", "trace_export_failures", "metric_exports", "metric_export_failures", "flushes", "flush_failures", "shutdowns", "shutdown_timeouts", "last_error_code", "last_export_success"]
+        },
+        "error_codes": {
+          "const": ["queue_full", "export_timeout", "export_canceled", "export_failed", "shutdown_timeout"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

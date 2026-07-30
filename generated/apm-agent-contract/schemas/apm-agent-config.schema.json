@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/spec/apm-agent-config.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "contract_version",
+    "enabled",
+    "endpoint",
+    "protocol",
+    "header_names",
+    "identity",
+    "trace_sample_ratio",
+    "trace_queue_size",
+    "trace_batch_size",
+    "trace_batch_timeout_ms",
+    "export_timeout_ms",
+    "metric_export_interval_ms",
+    "runtime_read_interval_ms",
+    "shutdown_timeout_ms",
+    "limits",
+    "excluded_server_routes",
+    "excluded_client_routes"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "contract_version": { "const": "1.0.0-draft.0" },
+    "enabled": { "type": "boolean" },
+    "endpoint": {
+      "oneOf": [
+        { "const": "" },
+        { "type": "string", "format": "uri", "pattern": "^https?://[^/?#@]+(?:/[^?#]*)?$" }
+      ]
+    },
+    "protocol": { "const": "http/protobuf" },
+    "header_names": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$" }
+    },
+    "identity": {
+      "type": "object",
+      "required": ["namespace", "name", "instance_id", "version", "environment"],
+      "properties": {
+        "namespace": { "$ref": "#/$defs/identityValue" },
+        "name": { "$ref": "#/$defs/identityValue" },
+        "instance_id": { "$ref": "#/$defs/identityValue" },
+        "version": { "$ref": "#/$defs/identityValue" },
+        "environment": { "$ref": "#/$defs/identityValue" }
+      },
+      "additionalProperties": false
+    },
+    "trace_sample_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "trace_queue_size": { "$ref": "#/$defs/boundedCount" },
+    "trace_batch_size": { "$ref": "#/$defs/boundedCount" },
+    "trace_batch_timeout_ms": { "$ref": "#/$defs/durationMs" },
+    "export_timeout_ms": { "$ref": "#/$defs/durationMs" },
+    "metric_export_interval_ms": { "$ref": "#/$defs/durationMs" },
+    "runtime_read_interval_ms": { "$ref": "#/$defs/durationMs" },
+    "shutdown_timeout_ms": { "$ref": "#/$defs/durationMs" },
+    "limits": {
+      "type": "object",
+      "required": ["attribute_count", "attribute_value_length", "span_event_count", "span_link_count"],
+      "properties": {
+        "attribute_count": { "$ref": "#/$defs/boundedCount" },
+        "attribute_value_length": { "$ref": "#/$defs/boundedCount" },
+        "span_event_count": { "$ref": "#/$defs/boundedCount" },
+        "span_link_count": { "$ref": "#/$defs/boundedCount" }
+      },
+      "additionalProperties": false
+    },
+    "excluded_server_routes": { "$ref": "#/$defs/routes" },
+    "excluded_client_routes": { "$ref": "#/$defs/routes" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+      "then": {
+        "properties": {
+          "endpoint": { "type": "string", "minLength": 1 },
+          "identity": {
+            "properties": {
+              "namespace": { "$ref": "#/$defs/nonEmptyIdentityValue" },
+              "name": { "$ref": "#/$defs/nonEmptyIdentityValue" },
+              "instance_id": { "$ref": "#/$defs/nonEmptyIdentityValue" },
+              "version": { "$ref": "#/$defs/nonEmptyIdentityValue" },
+              "environment": { "$ref": "#/$defs/nonEmptyIdentityValue" }
+            }
+          }
+        }
+      },
+      "else": { "properties": { "endpoint": { "const": "" }, "header_names": { "maxItems": 0 } } }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "identityValue": { "type": "string", "maxLength": 256, "pattern": "^[^\\r\\n\\u0000]*$" },
+    "nonEmptyIdentityValue": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[^\\r\\n\\u0000]+$" },
+    "boundedCount": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+    "durationMs": { "type": "integer", "minimum": 1, "maximum": 600000 },
+    "route": {
+      "type": "object",
+      "required": ["method", "template"],
+      "properties": {
+        "method": { "type": "string", "pattern": "^[A-Z]+$" },
+        "template": { "type": "string", "pattern": "^(?:[*]|/[^?#\\r\\n]*)$" }
+      },
+      "additionalProperties": false
+    },
+    "routes": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/route" } }
+  }
+}

@@ -31,6 +31,8 @@ jobs:
         run: python tools/spec_tool.py verify-control-plane-contract
       - name: Verify APM Metrics conformance
         run: python tools/spec_tool.py verify-apm-metrics-contract
+      - name: Verify APM Go Agent conformance
+        run: python tools/spec_tool.py verify-apm-agent-contract
       - name: Verify generated artifacts
         run: python tools/spec_tool.py generate --check
       - name: Verify distributable artifacts
@@ -79,6 +81,7 @@ jobs:
           (cd generated/typescript-rutp && npm pack --dry-run --ignore-scripts)
           (cd generated/conformance && npm pack --dry-run --ignore-scripts)
           (cd generated/apm-metrics-contract && npm pack --dry-run --ignore-scripts)
+          (cd generated/apm-agent-contract && npm pack --dry-run --ignore-scripts)
       - uses: dtolnay/rust-toolchain@stable
       - name: Compile and package generated Rust registry
         shell: bash

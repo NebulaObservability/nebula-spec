@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "contract_version": "1.0.0-draft.0",
+  "enabled": true,
+  "endpoint": "https://collector.example.test:4318",
+  "protocol": "http/protobuf",
+  "header_names": [],
+  "identity": {
+    "namespace": "nebula",
+    "name": "",
+    "instance_id": "backend-01",
+    "version": "a1b2c3d",
+    "environment": "test"
+  },
+  "trace_sample_ratio": 1,
+  "trace_queue_size": 2048,
+  "trace_batch_size": 512,
+  "trace_batch_timeout_ms": 5000,
+  "export_timeout_ms": 10000,
+  "metric_export_interval_ms": 30000,
+  "runtime_read_interval_ms": 15000,
+  "shutdown_timeout_ms": 10000,
+  "limits": {
+    "attribute_count": 128,
+    "attribute_value_length": 4096,
+    "span_event_count": 128,
+    "span_link_count": 128
+  },
+  "excluded_server_routes": [],
+  "excluded_client_routes": []
+}

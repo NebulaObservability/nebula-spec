@@ -1,5 +1,7 @@
 schema_version: 1
 enums:
+  - name: go.memory.type
+    values: [stack, other]
   - name: rum.app.type
     values: [web, webview, native, miniapp, desktop]
   - name: rum.runtime.type

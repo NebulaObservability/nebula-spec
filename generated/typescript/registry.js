@@ -21,6 +21,7 @@ export const Attributes = Object.freeze({
   ExceptionMessage: "exception.message",
   ExceptionStacktrace: "exception.stacktrace",
   ExceptionType: "exception.type",
+  GoMemoryType: "go.memory.type",
   HostId: "host.id",
   HostName: "host.name",
   HttpRequestMethod: "http.request.method",
@@ -93,6 +94,8 @@ export const Attributes = Object.freeze({
   ServiceVersion: "service.version",
   SessionId: "session.id",
   SessionPreviousId: "session.previous_id",
+  TelemetryDistroName: "telemetry.distro.name",
+  TelemetryDistroVersion: "telemetry.distro.version",
   TelemetrySdkLanguage: "telemetry.sdk.language",
   TelemetrySdkName: "telemetry.sdk.name",
   TelemetrySdkVersion: "telemetry.sdk.version",
@@ -135,6 +138,15 @@ export const Events = Object.freeze({
 
 export const Metrics = Object.freeze({
   DbClientOperationDuration: "db.client.operation.duration",
+  GoConfigGogc: "go.config.gogc",
+  GoGoroutineCount: "go.goroutine.count",
+  GoMemoryAllocated: "go.memory.allocated",
+  GoMemoryAllocations: "go.memory.allocations",
+  GoMemoryGcGoal: "go.memory.gc.goal",
+  GoMemoryLimit: "go.memory.limit",
+  GoMemoryUsed: "go.memory.used",
+  GoProcessorLimit: "go.processor.limit",
+  GoScheduleDuration: "go.schedule.duration",
   HttpServerRequestDuration: "http.server.request.duration",
   JvmCpuCount: "jvm.cpu.count",
   JvmCpuRecentUtilization: "jvm.cpu.recent_utilization",
@@ -159,6 +171,8 @@ export const Spans = Object.freeze({
   RumNavigation: "rum.navigation",
   RumUserAction: "rum.user.action",
 });
+
+export const GoMemoryTypeValues = Object.freeze(["stack", "other"]);
 
 export const RumActionTypeValues = Object.freeze(["click", "input", "scroll", "submit", "custom"]);
 

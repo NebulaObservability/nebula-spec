@@ -12,6 +12,15 @@ metrics:
   - { name: process.cpu.time, unit: s, instrument: counter, value_type: double, stability: release_candidate, attributes: [cpu.mode] }
   - { name: process.memory.usage, unit: By, instrument: updowncounter, value_type: int, stability: release_candidate, attributes: [] }
   - { name: process.uptime, unit: s, instrument: gauge, value_type: double, stability: release_candidate, attributes: [] }
+  - { name: go.memory.used, unit: By, instrument: updowncounter, value_type: int, stability: development, attributes: [go.memory.type] }
+  - { name: go.memory.limit, unit: By, instrument: updowncounter, value_type: int, stability: development, attributes: [] }
+  - { name: go.memory.allocated, unit: By, instrument: counter, value_type: int, stability: development, attributes: [] }
+  - { name: go.memory.allocations, unit: "{allocation}", instrument: counter, value_type: int, stability: development, attributes: [] }
+  - { name: go.memory.gc.goal, unit: By, instrument: updowncounter, value_type: int, stability: development, attributes: [] }
+  - { name: go.goroutine.count, unit: "{goroutine}", instrument: updowncounter, value_type: int, stability: development, attributes: [] }
+  - { name: go.processor.limit, unit: "{thread}", instrument: updowncounter, value_type: int, stability: development, attributes: [] }
+  - { name: go.config.gogc, unit: "%", instrument: updowncounter, value_type: int, stability: development, attributes: [] }
+  - { name: go.schedule.duration, unit: s, instrument: histogram, value_type: double, stability: development, attributes: [] }
   - { name: rum.session.count, unit: "{session}", instrument: counter, value_type: int, stability: stable, attributes: [service.name, deployment.environment.name] }
   - { name: rum.view.duration, unit: ms, instrument: histogram, value_type: double, stability: stable, attributes: [rum.view.name, service.name] }
   - { name: rum.http.client.duration, unit: ms, instrument: histogram, value_type: double, stability: stable, attributes: [http.request.method, server.address, http.response.status_code] }

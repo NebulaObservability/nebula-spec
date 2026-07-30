@@ -13,17 +13,24 @@ protocols:
         access: explicit_debug_only
         unknown_members: discard
   apm_extension:
-    current: 1.1.0-draft.0
+    current: 1.2.0-draft.0
     accepts:
       - ">=1.0.0-draft.1 <2.0.0"
     base_protocol: OTLP 1.x
   apm_metrics:
-    current: 1.1.0-draft.0
+    current: 1.2.0-draft.0
     accepts:
       - ">=1.1.0-draft.0 <2.0.0"
     base_protocol: OTLP Metrics 1.x
     otel_schema: 1.43.0
     temporality: cumulative
+  apm_agent:
+    current: 1.0.0-draft.0
+    accepts:
+      - ">=1.0.0-draft.0 <2.0.0"
+    implementation: github.com/NebulaObservability/nebula-apm-agent/go
+    otel_go: 1.44.0
+    runtime_instrumentation: 0.69.0
   control_plane_config:
     current: 1.0.0-draft.1
     accepts:
@@ -37,5 +44,6 @@ protocols:
 config:
   rum: rutp-config/v1
   control_plane: control-plane-config/v1
+  apm_agent: apm-agent-config/v1
 diagnostics:
-  status: deferred
+  apm_agent: apm-agent-diagnostics/v1

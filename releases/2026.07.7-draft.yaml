@@ -1,0 +1,18 @@
+release: 2026.07.7-draft.0
+protocols:
+  rutp: 1.0.0-draft.1
+  apm_extension: 1.2.0-draft.0
+  apm_metrics: 1.2.0-draft.0
+  apm_agent: 1.0.0-draft.0
+  apm_agent_config: 1.0.0-draft.0
+  apm_agent_diagnostics: 1.0.0-draft.0
+  control_plane_config: 1.0.0-draft.1
+otel_schema: 1.43.0
+components:
+  spec: 0.7.0-draft.0
+  apm_agent_java: null
+  apm_agent_go: null
+  rum_web: null
+  collector: null
+  backend: null
+  dashboard: null

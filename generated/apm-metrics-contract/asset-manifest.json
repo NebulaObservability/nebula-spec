@@ -1,17 +1,17 @@
 {
-  "contract_sha256": "925fc1ef3b831ebe8a116545d7fad91b72ab1f1705a3dc6cb9514efc3ffaa286",
+  "contract_sha256": "2248a7898699173b361b15b3fa1a21ce2a96de59a16cbe5e8646d5430fe5bb0a",
   "files": [
     {
       "path": "README.md",
-      "sha256": "bdf118cc1083eeedcb76a3f98ad48a100c424421758dc3d3a08496b88419689b"
+      "sha256": "c91bd4f28cbcbe28a86954f4eece4b0cd2906806b8b518eaad97faf79d3b9743"
     },
     {
       "path": "compatibility/apm-metrics.json",
-      "sha256": "4e1bcde73509c9640c642b96b8eeb625d6c4ed84b2c51004394589cf43da5cf4"
+      "sha256": "fbd31610be89810eb081d880bcde76640531d2fd0e787d6223af891f36e47e3a"
     },
     {
       "path": "contract.json",
-      "sha256": "4e1bcde73509c9640c642b96b8eeb625d6c4ed84b2c51004394589cf43da5cf4"
+      "sha256": "fbd31610be89810eb081d880bcde76640531d2fd0e787d6223af891f36e47e3a"
     },
     {
       "path": "fixtures/apm-metrics-cumulative-sequence-negative-cases.json",
@@ -26,6 +26,14 @@
       "sha256": "386187c165ab6f10701ee0949f4641abd114f16556ebaf0a0b185e67f5a47e40"
     },
     {
+      "path": "fixtures/apm-metrics-go-agent-negative-cases.json",
+      "sha256": "50857fe24c0e67274551b66028c01eef9d618bebf3822ac806e668889d24475c"
+    },
+    {
+      "path": "fixtures/apm-metrics-go-agent.json",
+      "sha256": "3272a6b9aa3f01d7494483f03bdf19e7b56ac3ba99db34cac4a13bb33364ff6c"
+    },
+    {
       "path": "fixtures/apm-metrics-mvp.json",
       "sha256": "34e62587a11850b01bd148407e27ed7c4db3e4a6dd3432360986554ece42a404"
     },
@@ -34,8 +42,12 @@
       "sha256": "539d5786774d33d05a06e03e16217785a0d8790715ec6799c891122b29373f9e"
     },
     {
+      "path": "fixtures/apm-metrics-standard-go-distro.json",
+      "sha256": "be9ebf44dd573fa3ab258890a44a1aa14a55b81a845e24c082c50b80bbea6eb5"
+    },
+    {
       "path": "package.json",
-      "sha256": "a5e7f4a0f97c216d4372207503a30b9c5751441701e56c69eef26764ea0d3fde"
+      "sha256": "818d706e9b6240661c5fe9d9a700e9d2da041838bf88bf814caaa3749d762518"
     },
     {
       "path": "schemas/apm-metrics-cumulative-sequence.schema.json",
@@ -43,7 +55,7 @@
     },
     {
       "path": "schemas/apm-metrics.schema.json",
-      "sha256": "796a2b7049cc2618592e38418e93695598842001678bc28b87495d65da120a76"
+      "sha256": "d588486192c800bc6bfe5f2c6721d12737cadb67a0e6ccefca97631eab4d5b6b"
     },
     {
       "path": "schemas/otlp-metrics-export.schema.json",
@@ -51,8 +63,8 @@
     }
   ],
   "format_version": 1,
-  "metrics_contract_version": "1.1.0-draft.0",
+  "metrics_contract_version": "1.2.0-draft.0",
   "otel_schema": "1.43.0",
-  "release": "2026.07.6-draft.0",
-  "spec_version": "0.6.0-draft.0"
+  "release": "2026.07.7-draft.0",
+  "spec_version": "0.7.0-draft.0"
 }

@@ -1,0 +1,73 @@
+{
+  "agent_contract_version": "1.0.0-draft.0",
+  "config_contract_version": "1.0.0-draft.0",
+  "contract_sha256": "ae21afaa2577c440b3febc7e1f10936fa6debe8962e5b10680b6aa66497927c9",
+  "diagnostics_contract_version": "1.0.0-draft.0",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "c85e456ba1321f030de1d335a4f54a2642bb2298950ad4496abc95aafed4b115"
+    },
+    {
+      "path": "contract.json",
+      "sha256": "b8494d7c6feb71b63c6d50fd3d8fe8cef224acfdc26cc624498d56c6a74fe83e"
+    },
+    {
+      "path": "fixtures/apm-agent-config.json",
+      "sha256": "59fabd0f407991d518004f4f545db9b2050002d54ae5223d60ee792293dc93b8"
+    },
+    {
+      "path": "fixtures/apm-agent-diagnostics.json",
+      "sha256": "bccd3842e7d489a92b161a04348ff6f9c206c3824118e7c7fd64957cfc472d75"
+    },
+    {
+      "path": "fixtures/apm-agent-disabled-config.json",
+      "sha256": "374f44d9252769b85750719c61f028bf58a26159c64d16d73c0ecc4051af1e16"
+    },
+    {
+      "path": "fixtures/apm-metrics-go-agent-negative-cases.json",
+      "sha256": "50857fe24c0e67274551b66028c01eef9d618bebf3822ac806e668889d24475c"
+    },
+    {
+      "path": "fixtures/apm-metrics-go-agent.json",
+      "sha256": "3272a6b9aa3f01d7494483f03bdf19e7b56ac3ba99db34cac4a13bb33364ff6c"
+    },
+    {
+      "path": "fixtures/apm-metrics-standard-go-distro.json",
+      "sha256": "be9ebf44dd573fa3ab258890a44a1aa14a55b81a845e24c082c50b80bbea6eb5"
+    },
+    {
+      "path": "fixtures/invalid-apm-agent-config.json",
+      "sha256": "22e5422f9119bf7547555e1d87cb17ae72a93f26585edc15859bb593a0d30c11"
+    },
+    {
+      "path": "fixtures/invalid-apm-agent-diagnostics.json",
+      "sha256": "9f73de3748c4036917b0364a052044c1a053f948302c6b0d61a36425cff0bbb4"
+    },
+    {
+      "path": "package.json",
+      "sha256": "a96065e6db175cae203aaa15718a08f129dd4a4fce6158a24cf4753e0fc99501"
+    },
+    {
+      "path": "schemas/apm-agent-config.schema.json",
+      "sha256": "5f42479b0a63f76d5cb2271f14bace1712e4c3953ce551e56f1498b683dcfaf4"
+    },
+    {
+      "path": "schemas/apm-agent-diagnostics.schema.json",
+      "sha256": "0ad1e67baa4bc92629fa7303b6c4a954b5bffe400b4ec805c01d1a1b8de26f84"
+    },
+    {
+      "path": "schemas/apm-go-agent.schema.json",
+      "sha256": "6b37a7f7dfa95933edf29c9c33eed239b8353bf5b73e45109e70fb7d4d7b365b"
+    },
+    {
+      "path": "schemas/otlp-metrics-export.schema.json",
+      "sha256": "7ce48fc1d16d6890a2c0172281e5ad2cc1a1e4704c9f5cc62370e0b1908b3f33"
+    }
+  ],
+  "format_version": 1,
+  "metrics_contract_version": "1.2.0-draft.0",
+  "release": "2026.07.7-draft.0",
+  "runtime_instrumentation_version": "0.69.0",
+  "spec_version": "0.7.0-draft.0"
+}
