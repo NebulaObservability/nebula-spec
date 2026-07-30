@@ -21,6 +21,7 @@ export declare const Attributes: {
   readonly ExceptionMessage: "exception.message";
   readonly ExceptionStacktrace: "exception.stacktrace";
   readonly ExceptionType: "exception.type";
+  readonly GoMemoryType: "go.memory.type";
   readonly HostId: "host.id";
   readonly HostName: "host.name";
   readonly HttpRequestMethod: "http.request.method";
@@ -93,6 +94,8 @@ export declare const Attributes: {
   readonly ServiceVersion: "service.version";
   readonly SessionId: "session.id";
   readonly SessionPreviousId: "session.previous_id";
+  readonly TelemetryDistroName: "telemetry.distro.name";
+  readonly TelemetryDistroVersion: "telemetry.distro.version";
   readonly TelemetrySdkLanguage: "telemetry.sdk.language";
   readonly TelemetrySdkName: "telemetry.sdk.name";
   readonly TelemetrySdkVersion: "telemetry.sdk.version";
@@ -135,6 +138,15 @@ export declare const Events: {
 
 export declare const Metrics: {
   readonly DbClientOperationDuration: "db.client.operation.duration";
+  readonly GoConfigGogc: "go.config.gogc";
+  readonly GoGoroutineCount: "go.goroutine.count";
+  readonly GoMemoryAllocated: "go.memory.allocated";
+  readonly GoMemoryAllocations: "go.memory.allocations";
+  readonly GoMemoryGcGoal: "go.memory.gc.goal";
+  readonly GoMemoryLimit: "go.memory.limit";
+  readonly GoMemoryUsed: "go.memory.used";
+  readonly GoProcessorLimit: "go.processor.limit";
+  readonly GoScheduleDuration: "go.schedule.duration";
   readonly HttpServerRequestDuration: "http.server.request.duration";
   readonly JvmCpuCount: "jvm.cpu.count";
   readonly JvmCpuRecentUtilization: "jvm.cpu.recent_utilization";
@@ -159,6 +171,9 @@ export declare const Spans: {
   readonly RumNavigation: "rum.navigation";
   readonly RumUserAction: "rum.user.action";
 };
+
+export declare const GoMemoryTypeValues: readonly ["stack", "other"];
+export type GoMemoryType = (typeof GoMemoryTypeValues)[number];
 
 export declare const RumActionTypeValues: readonly ["click", "input", "scroll", "submit", "custom"];
 export type RumActionType = (typeof RumActionTypeValues)[number];

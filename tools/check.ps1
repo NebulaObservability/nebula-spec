@@ -15,6 +15,9 @@ if ($LASTEXITCODE -ne 0) { throw 'Control Plane configuration conformance check 
 python tools/spec_tool.py verify-apm-metrics-contract
 if ($LASTEXITCODE -ne 0) { throw 'APM Metrics conformance check failed.' }
 
+python tools/spec_tool.py verify-apm-agent-contract
+if ($LASTEXITCODE -ne 0) { throw 'APM Go Agent conformance check failed.' }
+
 $protobufGeneratedBefore = (git status --porcelain -- generated/go generated/typescript-rutp) -join "`n"
 npx --yes @bufbuild/buf@1.72.0 generate --template buf.gen.yaml
 if ($LASTEXITCODE -ne 0) { throw 'RUTP Protobuf generation failed.' }

@@ -41,7 +41,7 @@
     "mode": "allowlist",
     "unknown_attributes": "reject"
   },
-  "contract_version": "1.1.0-draft.0",
+  "contract_version": "1.2.0-draft.0",
   "metrics": [
     {
       "aggregations": [
@@ -377,6 +377,175 @@
         "minimum": 0
       },
       "value_type": "double"
+    },
+    {
+      "attributes": [
+        {
+          "ref": "go.memory.type",
+          "requirement": "required"
+        }
+      ],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "updowncounter",
+      "monotonic": false,
+      "name": "go.memory.used",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "development",
+      "temporality": "cumulative",
+      "unit": "By",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "int"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "updowncounter",
+      "monotonic": false,
+      "name": "go.memory.limit",
+      "requirement": "conditional",
+      "source": "otel",
+      "stability": "development",
+      "temporality": "cumulative",
+      "unit": "By",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "int"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "counter",
+      "monotonic": true,
+      "name": "go.memory.allocated",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "development",
+      "temporality": "cumulative",
+      "unit": "By",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "int"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "counter",
+      "monotonic": true,
+      "name": "go.memory.allocations",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "development",
+      "temporality": "cumulative",
+      "unit": "{allocation}",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "int"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "updowncounter",
+      "monotonic": false,
+      "name": "go.memory.gc.goal",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "development",
+      "temporality": "cumulative",
+      "unit": "By",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "int"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "updowncounter",
+      "monotonic": false,
+      "name": "go.goroutine.count",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "development",
+      "temporality": "cumulative",
+      "unit": "{goroutine}",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "int"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "updowncounter",
+      "monotonic": false,
+      "name": "go.processor.limit",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "development",
+      "temporality": "cumulative",
+      "unit": "{thread}",
+      "value_range": {
+        "minimum": 1
+      },
+      "value_type": "int"
+    },
+    {
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "updowncounter",
+      "monotonic": false,
+      "name": "go.config.gogc",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "development",
+      "temporality": "cumulative",
+      "unit": "%",
+      "value_range": {
+        "minimum": -1
+      },
+      "value_type": "int"
+    },
+    {
+      "aggregations": [
+        "explicit_histogram"
+      ],
+      "attributes": [],
+      "exemplars": {
+        "policy": "none"
+      },
+      "instrument": "histogram",
+      "name": "go.schedule.duration",
+      "requirement": "required",
+      "source": "otel",
+      "stability": "development",
+      "temporality": "cumulative",
+      "unit": "s",
+      "value_range": {
+        "minimum": 0
+      },
+      "value_type": "double"
     }
   ],
   "otel_schema_url": "https://opentelemetry.io/schemas/1.43.0",
@@ -457,6 +626,18 @@
         "non_empty": true,
         "ref": "process.runtime.version",
         "requirement": "required",
+        "type": "string"
+      },
+      {
+        "non_empty": true,
+        "ref": "telemetry.distro.name",
+        "requirement": "optional",
+        "type": "string"
+      },
+      {
+        "non_empty": true,
+        "ref": "telemetry.distro.version",
+        "requirement": "optional",
         "type": "string"
       }
     ]

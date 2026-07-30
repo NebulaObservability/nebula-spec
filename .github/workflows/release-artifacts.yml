@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
@@ -25,11 +27,24 @@ jobs:
           python tools/spec_tool.py verify-receiver-contract
           python tools/spec_tool.py verify-control-plane-contract
           python tools/spec_tool.py verify-apm-metrics-contract
+          python tools/spec_tool.py verify-apm-agent-contract
           python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.5.0-draft.0.json
           python tools/spec_tool.py breaking-apm-metrics --against compatibility/baselines/apm-metrics-1.1.0-draft.0.json
       - name: Verify tag matches VERSION
         shell: bash
-        run: test "${GITHUB_REF_NAME}" = "spec-v$(cat VERSION)"
+        env:
+          REF_CREATED: ${{ github.event.created }}
+        run: |
+          set -euo pipefail
+          test "${REF_CREATED}" = "true"
+          test "${GITHUB_REF_NAME}" = "spec-v$(cat VERSION)"
+          git fetch --no-tags origin +main:refs/remotes/origin/main
+          remote_sha="$(git ls-remote --tags origin "refs/tags/${GITHUB_REF_NAME}^{}" | awk 'NR == 1 { print $1 }')"
+          if [ -z "${remote_sha}" ]; then
+            remote_sha="$(git ls-remote --tags origin "refs/tags/${GITHUB_REF_NAME}" | awk 'NR == 1 { print $1 }')"
+          fi
+          test "${remote_sha}" = "${GITHUB_SHA}"
+          git merge-base --is-ancestor "${GITHUB_SHA}" refs/remotes/origin/main
       - uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.72.0
@@ -73,6 +88,9 @@ jobs:
       - name: Pack APM Metrics contract
         working-directory: generated/apm-metrics-contract
         run: npm pack --ignore-scripts --pack-destination ../../artifacts
+      - name: Pack APM Agent contract
+        working-directory: generated/apm-agent-contract
+        run: npm pack --ignore-scripts --pack-destination ../../artifacts
       - name: Pack RUM conformance fixtures
         working-directory: generated/conformance
         run: npm pack --ignore-scripts --pack-destination ../../artifacts
@@ -82,30 +100,78 @@ jobs:
         run: |
           cargo package --locked --allow-dirty --no-verify
           cp target/package/*.crate ../../../artifacts/
-      - name: Archive fixture bundle
+      - name: Archive reproducible release bundles
+        shell: bash
         run: |
-          VERSION="$(cat VERSION)"
-          cd generated/conformance
-          zip -r "../../artifacts/rum-conformance-fixtures-${VERSION}.zip" .
-      - name: Archive APM Metrics contract
-        run: |
-          VERSION="$(cat VERSION)"
-          cd generated/apm-metrics-contract
-          zip -r "../../artifacts/apm-metrics-contract-${VERSION}.zip" .
-      - name: Archive Go RUTP module
-        run: |
-          VERSION="$(cat VERSION)"
-          cd generated/go
-          zip -r "../../artifacts/nebula-rutp-go-module-${VERSION}.zip" .
+          set -euo pipefail
+          version="$(cat VERSION)"
+          archive() {
+            local source="$1"
+            local output="$2"
+            (
+              cd "${source}"
+              find . -type f -exec touch -t 198001010000 {} +
+              LC_ALL=C find . -type f -print | LC_ALL=C sort | zip -X -q "../../artifacts/${output}" -@
+            )
+          }
+          archive generated/conformance "rum-conformance-fixtures-${version}.zip"
+          archive generated/apm-metrics-contract "apm-metrics-contract-${version}.zip"
+          archive generated/apm-agent-contract "apm-agent-contract-${version}.zip"
+          archive generated/go "nebula-rutp-go-module-${version}.zip"
       - name: Generate checksums
         run: |
           cd artifacts
           sha256sum * > SHA256SUMS
-      - uses: softprops/action-gh-release@v2
+      - name: Verify immutable release state
+        id: release-state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          response="${RUNNER_TEMP}/release.json"
+          status="$(curl --silent --show-error \
+            --output "${response}" \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header 'Accept: application/vnd.github+json' \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF_NAME}")"
+          case "${status}" in
+            404)
+              echo "exists=false" >> "${GITHUB_OUTPUT}"
+              ;;
+            200)
+              python - "${response}" "${GITHUB_REF_NAME}" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          release = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+          if release.get("tag_name") != sys.argv[2] or release.get("draft") or not release.get("prerelease"):
+              raise SystemExit("existing release metadata differs from the immutable prerelease contract")
+          PY
+              mkdir "${RUNNER_TEMP}/existing-release"
+              gh release download "${GITHUB_REF_NAME}" --dir "${RUNNER_TEMP}/existing-release"
+              diff -u artifacts/SHA256SUMS "${RUNNER_TEMP}/existing-release/SHA256SUMS"
+              diff -u \
+                <(find artifacts -maxdepth 1 -type f -printf '%f\n' | LC_ALL=C sort) \
+                <(find "${RUNNER_TEMP}/existing-release" -maxdepth 1 -type f -printf '%f\n' | LC_ALL=C sort)
+              (cd "${RUNNER_TEMP}/existing-release" && sha256sum --check SHA256SUMS)
+              echo "exists=true" >> "${GITHUB_OUTPUT}"
+              ;;
+            *)
+              echo "GitHub release lookup failed with HTTP ${status}" >&2
+              exit 1
+              ;;
+          esac
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        if: steps.release-state.outputs.exists != 'true'
         with:
           generate_release_notes: true
           prerelease: true
           make_latest: false
+          overwrite_files: false
           files: artifacts/*
       - name: Publish matching Go module tag
         shell: bash

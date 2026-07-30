@@ -1,0 +1,189 @@
+{
+  "resourceMetrics": [
+    {
+      "resource": {
+        "attributes": [
+          { "key": "service.namespace", "value": { "stringValue": "nebula" } },
+          { "key": "service.name", "value": { "stringValue": "backend" } },
+          { "key": "service.instance.id", "value": { "stringValue": "backend-01" } },
+          { "key": "service.version", "value": { "stringValue": "a1b2c3d" } },
+          { "key": "deployment.environment.name", "value": { "stringValue": "test" } },
+          { "key": "telemetry.sdk.name", "value": { "stringValue": "opentelemetry" } },
+          { "key": "telemetry.sdk.language", "value": { "stringValue": "go" } },
+          { "key": "telemetry.sdk.version", "value": { "stringValue": "1.44.0" } },
+          { "key": "telemetry.distro.name", "value": { "stringValue": "nebula-go-agent" } },
+          { "key": "telemetry.distro.version", "value": { "stringValue": "0.1.0" } },
+          { "key": "process.pid", "value": { "intValue": "4242" } },
+          { "key": "process.runtime.name", "value": { "stringValue": "go" } },
+          { "key": "process.runtime.version", "value": { "stringValue": "go1.25.0" } }
+        ]
+      },
+      "scopeMetrics": [
+        {
+          "scope": {
+            "name": "go.opentelemetry.io/contrib/instrumentation/runtime",
+            "version": "0.69.0"
+          },
+          "metrics": [
+            {
+              "name": "go.memory.used",
+              "unit": "By",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": false,
+                "dataPoints": [
+                  {
+                    "attributes": [{ "key": "go.memory.type", "value": { "stringValue": "stack" } }],
+                    "startTimeUnixNano": "1753862400000000000",
+                    "timeUnixNano": "1753862430000000000",
+                    "asInt": "8388608"
+                  },
+                  {
+                    "attributes": [{ "key": "go.memory.type", "value": { "stringValue": "other" } }],
+                    "startTimeUnixNano": "1753862400000000000",
+                    "timeUnixNano": "1753862430000000000",
+                    "asInt": "67108864"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "go.memory.limit",
+              "unit": "By",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": false,
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "startTimeUnixNano": "1753862400000000000",
+                    "timeUnixNano": "1753862430000000000",
+                    "asInt": "536870912"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "go.memory.allocated",
+              "unit": "By",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": true,
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "startTimeUnixNano": "1753862400000000000",
+                    "timeUnixNano": "1753862430000000000",
+                    "asInt": "104857600"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "go.memory.allocations",
+              "unit": "{allocation}",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": true,
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "startTimeUnixNano": "1753862400000000000",
+                    "timeUnixNano": "1753862430000000000",
+                    "asInt": "4096"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "go.memory.gc.goal",
+              "unit": "By",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": false,
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "startTimeUnixNano": "1753862400000000000",
+                    "timeUnixNano": "1753862430000000000",
+                    "asInt": "134217728"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "go.goroutine.count",
+              "unit": "{goroutine}",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": false,
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "startTimeUnixNano": "1753862400000000000",
+                    "timeUnixNano": "1753862430000000000",
+                    "asInt": "24"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "go.processor.limit",
+              "unit": "{thread}",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": false,
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "startTimeUnixNano": "1753862400000000000",
+                    "timeUnixNano": "1753862430000000000",
+                    "asInt": "8"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "go.config.gogc",
+              "unit": "%",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": false,
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "startTimeUnixNano": "1753862400000000000",
+                    "timeUnixNano": "1753862430000000000",
+                    "asInt": "100"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "go.schedule.duration",
+              "unit": "s",
+              "histogram": {
+                "aggregationTemporality": 2,
+                "dataPoints": [
+                  {
+                    "attributes": [],
+                    "startTimeUnixNano": "1753862400000000000",
+                    "timeUnixNano": "1753862430000000000",
+                    "count": "3",
+                    "sum": 0.0016,
+                    "bucketCounts": ["1", "1", "1"],
+                    "explicitBounds": [0.0001, 0.001],
+                    "min": 0.0001,
+                    "max": 0.001
+                  }
+                ]
+              }
+            }
+          ],
+          "schemaUrl": "https://opentelemetry.io/schemas/1.43.0"
+        }
+      ],
+      "schemaUrl": "https://opentelemetry.io/schemas/1.43.0"
+    }
+  ]
+}

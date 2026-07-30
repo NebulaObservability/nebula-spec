@@ -1,5 +1,5 @@
 schema_version: 1
-contract_version: 1.1.0-draft.0
+contract_version: 1.2.0-draft.0
 otel_schema_url: https://opentelemetry.io/schemas/1.43.0
 schema_url_policy:
   normalization_target: https://opentelemetry.io/schemas/1.43.0
@@ -53,6 +53,8 @@ resource:
     - { ref: process.pid, type: int, requirement: required, minimum: 1 }
     - { ref: process.runtime.name, type: string, requirement: required, non_empty: true }
     - { ref: process.runtime.version, type: string, requirement: required, non_empty: true }
+    - { ref: telemetry.distro.name, type: string, requirement: optional, non_empty: true }
+    - { ref: telemetry.distro.version, type: string, requirement: optional, non_empty: true }
 attribute_policy:
   mode: allowlist
   unknown_attributes: reject
@@ -240,6 +242,115 @@ metrics:
     value_type: double
     unit: s
     temporality: none
+    value_range: { minimum: 0 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: go.memory.used
+    requirement: required
+    source: otel
+    stability: development
+    instrument: updowncounter
+    value_type: int
+    unit: By
+    temporality: cumulative
+    monotonic: false
+    value_range: { minimum: 0 }
+    attributes:
+      - { ref: go.memory.type, requirement: required }
+    exemplars: { policy: none }
+  - name: go.memory.limit
+    requirement: conditional
+    source: otel
+    stability: development
+    instrument: updowncounter
+    value_type: int
+    unit: By
+    temporality: cumulative
+    monotonic: false
+    value_range: { minimum: 0 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: go.memory.allocated
+    requirement: required
+    source: otel
+    stability: development
+    instrument: counter
+    value_type: int
+    unit: By
+    temporality: cumulative
+    monotonic: true
+    value_range: { minimum: 0 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: go.memory.allocations
+    requirement: required
+    source: otel
+    stability: development
+    instrument: counter
+    value_type: int
+    unit: "{allocation}"
+    temporality: cumulative
+    monotonic: true
+    value_range: { minimum: 0 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: go.memory.gc.goal
+    requirement: required
+    source: otel
+    stability: development
+    instrument: updowncounter
+    value_type: int
+    unit: By
+    temporality: cumulative
+    monotonic: false
+    value_range: { minimum: 0 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: go.goroutine.count
+    requirement: required
+    source: otel
+    stability: development
+    instrument: updowncounter
+    value_type: int
+    unit: "{goroutine}"
+    temporality: cumulative
+    monotonic: false
+    value_range: { minimum: 0 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: go.processor.limit
+    requirement: required
+    source: otel
+    stability: development
+    instrument: updowncounter
+    value_type: int
+    unit: "{thread}"
+    temporality: cumulative
+    monotonic: false
+    value_range: { minimum: 1 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: go.config.gogc
+    requirement: required
+    source: otel
+    stability: development
+    instrument: updowncounter
+    value_type: int
+    unit: "%"
+    temporality: cumulative
+    monotonic: false
+    value_range: { minimum: -1 }
+    attributes: []
+    exemplars: { policy: none }
+  - name: go.schedule.duration
+    requirement: required
+    source: otel
+    stability: development
+    instrument: histogram
+    value_type: double
+    unit: s
+    temporality: cumulative
+    aggregations: [explicit_histogram]
     value_range: { minimum: 0 }
     attributes: []
     exemplars: { policy: none }

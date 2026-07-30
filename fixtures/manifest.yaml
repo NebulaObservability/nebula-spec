@@ -82,3 +82,31 @@ fixtures:
   - path: fixtures/metrics/apm-metrics-cumulative-sequence-negative-cases.json
     schema: schemas/apm-metrics-cumulative-sequence.schema.json
     valid: true
+  - path: fixtures/metrics/apm-metrics-go-agent.json
+    schema: schemas/otlp-metrics-export.schema.json
+    valid: true
+  - path: fixtures/metrics/apm-metrics-go-agent-negative-cases.json
+    validator: apm_metrics_go_negative_suite
+    valid: true
+  - path: fixtures/metrics/apm-metrics-standard-go-distro.json
+    validator: apm_metrics_go_compatibility
+    valid: true
+  - path: fixtures/agent/apm-agent-config.json
+    schema: schemas/apm-agent-config.schema.json
+    valid: true
+  - path: fixtures/agent/apm-agent-disabled-config.json
+    schema: schemas/apm-agent-config.schema.json
+    valid: true
+  - path: fixtures/agent/invalid-apm-agent-config.json
+    schema: schemas/apm-agent-config.schema.json
+    valid: false
+    expected_error_paths:
+      - identity/name
+  - path: fixtures/agent/apm-agent-diagnostics.json
+    schema: schemas/apm-agent-diagnostics.schema.json
+    valid: true
+  - path: fixtures/agent/invalid-apm-agent-diagnostics.json
+    schema: schemas/apm-agent-diagnostics.schema.json
+    valid: false
+    expected_error_paths:
+      - last_error_code

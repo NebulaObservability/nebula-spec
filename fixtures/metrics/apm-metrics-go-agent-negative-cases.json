@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "base_fixture": "fixtures/metrics/apm-metrics-go-agent.json",
+  "cases": [
+    {
+      "name": "missing-distro-version",
+      "patch": [
+        { "op": "remove", "path": "/resourceMetrics/0/resource/attributes/9" }
+      ],
+      "expected_errors": ["telemetry.distro.name and telemetry.distro.version must be present together"]
+    },
+    {
+      "name": "first-party-language",
+      "patch": [
+        { "op": "replace", "path": "/resourceMetrics/0/resource/attributes/6/value/stringValue", "value": "java" }
+      ],
+      "expected_errors": ["nebula-go-agent must use telemetry.sdk.language=go"]
+    },
+    {
+      "name": "deprecated-runtime-name",
+      "patch": [
+        { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/name", "value": "runtime.go.mem.heap_alloc" }
+      ],
+      "expected_errors": ["metric order/profile"]
+    },
+    {
+      "name": "wrong-runtime-scope-version",
+      "patch": [
+        { "op": "replace", "path": "/resourceMetrics/0/scopeMetrics/0/scope/version", "value": "0.68.0" }
+      ],
+      "expected_errors": ["runtime instrumentation scope must be version 0.69.0"]
+    },
+    {
+      "name": "missing-memory-type",
+      "patch": [
+        { "op": "remove", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/0/sum/dataPoints/0/attributes/0" }
+      ],
+      "expected_errors": ["missing required attributes"]
+    },
+    {
+      "name": "schedule-not-explicit-histogram",
+      "patch": [
+        { "op": "remove", "path": "/resourceMetrics/0/scopeMetrics/0/metrics/8/histogram" },
+        {
+          "op": "add",
+          "path": "/resourceMetrics/0/scopeMetrics/0/metrics/8/exponentialHistogram",
+          "value": {
+            "aggregationTemporality": 2,
+            "dataPoints": [
+              {
+                "attributes": [],
+                "startTimeUnixNano": "1753862400000000000",
+                "timeUnixNano": "1753862430000000000",
+                "count": "1",
+                "sum": 0.001,
+                "scale": 3,
+                "zeroCount": "0",
+                "positive": { "offset": -10, "bucketCounts": ["1"] },
+                "min": 0.001,
+                "max": 0.001
+              }
+            ]
+          }
+        }
+      ],
+      "expected_errors": ["expected histogram"]
+    }
+  ]
+}

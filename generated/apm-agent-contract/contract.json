@@ -1,0 +1,78 @@
+{
+  "apm_extension_version": "1.2.0-draft.0",
+  "config": {
+    "disabled_endpoint": "",
+    "invalid_config": "fail_fast",
+    "protocol": "http/protobuf",
+    "runtime_failure": "fail_open",
+    "schema": "schemas/apm-agent-config.schema.json",
+    "version": "1.0.0-draft.0"
+  },
+  "contract_version": "1.0.0-draft.0",
+  "diagnostics": {
+    "error_codes": [
+      "queue_full",
+      "export_timeout",
+      "export_canceled",
+      "export_failed",
+      "shutdown_timeout"
+    ],
+    "exact_queue_occupancy": "unavailable",
+    "exact_retry_attempts": "unavailable",
+    "fields": [
+      "state",
+      "noop",
+      "trace_queue_capacity",
+      "spans_ended",
+      "spans_exported",
+      "spans_dropped",
+      "trace_batches",
+      "trace_export_failures",
+      "metric_exports",
+      "metric_export_failures",
+      "flushes",
+      "flush_failures",
+      "shutdowns",
+      "shutdown_timeouts",
+      "last_error_code",
+      "last_export_success"
+    ],
+    "schema": "schemas/apm-agent-diagnostics.schema.json",
+    "secret_values": "forbidden",
+    "version": "1.0.0-draft.0"
+  },
+  "metrics_contract_version": "1.2.0-draft.0",
+  "module": {
+    "path": "github.com/NebulaObservability/nebula-apm-agent/go",
+    "tag_prefix": "go/v"
+  },
+  "resource": {
+    "first_party": {
+      "distro_name": "nebula-go-agent",
+      "sdk_language": "go"
+    },
+    "optional_pair": [
+      "telemetry.distro.name",
+      "telemetry.distro.version"
+    ],
+    "standard_distro_compatible": true
+  },
+  "runtime_instrumentation": {
+    "deprecated_runtime_metrics": "forbidden",
+    "metrics": [
+      "go.memory.used",
+      "go.memory.limit",
+      "go.memory.allocated",
+      "go.memory.allocations",
+      "go.memory.gc.goal",
+      "go.goroutine.count",
+      "go.processor.limit",
+      "go.config.gogc",
+      "go.schedule.duration"
+    ],
+    "module": "go.opentelemetry.io/contrib/instrumentation/runtime",
+    "scope": "go.opentelemetry.io/contrib/instrumentation/runtime",
+    "version": "0.69.0"
+  },
+  "schema_version": 1
+}

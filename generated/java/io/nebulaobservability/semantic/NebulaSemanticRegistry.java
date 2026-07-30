@@ -26,6 +26,7 @@ public final class NebulaSemanticRegistry {
     public static final String EXCEPTION_MESSAGE = "exception.message";
     public static final String EXCEPTION_STACKTRACE = "exception.stacktrace";
     public static final String EXCEPTION_TYPE = "exception.type";
+    public static final String GO_MEMORY_TYPE = "go.memory.type";
     public static final String HOST_ID = "host.id";
     public static final String HOST_NAME = "host.name";
     public static final String HTTP_REQUEST_METHOD = "http.request.method";
@@ -98,6 +99,8 @@ public final class NebulaSemanticRegistry {
     public static final String SERVICE_VERSION = "service.version";
     public static final String SESSION_ID = "session.id";
     public static final String SESSION_PREVIOUS_ID = "session.previous_id";
+    public static final String TELEMETRY_DISTRO_NAME = "telemetry.distro.name";
+    public static final String TELEMETRY_DISTRO_VERSION = "telemetry.distro.version";
     public static final String TELEMETRY_SDK_LANGUAGE = "telemetry.sdk.language";
     public static final String TELEMETRY_SDK_NAME = "telemetry.sdk.name";
     public static final String TELEMETRY_SDK_VERSION = "telemetry.sdk.version";
@@ -142,6 +145,15 @@ public final class NebulaSemanticRegistry {
   public static final class Metrics {
     private Metrics() {}
     public static final String DB_CLIENT_OPERATION_DURATION = "db.client.operation.duration";
+    public static final String GO_CONFIG_GOGC = "go.config.gogc";
+    public static final String GO_GOROUTINE_COUNT = "go.goroutine.count";
+    public static final String GO_MEMORY_ALLOCATED = "go.memory.allocated";
+    public static final String GO_MEMORY_ALLOCATIONS = "go.memory.allocations";
+    public static final String GO_MEMORY_GC_GOAL = "go.memory.gc.goal";
+    public static final String GO_MEMORY_LIMIT = "go.memory.limit";
+    public static final String GO_MEMORY_USED = "go.memory.used";
+    public static final String GO_PROCESSOR_LIMIT = "go.processor.limit";
+    public static final String GO_SCHEDULE_DURATION = "go.schedule.duration";
     public static final String HTTP_SERVER_REQUEST_DURATION = "http.server.request.duration";
     public static final String JVM_CPU_COUNT = "jvm.cpu.count";
     public static final String JVM_CPU_RECENT_UTILIZATION = "jvm.cpu.recent_utilization";
@@ -166,6 +178,15 @@ public final class NebulaSemanticRegistry {
     public static final String RUM_HTTP_CLIENT = "rum.http.client";
     public static final String RUM_NAVIGATION = "rum.navigation";
     public static final String RUM_USER_ACTION = "rum.user.action";
+  }
+
+  public enum GoMemoryType {
+    STACK("stack"),
+    OTHER("other");
+
+    private final String value;
+    GoMemoryType(String value) { this.value = value; }
+    public String value() { return value; }
   }
 
   public enum RumActionType {

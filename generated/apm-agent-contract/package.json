@@ -1,0 +1,30 @@
+{
+  "name": "@nebula-observability/apm-agent-contract",
+  "version": "0.7.0-draft.0",
+  "description": "Versioned Nebula Go APM Agent config, diagnostics, Resource, and runtime metrics contract.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "asset-manifest.json",
+    "contract.json",
+    "schemas",
+    "fixtures",
+    "README.md"
+  ],
+  "exports": {
+    "./contract.json": "./contract.json",
+    "./asset-manifest.json": "./asset-manifest.json",
+    "./schemas/apm-go-agent.schema.json": "./schemas/apm-go-agent.schema.json",
+    "./schemas/apm-agent-config.schema.json": "./schemas/apm-agent-config.schema.json",
+    "./schemas/apm-agent-diagnostics.schema.json": "./schemas/apm-agent-diagnostics.schema.json",
+    "./schemas/otlp-metrics-export.schema.json": "./schemas/otlp-metrics-export.schema.json",
+    "./fixtures/apm-agent-config.json": "./fixtures/apm-agent-config.json",
+    "./fixtures/apm-agent-disabled-config.json": "./fixtures/apm-agent-disabled-config.json",
+    "./fixtures/apm-agent-diagnostics.json": "./fixtures/apm-agent-diagnostics.json",
+    "./fixtures/invalid-apm-agent-config.json": "./fixtures/invalid-apm-agent-config.json",
+    "./fixtures/invalid-apm-agent-diagnostics.json": "./fixtures/invalid-apm-agent-diagnostics.json",
+    "./fixtures/apm-metrics-go-agent.json": "./fixtures/apm-metrics-go-agent.json",
+    "./fixtures/apm-metrics-go-agent-negative-cases.json": "./fixtures/apm-metrics-go-agent-negative-cases.json",
+    "./fixtures/apm-metrics-standard-go-distro.json": "./fixtures/apm-metrics-standard-go-distro.json"
+  }
+}

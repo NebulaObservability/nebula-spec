@@ -1,0 +1,59 @@
+schema_version: 1
+contract_version: 1.0.0-draft.0
+apm_extension_version: 1.2.0-draft.0
+metrics_contract_version: 1.2.0-draft.0
+module:
+  path: github.com/NebulaObservability/nebula-apm-agent/go
+  tag_prefix: go/v
+resource:
+  optional_pair: [telemetry.distro.name, telemetry.distro.version]
+  first_party:
+    distro_name: nebula-go-agent
+    sdk_language: go
+  standard_distro_compatible: true
+runtime_instrumentation:
+  module: go.opentelemetry.io/contrib/instrumentation/runtime
+  version: 0.69.0
+  scope: go.opentelemetry.io/contrib/instrumentation/runtime
+  metrics:
+    - go.memory.used
+    - go.memory.limit
+    - go.memory.allocated
+    - go.memory.allocations
+    - go.memory.gc.goal
+    - go.goroutine.count
+    - go.processor.limit
+    - go.config.gogc
+    - go.schedule.duration
+  deprecated_runtime_metrics: forbidden
+config:
+  version: 1.0.0-draft.0
+  schema: schemas/apm-agent-config.schema.json
+  disabled_endpoint: ""
+  protocol: http/protobuf
+  runtime_failure: fail_open
+  invalid_config: fail_fast
+diagnostics:
+  version: 1.0.0-draft.0
+  schema: schemas/apm-agent-diagnostics.schema.json
+  secret_values: forbidden
+  exact_queue_occupancy: unavailable
+  exact_retry_attempts: unavailable
+  fields:
+    - state
+    - noop
+    - trace_queue_capacity
+    - spans_ended
+    - spans_exported
+    - spans_dropped
+    - trace_batches
+    - trace_export_failures
+    - metric_exports
+    - metric_export_failures
+    - flushes
+    - flush_failures
+    - shutdowns
+    - shutdown_timeouts
+    - last_error_code
+    - last_export_success
+  error_codes: [queue_full, export_timeout, export_canceled, export_failed, shutdown_timeout]

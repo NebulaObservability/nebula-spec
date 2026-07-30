@@ -1,6 +1,6 @@
 {
   "name": "@nebula-observability/apm-metrics-contract",
-  "version": "0.6.0-draft.0",
+  "version": "0.7.0-draft.0",
   "description": "Versioned Nebula APM Metrics OTLP contract and conformance fixtures.",
   "license": "Apache-2.0",
   "type": "module",
@@ -23,6 +23,9 @@
     "./fixtures/apm-metrics-negative-cases.json": "./fixtures/apm-metrics-negative-cases.json",
     "./fixtures/apm-metrics-cumulative-sequence.json": "./fixtures/apm-metrics-cumulative-sequence.json",
     "./fixtures/apm-metrics-cumulative-sequence-negative-cases.json": "./fixtures/apm-metrics-cumulative-sequence-negative-cases.json",
+    "./fixtures/apm-metrics-go-agent.json": "./fixtures/apm-metrics-go-agent.json",
+    "./fixtures/apm-metrics-go-agent-negative-cases.json": "./fixtures/apm-metrics-go-agent-negative-cases.json",
+    "./fixtures/apm-metrics-standard-go-distro.json": "./fixtures/apm-metrics-standard-go-distro.json",
     "./compatibility/apm-metrics.json": "./compatibility/apm-metrics.json"
   }
 }

@@ -45,8 +45,23 @@ APM_METRICS_SEQUENCE_NEGATIVE_FIXTURE = (
 )
 OTLP_METRICS_SCHEMA = SCHEMAS / "otlp-metrics-export.schema.json"
 APM_METRICS_SEQUENCE_SCHEMA = SCHEMAS / "apm-metrics-cumulative-sequence.schema.json"
-APM_METRICS_BASELINE = ROOT / "compatibility" / "baselines" / "apm-metrics-1.1.0-draft.0.json"
+APM_METRICS_LEGACY_BASELINE = ROOT / "compatibility" / "baselines" / "apm-metrics-1.1.0-draft.0.json"
+APM_METRICS_BASELINE = ROOT / "compatibility" / "baselines" / "apm-metrics-1.2.0-draft.0.json"
 APM_METRICS_BUNDLE = ROOT / "generated" / "apm-metrics-contract"
+APM_GO_AGENT_CONTRACT = ROOT / "specs" / "apm" / "v1" / "go-agent.yaml"
+APM_GO_AGENT_SCHEMA = SCHEMAS / "apm-go-agent.schema.json"
+APM_AGENT_CONFIG_SCHEMA = SCHEMAS / "apm-agent-config.schema.json"
+APM_AGENT_DIAGNOSTICS_SCHEMA = SCHEMAS / "apm-agent-diagnostics.schema.json"
+APM_AGENT_FIXTURES = FIXTURES / "agent"
+APM_AGENT_CONFIG_FIXTURE = APM_AGENT_FIXTURES / "apm-agent-config.json"
+APM_AGENT_DISABLED_CONFIG_FIXTURE = APM_AGENT_FIXTURES / "apm-agent-disabled-config.json"
+APM_AGENT_DIAGNOSTICS_FIXTURE = APM_AGENT_FIXTURES / "apm-agent-diagnostics.json"
+APM_AGENT_INVALID_CONFIG_FIXTURE = APM_AGENT_FIXTURES / "invalid-apm-agent-config.json"
+APM_AGENT_INVALID_DIAGNOSTICS_FIXTURE = APM_AGENT_FIXTURES / "invalid-apm-agent-diagnostics.json"
+APM_GO_METRICS_FIXTURE = APM_METRICS_FIXTURES / "apm-metrics-go-agent.json"
+APM_GO_METRICS_NEGATIVE_FIXTURE = APM_METRICS_FIXTURES / "apm-metrics-go-agent-negative-cases.json"
+APM_GO_STANDARD_DISTRO_FIXTURE = APM_METRICS_FIXTURES / "apm-metrics-standard-go-distro.json"
+APM_AGENT_BUNDLE = ROOT / "generated" / "apm-agent-contract"
 GO_MODULE = ROOT / "generated" / "go"
 GO_MODULE_PATH = "github.com/NebulaObservability/nebula-spec/generated/go"
 GO_PROTOBUF_VERSION = "v1.36.6"
@@ -58,10 +73,10 @@ SEMVER_PATTERN = re.compile(
     r"(?:[+]([0-9A-Za-z-]+(?:[.][0-9A-Za-z-]+)*))?$"
 )
 
-APM_METRICS_CONTRACT_VERSION = "1.1.0-draft.0"
-APM_SEMANTIC_REGISTRY_VERSION = "1.1.0-draft.0"
+APM_METRICS_CONTRACT_VERSION = "1.2.0-draft.0"
+APM_SEMANTIC_REGISTRY_VERSION = "1.2.0-draft.0"
 APM_METRICS_OTEL_SCHEMA_URL = "https://opentelemetry.io/schemas/1.43.0"
-APM_MVP_METRIC_NAMES = (
+APM_BASE_METRIC_NAMES = (
     "http.server.request.duration",
     "db.client.operation.duration",
     "jvm.memory.used",
@@ -75,6 +90,19 @@ APM_MVP_METRIC_NAMES = (
     "process.memory.usage",
     "process.uptime",
 )
+APM_GO_RUNTIME_METRIC_NAMES = (
+    "go.memory.used",
+    "go.memory.limit",
+    "go.memory.allocated",
+    "go.memory.allocations",
+    "go.memory.gc.goal",
+    "go.goroutine.count",
+    "go.processor.limit",
+    "go.config.gogc",
+    "go.schedule.duration",
+)
+APM_MVP_METRIC_NAMES = APM_BASE_METRIC_NAMES
+APM_CURRENT_METRIC_NAMES = APM_BASE_METRIC_NAMES + APM_GO_RUNTIME_METRIC_NAMES
 APM_HISTOGRAM_METRIC_NAMES = {
     "http.server.request.duration",
     "db.client.operation.duration",
@@ -92,6 +120,8 @@ EXPECTED_APM_RESOURCE_ATTRIBUTES = [
     {"ref": "process.pid", "type": "int", "requirement": "required", "minimum": 1},
     {"ref": "process.runtime.name", "type": "string", "requirement": "required", "non_empty": True},
     {"ref": "process.runtime.version", "type": "string", "requirement": "required", "non_empty": True},
+    {"ref": "telemetry.distro.name", "type": "string", "requirement": "optional", "non_empty": True},
+    {"ref": "telemetry.distro.version", "type": "string", "requirement": "optional", "non_empty": True},
 ]
 PROHIBITED_METRIC_ATTRIBUTES = (
     "url.full",
@@ -135,6 +165,14 @@ EXPECTED_APM_NEGATIVE_CASES = {
     "wrong-metric-type",
     "wrong-unit",
 }
+EXPECTED_APM_GO_NEGATIVE_CASES = {
+    "deprecated-runtime-name",
+    "first-party-language",
+    "missing-distro-version",
+    "missing-memory-type",
+    "schedule-not-explicit-histogram",
+    "wrong-runtime-scope-version",
+}
 EXPECTED_APM_SEQUENCE_CASES = {
     "cumulative-growth",
     "start-time-reset",
@@ -151,6 +189,14 @@ EXPECTED_APM_SEQUENCE_NEGATIVE_CASES = {
     "start-time-regression",
 }
 EXPECTED_APM_METRICS_BASELINE_SHA256 = "925fc1ef3b831ebe8a116545d7fad91b72ab1f1705a3dc6cb9514efc3ffaa286"
+EXPECTED_APM_METRICS_CURRENT_BASELINE_SHA256 = "2248a7898699173b361b15b3fa1a21ce2a96de59a16cbe5e8646d5430fe5bb0a"
+APM_GO_AGENT_CONTRACT_VERSION = "1.0.0-draft.0"
+APM_AGENT_CONFIG_VERSION = "1.0.0-draft.0"
+APM_AGENT_DIAGNOSTICS_VERSION = "1.0.0-draft.0"
+APM_GO_AGENT_VERSION = "0.1.0"
+APM_GO_RUNTIME_SCOPE = "go.opentelemetry.io/contrib/instrumentation/runtime"
+APM_GO_RUNTIME_VERSION = "0.69.0"
+APM_FIRST_PARTY_DISTRO = "nebula-go-agent"
 OTLP_CUMULATIVE_TEMPORALITY = 2
 OTLP_UINT64_MAX = 2**64 - 1
 
@@ -525,6 +571,43 @@ def apm_metrics_snapshot_data(contract: dict[str, Any] | None = None) -> dict[st
     return copy.deepcopy(contract if contract is not None else load_yaml(APM_METRICS_CONTRACT))
 
 
+def apm_metrics_compatibility_errors(
+    baseline: dict[str, Any],
+    current: dict[str, Any],
+    label: str,
+) -> list[str]:
+    errors: list[str] = []
+    try:
+        baseline_version = str(baseline["contract_version"])
+        current_version = str(current["contract_version"])
+        baseline_major, _, _, _ = parse_semver(baseline_version)
+        current_major, _, _, _ = parse_semver(current_version)
+        if baseline_major != current_major or compare_semver(current_version, baseline_version) < 0:
+            errors.append(f"{label}: current contract version is not an additive successor")
+    except (KeyError, SpecError) as error:
+        errors.append(f"{label}: invalid contract version: {error}")
+        return errors
+
+    ignored = {"contract_version", "resource", "metrics"}
+    for key, value in baseline.items():
+        if key not in ignored and current.get(key) != value:
+            errors.append(f"{label}: existing top-level field changed: {key}")
+
+    baseline_resources = baseline.get("resource", {}).get("attributes", [])
+    current_resources = current.get("resource", {}).get("attributes", [])
+    if current_resources[: len(baseline_resources)] != baseline_resources:
+        errors.append(f"{label}: existing Resource attribute profile changed or reordered")
+    for attribute in current_resources[len(baseline_resources) :]:
+        if attribute.get("requirement") != "optional":
+            errors.append(f"{label}: additive Resource attribute must be optional: {attribute.get('ref')}")
+
+    baseline_metrics = baseline.get("metrics", [])
+    current_metrics = current.get("metrics", [])
+    if current_metrics[: len(baseline_metrics)] != baseline_metrics:
+        errors.append(f"{label}: existing metric profile changed or reordered")
+    return errors
+
+
 def otlp_attribute_map(entries: Any, label: str, errors: list[str]) -> dict[str, dict[str, Any]]:
     if not isinstance(entries, list):
         errors.append(f"{label}: attributes must be an array")
@@ -759,6 +842,7 @@ def apm_metrics_fixture_errors(
     expected_histogram_signal: str,
     enforce_red_counts: bool,
     require_target_schema: bool = False,
+    require_first_party_distro: bool = False,
 ) -> list[str]:
     errors = validate(fixture, OTLP_METRICS_SCHEMA, label)
     if errors:
@@ -766,7 +850,10 @@ def apm_metrics_fixture_errors(
     contract_by_name = {metric["name"]: metric for metric in contract["metrics"]}
     semantic_attributes = {item["name"]: item for item in registry()["attributes"]}
     resource_definitions = {item["ref"]: item for item in contract["resource"]["attributes"]}
-    expected_resources = set(resource_definitions)
+    required_resources = {
+        item["ref"] for item in contract["resource"]["attributes"] if item["requirement"] == "required"
+    }
+    allowed_resources = set(resource_definitions)
     global_forbidden = set(contract["attribute_policy"]["forbidden"])
 
     resource_metrics = fixture["resourceMetrics"]
@@ -778,13 +865,36 @@ def apm_metrics_fixture_errors(
     for resource_index, resource_metric in enumerate(resource_metrics):
         resource_label = f"{label}/resourceMetrics/{resource_index}"
         resource_attributes = otlp_attribute_map(resource_metric["resource"]["attributes"], resource_label, errors)
-        missing_resources = expected_resources - set(resource_attributes)
-        unexpected_resources = set(resource_attributes) - expected_resources
+        missing_resources = required_resources - set(resource_attributes)
+        unexpected_resources = set(resource_attributes) - allowed_resources
         if missing_resources:
             errors.append(f"{resource_label}: missing required Resource attributes {sorted(missing_resources)}")
         if unexpected_resources:
             errors.append(f"{resource_label}: golden fixture has unexpected Resource attributes {sorted(unexpected_resources)}")
         errors.extend(attribute_value_errors(resource_attributes, resource_definitions, resource_label))
+        distro_name = resource_attributes.get("telemetry.distro.name", {}).get("value")
+        distro_version = resource_attributes.get("telemetry.distro.version", {}).get("value")
+        if (distro_name is None) != (distro_version is None):
+            errors.append(
+                f"{resource_label}: telemetry.distro.name and telemetry.distro.version must be present together"
+            )
+        if distro_version is not None:
+            try:
+                parse_semver(str(distro_version))
+            except SpecError:
+                errors.append(f"{resource_label}: telemetry.distro.version must be a semantic version")
+        sdk_language = resource_attributes.get("telemetry.sdk.language", {}).get("value")
+        if distro_name == APM_FIRST_PARTY_DISTRO and sdk_language != "go":
+            errors.append(f"{resource_label}: nebula-go-agent must use telemetry.sdk.language=go")
+        if require_first_party_distro:
+            if distro_name != APM_FIRST_PARTY_DISTRO:
+                errors.append(f"{resource_label}: first-party fixture must use telemetry.distro.name=nebula-go-agent")
+            if distro_version != APM_GO_AGENT_VERSION:
+                errors.append(
+                    f"{resource_label}: first-party fixture telemetry.distro.version must be {APM_GO_AGENT_VERSION}"
+                )
+            if sdk_language != "go":
+                errors.append(f"{resource_label}: first-party fixture must use telemetry.sdk.language=go")
         resource_schema_url = resource_metric.get("schemaUrl")
         errors.extend(source_otel_schema_url_errors(resource_schema_url, contract, f"{resource_label}/schemaUrl"))
         if require_target_schema and resource_schema_url != contract["otel_schema_url"]:
@@ -810,12 +920,42 @@ def apm_metrics_fixture_errors(
             scope_names.append(scope_name)
             scope_profiles.append(tuple(metric["name"] for metric in scope_metric["metrics"]))
             fixture_metrics.extend(scope_metric["metrics"])
+            if any(metric["name"] in APM_GO_RUNTIME_METRIC_NAMES for metric in scope_metric["metrics"]):
+                if scope_name != APM_GO_RUNTIME_SCOPE:
+                    errors.append(f"{scope_label}: Go runtime metrics must use scope {APM_GO_RUNTIME_SCOPE}")
+                if scope_version != APM_GO_RUNTIME_VERSION:
+                    errors.append(
+                        f"{scope_label}: runtime instrumentation scope must be version {APM_GO_RUNTIME_VERSION}"
+                    )
+    fixture_names = [metric["name"] for metric in fixture_metrics]
+    if len(fixture_names) != len(set(fixture_names)):
+        errors.append(f"{label}: fixture contains duplicate metric names across scopes")
+    fixture_name_set = set(fixture_names)
+    expected_name_set = set(expected_metric_names)
+    required_expected_names = {
+        name
+        for name in expected_metric_names
+        if contract_by_name.get(name, {}).get("requirement") == "required"
+    }
+    missing_required_names = required_expected_names - fixture_name_set
+    unexpected_names = fixture_name_set - expected_name_set
+    if missing_required_names:
+        errors.append(f"{label}: missing required metrics {sorted(missing_required_names)}")
+    if unexpected_names:
+        errors.append(f"{label}: unexpected metrics {sorted(unexpected_names)}")
+    expected_present_names = tuple(name for name in expected_metric_names if name in fixture_name_set)
+    if tuple(fixture_names) != expected_present_names:
+        errors.append(
+            f"{label}: metric order/profile must be the declared subset {list(expected_present_names)}, "
+            f"got {fixture_names}"
+        )
+
     expected_scope_profiles = (
-        tuple(name for name in expected_metric_names if name == "http.server.request.duration"),
-        tuple(name for name in expected_metric_names if name == "db.client.operation.duration"),
+        tuple(name for name in expected_present_names if name == "http.server.request.duration"),
+        tuple(name for name in expected_present_names if name == "db.client.operation.duration"),
         tuple(
             name
-            for name in expected_metric_names
+            for name in expected_present_names
             if name not in {"http.server.request.duration", "db.client.operation.duration"}
         ),
     )
@@ -827,12 +967,6 @@ def apm_metrics_fixture_errors(
         )
     if len(scope_names) != len(set(scope_names)):
         errors.append(f"{label}: producer instrumentation scope names must be distinct")
-
-    fixture_names = [metric["name"] for metric in fixture_metrics]
-    if len(fixture_names) != len(set(fixture_names)):
-        errors.append(f"{label}: fixture contains duplicate metric names across scopes")
-    if tuple(fixture_names) != expected_metric_names:
-        errors.append(f"{label}: metric order/profile must be {list(expected_metric_names)}, got {fixture_names}")
 
     seen_series: set[tuple[str, tuple[tuple[str, str], ...]]] = set()
     http_success_count = 0
@@ -1043,6 +1177,8 @@ def fixture_validation_profile(path: Path) -> tuple[tuple[str, ...], str, bool]:
     if path == APM_METRICS_EXPLICIT_FIXTURE:
         histogram_names = tuple(name for name in APM_MVP_METRIC_NAMES if name in APM_HISTOGRAM_METRIC_NAMES)
         return histogram_names, "histogram", False
+    if path == APM_GO_METRICS_FIXTURE:
+        return APM_GO_RUNTIME_METRIC_NAMES, "histogram", False
     raise SpecError(f"unsupported APM metrics fixture base: {path.relative_to(ROOT)}")
 
 
@@ -1078,7 +1214,10 @@ def apm_metrics_negative_conformance_errors(contract: dict[str, Any]) -> list[st
             errors.append(f"{case_label}: base_fixture must be a path")
             continue
         base_path = (ROOT / relative_base).resolve()
-        if base_path not in {APM_METRICS_FIXTURE.resolve(), APM_METRICS_EXPLICIT_FIXTURE.resolve()}:
+        if base_path not in {
+            APM_METRICS_FIXTURE.resolve(),
+            APM_METRICS_EXPLICIT_FIXTURE.resolve(),
+        }:
             errors.append(f"{case_label}: unsupported base fixture {relative_base}")
             continue
         try:
@@ -1124,6 +1263,115 @@ def apm_metrics_negative_conformance_errors(contract: dict[str, Any]) -> list[st
     if missing or unexpected:
         errors.append(f"APM metrics negative cases differ: missing={sorted(missing)}, unexpected={sorted(unexpected)}")
     return errors
+
+
+def apm_go_metrics_negative_conformance_errors(contract: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    label = APM_GO_METRICS_NEGATIVE_FIXTURE.relative_to(ROOT).as_posix()
+    try:
+        suite = load_json(APM_GO_METRICS_NEGATIVE_FIXTURE)
+    except (FileNotFoundError, json.JSONDecodeError, SpecError) as error:
+        return [f"invalid Go runtime metrics negative fixture suite: {error}"]
+    if set(suite) != {"schema_version", "base_fixture", "cases"} or suite.get("schema_version") != 1:
+        return [f"{label}: invalid suite envelope"]
+    base_path = (ROOT / str(suite.get("base_fixture", ""))).resolve()
+    if base_path != APM_GO_METRICS_FIXTURE.resolve():
+        return [f"{label}: base_fixture must be {APM_GO_METRICS_FIXTURE.relative_to(ROOT).as_posix()}"]
+    try:
+        base = load_json(base_path)
+    except (FileNotFoundError, json.JSONDecodeError, SpecError) as error:
+        return [f"{label}: invalid base fixture: {error}"]
+    cases = suite.get("cases")
+    if not isinstance(cases, list):
+        return [f"{label}: cases must be an array"]
+    base_errors = apm_metrics_fixture_errors(
+        contract,
+        base,
+        APM_GO_METRICS_FIXTURE.relative_to(ROOT).as_posix(),
+        APM_GO_RUNTIME_METRIC_NAMES,
+        "histogram",
+        False,
+        True,
+        True,
+    )
+    if base_errors:
+        errors.extend(base_errors)
+        return errors
+    seen_names: set[str] = set()
+    for case_index, case in enumerate(cases):
+        case_label = f"{label}/cases/{case_index}"
+        if not isinstance(case, dict) or not isinstance(case.get("name"), str):
+            errors.append(f"{case_label}: case name is required")
+            continue
+        name = case["name"]
+        if name in seen_names:
+            errors.append(f"{case_label}: duplicate case name {name}")
+            continue
+        seen_names.add(name)
+        mutated = copy.deepcopy(base)
+        patch_errors = apply_json_patch(mutated, case.get("patch"), case_label)
+        errors.extend(patch_errors)
+        if patch_errors:
+            continue
+        mutated_errors = apm_metrics_fixture_errors(
+            contract,
+            mutated,
+            APM_GO_METRICS_FIXTURE.relative_to(ROOT).as_posix(),
+            APM_GO_RUNTIME_METRIC_NAMES,
+            "histogram",
+            False,
+            True,
+            True,
+        )
+        if not mutated_errors:
+            errors.append(f"{case_label}: mutation did not create a conformance failure")
+            continue
+        expected_errors = case.get("expected_errors")
+        if not isinstance(expected_errors, list) or not expected_errors:
+            errors.append(f"{case_label}: expected_errors must be a non-empty array")
+            continue
+        for expected in expected_errors:
+            if not any(str(expected) in actual for actual in mutated_errors):
+                errors.append(f"{case_label}: expected error containing {expected!r}, got {mutated_errors}")
+    if seen_names != EXPECTED_APM_GO_NEGATIVE_CASES:
+        errors.append(
+            f"Go runtime negative cases differ: missing={sorted(EXPECTED_APM_GO_NEGATIVE_CASES - seen_names)}, "
+            f"unexpected={sorted(seen_names - EXPECTED_APM_GO_NEGATIVE_CASES)}"
+        )
+    return errors
+
+
+def apm_standard_go_distro_conformance_errors(contract: dict[str, Any]) -> list[str]:
+    label = APM_GO_STANDARD_DISTRO_FIXTURE.relative_to(ROOT).as_posix()
+    try:
+        compatibility = load_json(APM_GO_STANDARD_DISTRO_FIXTURE)
+    except (FileNotFoundError, json.JSONDecodeError, SpecError) as error:
+        return [f"invalid standard Go distro compatibility fixture: {error}"]
+    if set(compatibility) != {"schema_version", "base_fixture", "patch"} or compatibility.get("schema_version") != 1:
+        return [f"{label}: invalid compatibility fixture envelope"]
+    base_path = (ROOT / str(compatibility.get("base_fixture", ""))).resolve()
+    if base_path != APM_GO_METRICS_FIXTURE.resolve():
+        return [f"{label}: base_fixture must be the first-party Go Agent fixture"]
+    fixture = load_json(base_path)
+    errors = apply_json_patch(fixture, compatibility.get("patch"), label)
+    if errors:
+        return errors
+    resource_errors = apm_metrics_fixture_errors(
+        contract,
+        fixture,
+        label,
+        APM_GO_RUNTIME_METRIC_NAMES,
+        "histogram",
+        False,
+        True,
+        False,
+    )
+    attributes = otlp_attribute_map(fixture["resourceMetrics"][0]["resource"]["attributes"], label, resource_errors)
+    if attributes.get("telemetry.distro.name", {}).get("value") in {None, APM_FIRST_PARTY_DISTRO}:
+        resource_errors.append(f"{label}: compatibility fixture must use a non-Nebula standard distro")
+    if attributes.get("telemetry.sdk.language", {}).get("value") != "go":
+        resource_errors.append(f"{label}: standard Go distro fixture must use telemetry.sdk.language=go")
+    return resource_errors
 
 
 def metric_series_states(
@@ -1503,7 +1751,7 @@ def apm_metrics_conformance_errors(
     if contract["red"] != expected_red:
         errors.append("APM RED derivation must use the HTTP duration histogram independently from trace sampling")
     if contract["resource"]["attributes"] != EXPECTED_APM_RESOURCE_ATTRIBUTES:
-        errors.append("APM metrics Resource profile must contain the exact 11 typed required attributes")
+        errors.append("APM metrics Resource profile differs from the frozen typed attribute order")
     expected_policy = {
         "mode": "allowlist",
         "unknown_attributes": "reject",
@@ -1515,15 +1763,27 @@ def apm_metrics_conformance_errors(
         errors.append("APM metrics attribute policy differs from the frozen reject/forbidden profile")
     contract_metrics = contract["metrics"]
     contract_names = tuple(metric["name"] for metric in contract_metrics)
-    if contract_names != APM_MVP_METRIC_NAMES:
-        errors.append(f"APM Metrics MVP order/profile differs: expected={list(APM_MVP_METRIC_NAMES)}, got={list(contract_names)}")
+    if contract_names != APM_CURRENT_METRIC_NAMES:
+        errors.append(
+            f"APM Metrics profile differs: expected={list(APM_CURRENT_METRIC_NAMES)}, got={list(contract_names)}"
+        )
 
     try:
+        legacy_baseline = load_json(APM_METRICS_LEGACY_BASELINE)
+        if canonical_document_sha256(legacy_baseline) != EXPECTED_APM_METRICS_BASELINE_SHA256:
+            errors.append("APM Metrics 1.1 compatibility baseline hash is not the reviewed immutable value")
+        errors.extend(
+            apm_metrics_compatibility_errors(
+                legacy_baseline,
+                contract,
+                "compatibility/baselines/apm-metrics-1.1.0-draft.0.json",
+            )
+        )
         baseline = load_json(APM_METRICS_BASELINE)
-        if canonical_document_sha256(baseline) != EXPECTED_APM_METRICS_BASELINE_SHA256:
-            errors.append("APM metrics compatibility baseline hash is not the reviewed immutable value")
+        if canonical_document_sha256(baseline) != EXPECTED_APM_METRICS_CURRENT_BASELINE_SHA256:
+            errors.append("APM Metrics 1.2 compatibility baseline hash is not the reviewed immutable value")
         if apm_metrics_snapshot_data(contract) != baseline:
-            errors.append("APM metrics contract differs from the frozen compatibility baseline")
+            errors.append("APM Metrics contract differs from the current frozen compatibility baseline")
     except (FileNotFoundError, json.JSONDecodeError, SpecError) as error:
         errors.append(f"invalid APM metrics compatibility baseline: {error}")
 
@@ -1570,8 +1830,16 @@ def apm_metrics_conformance_errors(
     ):
         errors.append("APM metrics contract must use the registered OTel schema URL")
     manifest_resources = apm_manifest.get("resource", {}).get("required", [])
-    if manifest_resources != [item["ref"] for item in contract["resource"]["attributes"]]:
-        errors.append("APM metrics Resource profile must match the APM manifest required Resource order")
+    expected_manifest_required = [item["ref"] for item in EXPECTED_APM_RESOURCE_ATTRIBUTES[:8]]
+    expected_manifest_optional = [item["ref"] for item in EXPECTED_APM_RESOURCE_ATTRIBUTES[8:11]]
+    if manifest_resources != expected_manifest_required:
+        errors.append("APM manifest required Resource identity order differs from the frozen profile")
+    if apm_manifest.get("resource", {}).get("optional") != expected_manifest_optional:
+        errors.append("APM manifest optional process/runtime Resource order differs from the frozen profile")
+    if apm_manifest.get("resource", {}).get("optional_pairs") != [
+        ["telemetry.distro.name", "telemetry.distro.version"]
+    ]:
+        errors.append("APM manifest must declare the telemetry distro Resource attributes as an optional pair")
 
     primary_fixture = fixture if fixture is not None else load_json(APM_METRICS_FIXTURE)
     errors.extend(
@@ -1597,7 +1865,44 @@ def apm_metrics_conformance_errors(
             True,
         )
     )
+    go_fixture = load_json(APM_GO_METRICS_FIXTURE)
+    errors.extend(
+        apm_metrics_fixture_errors(
+            contract,
+            go_fixture,
+            "fixtures/metrics/apm-metrics-go-agent.json",
+            APM_GO_RUNTIME_METRIC_NAMES,
+            "histogram",
+            False,
+            True,
+            True,
+        )
+    )
+    go_fixture_without_limit = copy.deepcopy(go_fixture)
+    removed_limits = 0
+    for resource_metric in go_fixture_without_limit["resourceMetrics"]:
+        for scope_metric in resource_metric["scopeMetrics"]:
+            metrics = scope_metric["metrics"]
+            removed_limits += sum(metric["name"] == "go.memory.limit" for metric in metrics)
+            scope_metric["metrics"] = [metric for metric in metrics if metric["name"] != "go.memory.limit"]
+    if removed_limits != 1:
+        errors.append("Go Agent fixture must contain exactly one conditional go.memory.limit metric")
+    else:
+        errors.extend(
+            apm_metrics_fixture_errors(
+                contract,
+                go_fixture_without_limit,
+                "fixtures/metrics/apm-metrics-go-agent-without-memory-limit.json",
+                APM_GO_RUNTIME_METRIC_NAMES,
+                "histogram",
+                False,
+                True,
+                True,
+            )
+        )
     errors.extend(apm_metrics_negative_conformance_errors(contract))
+    errors.extend(apm_go_metrics_negative_conformance_errors(contract))
+    errors.extend(apm_standard_go_distro_conformance_errors(contract))
     errors.extend(apm_metrics_accumulation_conformance_errors(contract))
 
     fixture_manifest = load_yaml(FIXTURES / "manifest.yaml")
@@ -1621,6 +1926,18 @@ def apm_metrics_conformance_errors(
         },
         "fixtures/metrics/apm-metrics-cumulative-sequence-negative-cases.json": {
             "schema": "schemas/apm-metrics-cumulative-sequence.schema.json",
+            "valid": True,
+        },
+        "fixtures/metrics/apm-metrics-go-agent.json": {
+            "schema": "schemas/otlp-metrics-export.schema.json",
+            "valid": True,
+        },
+        "fixtures/metrics/apm-metrics-go-agent-negative-cases.json": {
+            "validator": "apm_metrics_go_negative_suite",
+            "valid": True,
+        },
+        "fixtures/metrics/apm-metrics-standard-go-distro.json": {
+            "validator": "apm_metrics_go_compatibility",
             "valid": True,
         },
     }
@@ -1654,9 +1971,131 @@ def write_apm_metrics_snapshot(output: Path) -> None:
 def breaking_apm_metrics(against: Path) -> None:
     baseline = load_json(against)
     current = apm_metrics_snapshot_data()
-    if current != baseline:
-        raise SpecError(f"APM Metrics contract differs from frozen baseline {against.relative_to(ROOT)}")
-    print(f"No APM Metrics contract changes against {against.relative_to(ROOT)}.")
+    errors = apm_metrics_compatibility_errors(baseline, current, against.relative_to(ROOT).as_posix())
+    if errors:
+        raise SpecError("Breaking APM Metrics changes detected:\n- " + "\n- ".join(errors))
+    print(f"No breaking APM Metrics changes against {against.relative_to(ROOT)}.")
+
+
+def apm_agent_conformance_errors() -> list[str]:
+    errors: list[str] = []
+    contract = load_yaml(APM_GO_AGENT_CONTRACT)
+    errors.extend(validate(contract, APM_GO_AGENT_SCHEMA, "specs/apm/v1/go-agent.yaml"))
+    if errors:
+        return errors
+
+    release = current_release()
+    protocols = release.get("protocols", {})
+    if protocols.get("apm_agent") != contract["contract_version"]:
+        errors.append("current release APM Agent version must match specs/apm/v1/go-agent.yaml")
+    if protocols.get("apm_agent_config") != contract["config"]["version"]:
+        errors.append("current release APM Agent config version must match the Go Agent contract")
+    if protocols.get("apm_agent_diagnostics") != contract["diagnostics"]["version"]:
+        errors.append("current release APM Agent diagnostics version must match the Go Agent contract")
+    if protocols.get("apm_extension") != contract["apm_extension_version"]:
+        errors.append("current release APM extension version must match the Go Agent contract")
+    if protocols.get("apm_metrics") != contract["metrics_contract_version"]:
+        errors.append("current release APM Metrics version must match the Go Agent contract")
+    if release.get("components", {}).get("apm_agent_go") is not None:
+        errors.append("current Spec release must not claim an unpublished apm_agent_go component")
+
+    config_schema = load_json(APM_AGENT_CONFIG_SCHEMA)
+    diagnostics_schema = load_json(APM_AGENT_DIAGNOSTICS_SCHEMA)
+    if config_schema.get("properties", {}).get("contract_version", {}).get("const") != contract["config"]["version"]:
+        errors.append("APM Agent config schema contract version differs from the Go Agent contract")
+    if diagnostics_schema.get("required") != contract["diagnostics"]["fields"]:
+        errors.append("APM Agent diagnostics schema fields differ from the exact Go Agent contract")
+    diagnostics_error_codes = diagnostics_schema.get("properties", {}).get("last_error_code", {}).get("enum", [])
+    if diagnostics_error_codes != ["", *contract["diagnostics"]["error_codes"]]:
+        errors.append("APM Agent diagnostics stable error codes differ from the Go Agent contract")
+
+    matrix = load_yaml(ROOT / "compatibility" / "protocol-matrix.yaml").get("protocols", {}).get("apm_agent", {})
+    if matrix.get("current") != APM_GO_AGENT_CONTRACT_VERSION:
+        errors.append("APM Agent compatibility matrix current version differs")
+    if matrix.get("implementation") != contract["module"]["path"]:
+        errors.append("APM Agent compatibility matrix module path differs")
+    if str(matrix.get("otel_go")) != "1.44.0":
+        errors.append("APM Agent compatibility matrix must pin OTel Go 1.44.0")
+    if str(matrix.get("runtime_instrumentation")) != APM_GO_RUNTIME_VERSION:
+        errors.append(f"APM Agent compatibility matrix must pin runtime instrumentation {APM_GO_RUNTIME_VERSION}")
+
+    config_label = APM_AGENT_CONFIG_FIXTURE.relative_to(ROOT).as_posix()
+    disabled_label = APM_AGENT_DISABLED_CONFIG_FIXTURE.relative_to(ROOT).as_posix()
+    diagnostics_label = APM_AGENT_DIAGNOSTICS_FIXTURE.relative_to(ROOT).as_posix()
+    config = load_json(APM_AGENT_CONFIG_FIXTURE)
+    disabled = load_json(APM_AGENT_DISABLED_CONFIG_FIXTURE)
+    diagnostics = load_json(APM_AGENT_DIAGNOSTICS_FIXTURE)
+    errors.extend(validate(config, APM_AGENT_CONFIG_SCHEMA, config_label))
+    errors.extend(validate(disabled, APM_AGENT_CONFIG_SCHEMA, disabled_label))
+    errors.extend(validate(diagnostics, APM_AGENT_DIAGNOSTICS_SCHEMA, diagnostics_label))
+
+    expected_defaults = {
+        "trace_sample_ratio": 1,
+        "trace_queue_size": 2048,
+        "trace_batch_size": 512,
+        "trace_batch_timeout_ms": 5000,
+        "export_timeout_ms": 10000,
+        "metric_export_interval_ms": 30000,
+        "runtime_read_interval_ms": 15000,
+        "shutdown_timeout_ms": 10000,
+        "limits": {
+            "attribute_count": 128,
+            "attribute_value_length": 4096,
+            "span_event_count": 128,
+            "span_link_count": 128,
+        },
+    }
+    for name, expected in expected_defaults.items():
+        if config.get(name) != expected or disabled.get(name) != expected:
+            errors.append(f"APM Agent config fixtures must freeze default {name}={expected}")
+    if config.get("trace_batch_size", 0) > config.get("trace_queue_size", 0):
+        errors.append("APM Agent trace batch size must not exceed trace queue size")
+    if config.get("enabled") is not True or not config.get("endpoint"):
+        errors.append("APM Agent enabled config fixture must declare a non-empty endpoint")
+    if disabled.get("enabled") is not False or disabled.get("endpoint") != "" or disabled.get("header_names") != []:
+        errors.append("APM Agent disabled config must use an empty endpoint and no exporter header names")
+
+    expected_exclusions = [
+        {"method": "GET", "template": "/healthz"},
+        {"method": "POST", "template": "/v1/traces"},
+        {"method": "POST", "template": "/v1/metrics"},
+        {"method": "POST", "template": "/v1/logs"},
+        {"method": "POST", "template": "/v1/profiles"},
+        {"method": "POST", "template": "/internal/v1/rum/batches"},
+        {"method": "POST", "template": "/internal/v1/agent/diagnostics"},
+        {"method": "OPTIONS", "template": "*"},
+    ]
+    if config.get("excluded_server_routes") != expected_exclusions:
+        errors.append("APM Agent config fixture must freeze the exact recursion-exclusion route set")
+    if config.get("excluded_client_routes") != []:
+        errors.append("APM Agent default client exclusion list must be empty; exporter isolation is transport-owned")
+
+    if diagnostics.get("spans_exported", 0) + diagnostics.get("spans_dropped", 0) > diagnostics.get("spans_ended", 0):
+        errors.append("APM Agent diagnostics exported+dropped spans must not exceed ended spans")
+    if diagnostics.get("noop") is True and diagnostics.get("state") != "disabled":
+        errors.append("APM Agent no-op diagnostics must use the disabled state")
+
+    fixture_manifest = load_yaml(FIXTURES / "manifest.yaml")
+    entries = {entry.get("path"): entry for entry in fixture_manifest.get("fixtures", []) if isinstance(entry, dict)}
+    expected_entries = {
+        "fixtures/agent/apm-agent-config.json": ("schemas/apm-agent-config.schema.json", True),
+        "fixtures/agent/apm-agent-disabled-config.json": ("schemas/apm-agent-config.schema.json", True),
+        "fixtures/agent/invalid-apm-agent-config.json": ("schemas/apm-agent-config.schema.json", False),
+        "fixtures/agent/apm-agent-diagnostics.json": ("schemas/apm-agent-diagnostics.schema.json", True),
+        "fixtures/agent/invalid-apm-agent-diagnostics.json": ("schemas/apm-agent-diagnostics.schema.json", False),
+    }
+    for path, (schema, valid) in expected_entries.items():
+        entry = entries.get(path)
+        if entry is None or entry.get("schema") != schema or entry.get("valid") is not valid:
+            errors.append(f"fixtures/manifest.yaml must register {path} against {schema} with valid={valid}")
+    return errors
+
+
+def verify_apm_agent_contract() -> None:
+    errors = apm_agent_conformance_errors()
+    if errors:
+        raise SpecError("APM Go Agent conformance failed:\n- " + "\n- ".join(errors))
+    print("APM Go Agent config, diagnostics, distro, runtime metric, and release conformance passed.")
 
 
 def lint() -> None:
@@ -1787,6 +2226,23 @@ def lint() -> None:
     if matrix_apm_metrics.get("otel_schema") != release_otel_schema:
         errors.append("APM Metrics compatibility profile must pin the current release OTel Schema")
 
+    matrix_apm_agent = protocol_matrix.get("protocols", {}).get("apm_agent", {})
+    release_apm_agent = active_release.get("protocols", {}).get("apm_agent")
+    if release_apm_agent != matrix_apm_agent.get("current"):
+        errors.append("current release APM Agent version must match compatibility/protocol-matrix.yaml")
+    accepted_apm_agent_ranges = matrix_apm_agent.get("accepts", [])
+    try:
+        parse_semver(str(release_apm_agent))
+        if not isinstance(accepted_apm_agent_ranges, list) or not accepted_apm_agent_ranges:
+            errors.append("compatibility/protocol-matrix.yaml must declare accepted APM Agent ranges")
+        elif not any(
+            semver_satisfies(str(release_apm_agent), str(expression))
+            for expression in accepted_apm_agent_ranges
+        ):
+            errors.append("current release APM Agent version must be included in its compatibility range")
+    except SpecError as error:
+        errors.append(str(error))
+
     matrix_control_plane = protocol_matrix.get("protocols", {}).get("control_plane_config", {})
     matrix_control_plane_version = matrix_control_plane.get("current")
     accepted_control_plane_ranges = matrix_control_plane.get("accepts", [])
@@ -1834,7 +2290,11 @@ def lint() -> None:
         fixture_data = load_json(fixture_path)
         custom_validator = fixture.get("validator")
         if custom_validator is not None:
-            if custom_validator != "apm_metrics_negative_suite":
+            if custom_validator not in {
+                "apm_metrics_negative_suite",
+                "apm_metrics_go_negative_suite",
+                "apm_metrics_go_compatibility",
+            }:
                 errors.append(f"unknown fixture validator {custom_validator}: {fixture['path']}")
             if "schema" in fixture:
                 errors.append(f"custom-validated fixture must not also declare schema: {fixture['path']}")
@@ -1892,6 +2352,7 @@ def lint() -> None:
     errors.extend(receiver_conformance_errors())
     errors.extend(control_plane_conformance_errors())
     errors.extend(apm_metrics_conformance_errors())
+    errors.extend(apm_agent_conformance_errors())
 
     if errors:
         raise SpecError("Specification lint failed:\n- " + "\n- ".join(errors))
@@ -2301,7 +2762,11 @@ def normalized_fixture_content(path: Path) -> str:
 
 
 def rum_conformance_fixture_paths() -> list[Path]:
-    return [path for path in sorted(FIXTURES.rglob("*.json")) if fixture_kind(path) != "metrics"]
+    return [
+        path
+        for path in sorted(FIXTURES.rglob("*.json"))
+        if fixture_kind(path) not in {"agent", "metrics"}
+    ]
 
 
 def conformance_manifest_output() -> str:
@@ -2391,6 +2856,9 @@ def apm_metrics_package_json_output() -> str:
                 "./fixtures/apm-metrics-negative-cases.json": "./fixtures/apm-metrics-negative-cases.json",
                 "./fixtures/apm-metrics-cumulative-sequence.json": "./fixtures/apm-metrics-cumulative-sequence.json",
                 "./fixtures/apm-metrics-cumulative-sequence-negative-cases.json": "./fixtures/apm-metrics-cumulative-sequence-negative-cases.json",
+                "./fixtures/apm-metrics-go-agent.json": "./fixtures/apm-metrics-go-agent.json",
+                "./fixtures/apm-metrics-go-agent-negative-cases.json": "./fixtures/apm-metrics-go-agent-negative-cases.json",
+                "./fixtures/apm-metrics-standard-go-distro.json": "./fixtures/apm-metrics-standard-go-distro.json",
                 "./compatibility/apm-metrics.json": "./compatibility/apm-metrics.json",
             },
         },
@@ -2403,10 +2871,10 @@ def apm_metrics_package_readme_output() -> str:
     return f"""# @nebula-observability/apm-metrics-contract
 
 Generated, immutable APM Metrics contract for Spec `{artifact_version()}` and
-platform release `{release['release']}`. The bundle contains the exact 12-metric
+platform release `{release['release']}`. The bundle contains the exact 21-metric
 OTLP profile, its schemas, ExponentialHistogram and explicit Histogram fixtures,
-continuous cumulative export sequences, negative conformance cases, and the
-frozen compatibility snapshot. OTLP exemplar trace/span IDs use lowercase hex;
+continuous cumulative export sequences, the official Go runtime `v{APM_GO_RUNTIME_VERSION}`
+profile, negative conformance cases, and the frozen compatibility snapshot. OTLP exemplar trace/span IDs use lowercase hex;
 filtered attributes are forbidden. Source Schema URLs may be empty or official
 OpenTelemetry semver URLs up to the `1.43.0` normalization target.
 
@@ -2449,6 +2917,15 @@ def apm_metrics_bundle_payload_outputs() -> dict[Path, str]:
         / "apm-metrics-cumulative-sequence-negative-cases.json": normalized_fixture_content(
             APM_METRICS_SEQUENCE_NEGATIVE_FIXTURE
         ),
+        APM_METRICS_BUNDLE / "fixtures" / "apm-metrics-go-agent.json": normalized_fixture_content(
+            APM_GO_METRICS_FIXTURE
+        ),
+        APM_METRICS_BUNDLE / "fixtures" / "apm-metrics-go-agent-negative-cases.json": normalized_fixture_content(
+            APM_GO_METRICS_NEGATIVE_FIXTURE
+        ),
+        APM_METRICS_BUNDLE / "fixtures" / "apm-metrics-standard-go-distro.json": normalized_fixture_content(
+            APM_GO_STANDARD_DISTRO_FIXTURE
+        ),
         APM_METRICS_BUNDLE / "compatibility" / "apm-metrics.json": normalized_fixture_content(
             APM_METRICS_BASELINE
         ),
@@ -2487,6 +2964,135 @@ def apm_metrics_bundle_outputs() -> dict[Path, str]:
     }
 
 
+def apm_agent_package_json_output() -> str:
+    return json.dumps(
+        {
+            "name": "@nebula-observability/apm-agent-contract",
+            "version": artifact_version(),
+            "description": "Versioned Nebula Go APM Agent config, diagnostics, Resource, and runtime metrics contract.",
+            "license": "Apache-2.0",
+            "type": "module",
+            "files": ["asset-manifest.json", "contract.json", "schemas", "fixtures", "README.md"],
+            "exports": {
+                "./contract.json": "./contract.json",
+                "./asset-manifest.json": "./asset-manifest.json",
+                "./schemas/apm-go-agent.schema.json": "./schemas/apm-go-agent.schema.json",
+                "./schemas/apm-agent-config.schema.json": "./schemas/apm-agent-config.schema.json",
+                "./schemas/apm-agent-diagnostics.schema.json": "./schemas/apm-agent-diagnostics.schema.json",
+                "./schemas/otlp-metrics-export.schema.json": "./schemas/otlp-metrics-export.schema.json",
+                "./fixtures/apm-agent-config.json": "./fixtures/apm-agent-config.json",
+                "./fixtures/apm-agent-disabled-config.json": "./fixtures/apm-agent-disabled-config.json",
+                "./fixtures/apm-agent-diagnostics.json": "./fixtures/apm-agent-diagnostics.json",
+                "./fixtures/invalid-apm-agent-config.json": "./fixtures/invalid-apm-agent-config.json",
+                "./fixtures/invalid-apm-agent-diagnostics.json": "./fixtures/invalid-apm-agent-diagnostics.json",
+                "./fixtures/apm-metrics-go-agent.json": "./fixtures/apm-metrics-go-agent.json",
+                "./fixtures/apm-metrics-go-agent-negative-cases.json": "./fixtures/apm-metrics-go-agent-negative-cases.json",
+                "./fixtures/apm-metrics-standard-go-distro.json": "./fixtures/apm-metrics-standard-go-distro.json",
+            },
+        },
+        indent=2,
+    ) + "\n"
+
+
+def apm_agent_package_readme_output() -> str:
+    release = current_release()
+    return f"""# @nebula-observability/apm-agent-contract
+
+Generated, immutable Go APM Agent contract for Spec `{artifact_version()}` and
+platform release `{release['release']}`. It freezes the first-party Resource
+identity, the official OpenTelemetry Go runtime instrumentation `v{APM_GO_RUNTIME_VERSION}`
+metric profile, sanitized configuration projection, bounded diagnostics, and
+positive/negative conformance fixtures. Standard OpenTelemetry distributions
+remain compatible when `telemetry.distro.name` and `telemetry.distro.version`
+are supplied together.
+
+Verify every file against `asset-manifest.json` before consuming it. Secret
+header values are deliberately absent from this bundle and from diagnostics.
+"""
+
+
+def apm_agent_bundle_payload_outputs() -> dict[Path, str]:
+    return {
+        APM_AGENT_BUNDLE / "package.json": apm_agent_package_json_output(),
+        APM_AGENT_BUNDLE / "README.md": apm_agent_package_readme_output(),
+        APM_AGENT_BUNDLE / "contract.json": json.dumps(
+            load_yaml(APM_GO_AGENT_CONTRACT), indent=2, sort_keys=True
+        ) + "\n",
+        APM_AGENT_BUNDLE / "schemas" / "apm-go-agent.schema.json": normalized_fixture_content(
+            APM_GO_AGENT_SCHEMA
+        ),
+        APM_AGENT_BUNDLE / "schemas" / "apm-agent-config.schema.json": normalized_fixture_content(
+            APM_AGENT_CONFIG_SCHEMA
+        ),
+        APM_AGENT_BUNDLE / "schemas" / "apm-agent-diagnostics.schema.json": normalized_fixture_content(
+            APM_AGENT_DIAGNOSTICS_SCHEMA
+        ),
+        APM_AGENT_BUNDLE / "schemas" / "otlp-metrics-export.schema.json": normalized_fixture_content(
+            OTLP_METRICS_SCHEMA
+        ),
+        APM_AGENT_BUNDLE / "fixtures" / "apm-agent-config.json": normalized_fixture_content(
+            APM_AGENT_CONFIG_FIXTURE
+        ),
+        APM_AGENT_BUNDLE / "fixtures" / "apm-agent-disabled-config.json": normalized_fixture_content(
+            APM_AGENT_DISABLED_CONFIG_FIXTURE
+        ),
+        APM_AGENT_BUNDLE / "fixtures" / "apm-agent-diagnostics.json": normalized_fixture_content(
+            APM_AGENT_DIAGNOSTICS_FIXTURE
+        ),
+        APM_AGENT_BUNDLE / "fixtures" / "invalid-apm-agent-config.json": normalized_fixture_content(
+            APM_AGENT_INVALID_CONFIG_FIXTURE
+        ),
+        APM_AGENT_BUNDLE / "fixtures" / "invalid-apm-agent-diagnostics.json": normalized_fixture_content(
+            APM_AGENT_INVALID_DIAGNOSTICS_FIXTURE
+        ),
+        APM_AGENT_BUNDLE / "fixtures" / "apm-metrics-go-agent.json": normalized_fixture_content(
+            APM_GO_METRICS_FIXTURE
+        ),
+        APM_AGENT_BUNDLE / "fixtures" / "apm-metrics-go-agent-negative-cases.json": normalized_fixture_content(
+            APM_GO_METRICS_NEGATIVE_FIXTURE
+        ),
+        APM_AGENT_BUNDLE / "fixtures" / "apm-metrics-standard-go-distro.json": normalized_fixture_content(
+            APM_GO_STANDARD_DISTRO_FIXTURE
+        ),
+    }
+
+
+def apm_agent_asset_manifest_output(payload: dict[Path, str]) -> str:
+    release = current_release()
+    files = [
+        {
+            "path": path.relative_to(APM_AGENT_BUNDLE).as_posix(),
+            "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+        }
+        for path, content in sorted(payload.items(), key=lambda item: item[0].as_posix())
+    ]
+    contract = load_yaml(APM_GO_AGENT_CONTRACT)
+    return json.dumps(
+        {
+            "format_version": 1,
+            "spec_version": artifact_version(),
+            "release": release["release"],
+            "agent_contract_version": contract["contract_version"],
+            "config_contract_version": contract["config"]["version"],
+            "diagnostics_contract_version": contract["diagnostics"]["version"],
+            "metrics_contract_version": contract["metrics_contract_version"],
+            "runtime_instrumentation_version": contract["runtime_instrumentation"]["version"],
+            "contract_sha256": canonical_document_sha256(contract),
+            "files": files,
+        },
+        indent=2,
+        sort_keys=True,
+    ) + "\n"
+
+
+def apm_agent_bundle_outputs() -> dict[Path, str]:
+    payload = apm_agent_bundle_payload_outputs()
+    return {
+        **payload,
+        APM_AGENT_BUNDLE / "asset-manifest.json": apm_agent_asset_manifest_output(payload),
+    }
+
+
 def generated_files(data: dict[str, Any]) -> dict[Path, str]:
     output = {
         ROOT / "generated" / "typescript" / "registry.ts": typescript_output(data),
@@ -2514,6 +3120,7 @@ def generated_files(data: dict[str, Any]) -> dict[Path, str]:
     }
     output.update(conformance_fixture_outputs())
     output.update(apm_metrics_bundle_outputs())
+    output.update(apm_agent_bundle_outputs())
     return output
 
 
@@ -2526,6 +3133,7 @@ def verify_artifacts() -> None:
         (TYPESCRIPT_RUTP / "package.json", "@nebula-observability/rutp-protobuf"),
         (ROOT / "generated" / "conformance" / "package.json", "@nebula-observability/rum-conformance"),
         (APM_METRICS_BUNDLE / "package.json", "@nebula-observability/apm-metrics-contract"),
+        (APM_AGENT_BUNDLE / "package.json", "@nebula-observability/apm-agent-contract"),
     ):
         try:
             package = load_json(package_path)
@@ -2659,7 +3267,7 @@ def verify_artifacts() -> None:
             "release": release["release"],
             "metrics_contract_version": release["protocols"]["apm_metrics"],
             "otel_schema": release["otel_schema"],
-            "contract_sha256": EXPECTED_APM_METRICS_BASELINE_SHA256,
+            "contract_sha256": EXPECTED_APM_METRICS_CURRENT_BASELINE_SHA256,
         }
         for field, expected in expected_metadata.items():
             if metrics_manifest.get(field) != expected:
@@ -2704,9 +3312,66 @@ def verify_artifacts() -> None:
     except (FileNotFoundError, json.JSONDecodeError, SpecError, KeyError, TypeError) as error:
         errors.append(f"invalid APM Metrics bundle: {error}")
 
+    agent_manifest_path = APM_AGENT_BUNDLE / "asset-manifest.json"
+    try:
+        agent_manifest = load_json(agent_manifest_path)
+        release = current_release()
+        contract = load_yaml(APM_GO_AGENT_CONTRACT)
+        expected_metadata = {
+            "format_version": 1,
+            "spec_version": version,
+            "release": release["release"],
+            "agent_contract_version": contract["contract_version"],
+            "config_contract_version": contract["config"]["version"],
+            "diagnostics_contract_version": contract["diagnostics"]["version"],
+            "metrics_contract_version": contract["metrics_contract_version"],
+            "runtime_instrumentation_version": APM_GO_RUNTIME_VERSION,
+            "contract_sha256": canonical_document_sha256(contract),
+        }
+        for field, expected in expected_metadata.items():
+            if agent_manifest.get(field) != expected:
+                errors.append(f"APM Agent bundle manifest {field} must be {expected}")
+        payload_paths = {
+            path.relative_to(APM_AGENT_BUNDLE).as_posix()
+            for path in apm_agent_bundle_payload_outputs()
+        }
+        manifest_files = agent_manifest.get("files")
+        if not isinstance(manifest_files, list):
+            errors.append("APM Agent bundle manifest files must be an array")
+        else:
+            declared_paths: set[str] = set()
+            for entry in manifest_files:
+                if not isinstance(entry, dict) or set(entry) != {"path", "sha256"}:
+                    errors.append("APM Agent bundle manifest contains an invalid file entry")
+                    continue
+                relative = entry.get("path")
+                if not isinstance(relative, str) or not relative or Path(relative).is_absolute() or ".." in Path(relative).parts:
+                    errors.append(f"APM Agent bundle manifest contains an unsafe path: {relative}")
+                    continue
+                if relative in declared_paths:
+                    errors.append(f"APM Agent bundle manifest contains a duplicate path: {relative}")
+                    continue
+                declared_paths.add(relative)
+                bundled = APM_AGENT_BUNDLE / Path(relative)
+                if not bundled.is_file():
+                    errors.append(f"APM Agent bundle file is missing: {relative}")
+                    continue
+                if entry.get("sha256") != hashlib.sha256(bundled.read_bytes()).hexdigest():
+                    errors.append(f"APM Agent bundle checksum mismatch: {relative}")
+            if declared_paths != payload_paths:
+                errors.append(
+                    "APM Agent bundle manifest file set differs: "
+                    f"missing={sorted(payload_paths - declared_paths)}, "
+                    f"unexpected={sorted(declared_paths - payload_paths)}"
+                )
+        if load_json(APM_AGENT_BUNDLE / "contract.json") != contract:
+            errors.append("APM Agent bundled contract differs from specs/apm/v1/go-agent.yaml")
+    except (FileNotFoundError, json.JSONDecodeError, SpecError, KeyError, TypeError) as error:
+        errors.append(f"invalid APM Agent bundle: {error}")
+
     if errors:
         raise SpecError("Artifact verification failed:\n- " + "\n- ".join(errors))
-    print("Generated TypeScript, Rust, Go, RUM conformance, and APM Metrics artifacts are valid.")
+    print("Generated TypeScript, Rust, Go, RUM conformance, APM Metrics, and APM Agent artifacts are valid.")
 
 
 def generate(check: bool) -> None:
@@ -2715,8 +3380,10 @@ def generate(check: bool) -> None:
     conformance_fixtures = ROOT / "generated" / "conformance" / "fixtures"
     if not check and conformance_fixtures.exists():
         shutil.rmtree(conformance_fixtures)
-    if not check and APM_METRICS_BUNDLE.exists():
-        shutil.rmtree(APM_METRICS_BUNDLE)
+    if not check:
+        for managed_directory in (APM_METRICS_BUNDLE, APM_AGENT_BUNDLE):
+            if managed_directory.exists():
+                shutil.rmtree(managed_directory)
     for path, content in expected.items():
         content = content.rstrip() + "\n"
         if check:
@@ -2727,7 +3394,11 @@ def generate(check: bool) -> None:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8", newline="\n")
     if check:
-        for managed_directory in (ROOT / "generated" / "conformance", APM_METRICS_BUNDLE):
+        for managed_directory in (
+            ROOT / "generated" / "conformance",
+            APM_METRICS_BUNDLE,
+            APM_AGENT_BUNDLE,
+        ):
             expected_managed = {path for path in expected if managed_directory in path.parents}
             if managed_directory.exists():
                 for actual in managed_directory.rglob("*"):
@@ -2738,7 +3409,7 @@ def generate(check: bool) -> None:
     print(
         "Generated files are current."
         if check
-        else "Generated language registries, RUM conformance, and APM Metrics bundles."
+        else "Generated language registries, RUM conformance, APM Metrics, and APM Agent bundles."
     )
 
 
@@ -2803,6 +3474,7 @@ def main() -> int:
     subparsers.add_parser("verify-receiver-contract")
     subparsers.add_parser("verify-control-plane-contract")
     subparsers.add_parser("verify-apm-metrics-contract")
+    subparsers.add_parser("verify-apm-agent-contract")
     generate_parser = subparsers.add_parser("generate")
     generate_parser.add_argument("--check", action="store_true")
     subparsers.add_parser("verify-artifacts")
@@ -2825,6 +3497,8 @@ def main() -> int:
             verify_control_plane_contract()
         elif args.command == "verify-apm-metrics-contract":
             verify_apm_metrics_contract()
+        elif args.command == "verify-apm-agent-contract":
+            verify_apm_agent_contract()
         elif args.command == "generate":
             generate(args.check)
         elif args.command == "verify-artifacts":

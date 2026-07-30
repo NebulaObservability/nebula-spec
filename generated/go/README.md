@@ -4,10 +4,10 @@ Generated RUTP v1 Protobuf messages and Nebula semantic registry for Go
 Collector and Backend consumers.
 
 Module: `github.com/NebulaObservability/nebula-spec/generated/go`
-Specification version: `0.6.0-draft.0`
+Specification version: `0.7.0-draft.0`
 RUTP version: `1.0.0-draft.1`
 
-Use the matching immutable Go module tag `generated/go/v0.6.0-draft.0`:
+Use the matching immutable Go module tag `generated/go/v0.7.0-draft.0`:
 
 ```go
 import (

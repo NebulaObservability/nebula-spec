@@ -47,6 +47,7 @@ Phase 1 已提供：
 - `nebula-semantic-registry` Rust crate
 - `@nebula-observability/rum-conformance` npm tarball
 - `@nebula-observability/apm-metrics-contract` npm tarball and standalone zip
+- `@nebula-observability/apm-agent-contract` npm tarball and standalone zip
 - RUM conformance fixture zip 与 `SHA256SUMS`
 - 含 RUTP v1 Protobuf 和 Go 语义 registry 的 `nebula-rutp-go-module` zip
 
@@ -66,6 +67,7 @@ python tools/spec_tool.py lint
 python tools/spec_tool.py verify-receiver-contract
 python tools/spec_tool.py verify-control-plane-contract
 python tools/spec_tool.py verify-apm-metrics-contract
+python tools/spec_tool.py verify-apm-agent-contract
 python tools/spec_tool.py generate --check
 python tools/spec_tool.py verify-artifacts
 python tools/spec_tool.py breaking --against compatibility/baselines/semantic-registry-0.5.0-draft.0.json
@@ -86,8 +88,10 @@ python tools/spec_tool.py generate
 
 `specs/apm/v1/metrics.yaml` 固定标准 OTLP Metrics profile，`schemas/apm-metrics.schema.json` 与
 `schemas/otlp-metrics-export.schema.json` 提供结构校验，`fixtures/metrics/apm-metrics-mvp.json`
-提供跨仓库 Golden Fixture。Release `2026.07.6-draft.0` 将 Spec `0.6.0-draft.0`、APM
-extension 和 Metrics contract `1.1.0-draft.0` 绑定到 OTel Schema `1.43.0`。消费者必须按
+提供跨仓库 Golden Fixture。Release `2026.07.7-draft.0` 将 Spec `0.7.0-draft.0`、APM
+extension 和 Metrics contract `1.2.0-draft.0` 绑定到 OTel Schema `1.43.0`。该版本同时发布
+Go APM Agent `1.0.0-draft.0` 的配置、诊断、Resource 和 runtime metrics 契约，但在 Agent
+仓库正式发布 `go/v0.1.0` 前，Release Manifest 保持 `components.apm_agent_go: null`。消费者必须按
 Release Manifest 固定版本，不得复制或私有扩展标准指标。
 
 连续 export conformance 另外冻结累计 reset、同 start time 回退和跨 scale bucket 比较；
