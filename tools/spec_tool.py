@@ -73,6 +73,45 @@ SEMVER_PATTERN = re.compile(
     r"(?:[+]([0-9A-Za-z-]+(?:[.][0-9A-Za-z-]+)*))?$"
 )
 
+PLATFORM_COMPONENT_IDENTITIES = {
+    "apm_agent_go": {
+        "repository": "NebulaObservability/nebula-apm-agent",
+        "artifact_kind": "go_module",
+        "artifact_identity": "github.com/NebulaObservability/nebula-apm-agent/go",
+        "spec_relationship": "direct",
+    },
+    "rum_web": {
+        "repository": "NebulaObservability/nebula-rum-sdk",
+        "artifact_kind": "npm_package",
+        "artifact_identity": "@nebula-observability/rum-web",
+        "spec_relationship": "direct",
+    },
+    "collector": {
+        "repository": "NebulaObservability/nebula-collector",
+        "artifact_kind": "oci_image",
+        "artifact_identity": "docker.io/baicie2/nebula-collector",
+        "spec_relationship": "direct",
+    },
+    "rum_ingress": {
+        "repository": "NebulaObservability/nebula-collector",
+        "artifact_kind": "oci_image",
+        "artifact_identity": "docker.io/baicie2/nebula-rum-ingress",
+        "spec_relationship": "direct",
+    },
+    "backend": {
+        "repository": "NebulaObservability/nebula-backend",
+        "artifact_kind": "oci_image",
+        "artifact_identity": "docker.io/baicie2/nebula-backend",
+        "spec_relationship": "transitive",
+    },
+    "dashboard": {
+        "repository": "NebulaObservability/nebula-dashboard",
+        "artifact_kind": "oci_image",
+        "artifact_identity": "docker.io/baicie2/nebula-dashboard",
+        "spec_relationship": "vendored",
+    },
+}
+
 APM_METRICS_CONTRACT_VERSION = "1.2.0-draft.0"
 APM_SEMANTIC_REGISTRY_VERSION = "1.2.0-draft.0"
 APM_METRICS_OTEL_SCHEMA_URL = "https://opentelemetry.io/schemas/1.43.0"
@@ -373,6 +412,98 @@ def release_manifest_paths() -> list[Path]:
 
 def current_release() -> dict[str, Any]:
     return load_yaml(current_release_path())
+
+
+def release_spec_version(manifest: dict[str, Any]) -> str | None:
+    components = manifest.get("components")
+    if not isinstance(components, dict):
+        return None
+    spec = components.get("spec")
+    if isinstance(spec, str):
+        return spec
+    if isinstance(spec, dict) and isinstance(spec.get("version"), str):
+        return spec["version"]
+    return None
+
+
+def release_manifest_errors(manifest: dict[str, Any], label: str = "release manifest") -> list[str]:
+    """Check Nebula identity relationships which JSON Schema cannot express."""
+    if manifest.get("schema_version") != 2:
+        return []
+
+    errors: list[str] = []
+    components = manifest.get("components")
+    if not isinstance(components, dict):
+        return [f"{label}: components must be a mapping"]
+
+    spec = components.get("spec")
+    if isinstance(spec, dict):
+        version = spec.get("version")
+        if isinstance(version, str) and spec.get("release") != f"spec-v{version}":
+            errors.append(f"{label}: components.spec release must match its version")
+
+    for name, expected in PLATFORM_COMPONENT_IDENTITIES.items():
+        component = components.get(name)
+        if not isinstance(component, dict):
+            continue
+        source = component.get("source")
+        artifact = component.get("artifact")
+        dependency = component.get("spec_dependency")
+        if not isinstance(source, dict) or not isinstance(artifact, dict) or not isinstance(dependency, dict):
+            continue
+
+        if source.get("repository") != expected["repository"]:
+            errors.append(f"{label}: {name} source repository is not the canonical owner")
+        if artifact.get("kind") != expected["artifact_kind"]:
+            errors.append(f"{label}: {name} artifact kind is not canonical")
+        identity = artifact.get("reference") if artifact.get("kind") == "oci_image" else artifact.get("identity")
+        if artifact.get("kind") == "oci_image":
+            identity = str(identity).partition("@sha256:")[0]
+        if identity != expected["artifact_identity"]:
+            errors.append(f"{label}: {name} artifact identity is not canonical")
+        if dependency.get("relationship") != expected["spec_relationship"]:
+            errors.append(f"{label}: {name} Spec dependency relationship is not canonical")
+        dependency_version = dependency.get("version")
+        if isinstance(dependency_version, str) and dependency.get("release") != f"spec-v{dependency_version}":
+            errors.append(f"{label}: {name} Spec release must match its version")
+
+        artifact_version = artifact.get("version")
+        if artifact.get("kind") == "go_module" and isinstance(artifact_version, str):
+            if artifact.get("release_tag") != f"go/{artifact_version}":
+                errors.append(f"{label}: {name} Go release tag must match its module version")
+        if artifact.get("kind") == "npm_package" and isinstance(artifact_version, str):
+            if artifact.get("release_tag") != f"rum-sdk-v{artifact_version}":
+                errors.append(f"{label}: {name} RUM release tag must match its package version")
+
+    agent_component = components.get("apm_agent_go")
+    backend_component = components.get("backend")
+    agent_artifact = agent_component.get("artifact", {}) if isinstance(agent_component, dict) else {}
+    backend_dependency = backend_component.get("spec_dependency", {}) if isinstance(backend_component, dict) else {}
+    if isinstance(agent_artifact, dict) and isinstance(backend_dependency, dict):
+        expected_via = f"{agent_artifact.get('identity')}@{agent_artifact.get('version')}"
+        if backend_dependency.get("via") != expected_via:
+            errors.append(f"{label}: backend transitive Spec dependency must name the frozen Go Agent")
+
+    rum_component = components.get("rum_web")
+    dashboard_component = components.get("dashboard")
+    rum_artifact = rum_component.get("artifact", {}) if isinstance(rum_component, dict) else {}
+    dashboard_dependency = (
+        dashboard_component.get("spec_dependency", {}) if isinstance(dashboard_component, dict) else {}
+    )
+    if isinstance(rum_artifact, dict) and isinstance(dashboard_dependency, dict):
+        expected_via = f"{rum_artifact.get('identity')}@{rum_artifact.get('version')}"
+        if dashboard_dependency.get("via") != expected_via:
+            errors.append(f"{label}: dashboard vendored Spec dependency must name the frozen RUM SDK")
+
+    collector = components.get("collector", {})
+    ingress = components.get("rum_ingress", {})
+    if isinstance(collector, dict) and isinstance(ingress, dict):
+        if collector.get("source") != ingress.get("source"):
+            errors.append(f"{label}: Collector and RUTP ingress must share one atomic source revision")
+        if collector.get("spec_dependency") != ingress.get("spec_dependency"):
+            errors.append(f"{label}: Collector and RUTP ingress must share one Spec dependency")
+
+    return errors
 
 
 def receiver_conformance_errors() -> list[str]:
@@ -1996,7 +2127,7 @@ def apm_agent_conformance_errors() -> list[str]:
         errors.append("current release APM extension version must match the Go Agent contract")
     if protocols.get("apm_metrics") != contract["metrics_contract_version"]:
         errors.append("current release APM Metrics version must match the Go Agent contract")
-    if release.get("components", {}).get("apm_agent_go") is not None:
+    if release.get("schema_version") != 2 and release.get("components", {}).get("apm_agent_go") is not None:
         errors.append("current Spec release must not claim an unpublished apm_agent_go component")
 
     config_schema = load_json(APM_AGENT_CONFIG_SCHEMA)
@@ -2149,17 +2280,18 @@ def lint() -> None:
 
     for release_path in release_manifest_paths():
         release = load_yaml(release_path)
+        release_label = release_path.relative_to(ROOT).as_posix()
         errors.extend(
             validate(
                 release,
                 SCHEMAS / "release-manifest.schema.json",
-                release_path.relative_to(ROOT).as_posix(),
+                release_label,
             )
         )
+        errors.extend(release_manifest_errors(release, release_label))
 
     active_release = current_release()
-    components = active_release.get("components")
-    if not isinstance(components, dict) or components.get("spec") != artifact_version():
+    if release_spec_version(active_release) != artifact_version():
         errors.append("current release manifest components.spec must match VERSION")
 
     protocol_matrix = load_yaml(ROOT / "compatibility" / "protocol-matrix.yaml")

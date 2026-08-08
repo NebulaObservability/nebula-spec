@@ -73,7 +73,13 @@ jobs:
         with:
           node-version: "22"
       - name: Create release directory
-        run: mkdir -p artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          version="$(cat VERSION)"
+          manifest="$(cat releases/CURRENT)"
+          cp "releases/${manifest}" "artifacts/platform-release-manifest-${version}.yaml"
       - name: Pack TypeScript semantic registry
         working-directory: generated/typescript
         run: npm pack --ignore-scripts --pack-destination ../../artifacts
@@ -122,13 +128,13 @@ jobs:
         run: |
           cd artifacts
           sha256sum * > SHA256SUMS
-      - name: Verify immutable release state
-        id: release-state
+      - name: Publish or verify the server-immutable prerelease
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
+          release_endpoint="repos/${GITHUB_REPOSITORY}/releases"
           response="${RUNNER_TEMP}/release.json"
           status="$(curl --silent --show-error \
             --output "${response}" \
@@ -138,9 +144,6 @@ jobs:
             --header 'X-GitHub-Api-Version: 2022-11-28' \
             "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF_NAME}")"
           case "${status}" in
-            404)
-              echo "exists=false" >> "${GITHUB_OUTPUT}"
-              ;;
             200)
               python - "${response}" "${GITHUB_REF_NAME}" <<'PY'
           import json
@@ -148,7 +151,12 @@ jobs:
           import sys
 
           release = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-          if release.get("tag_name") != sys.argv[2] or release.get("draft") or not release.get("prerelease"):
+          if (
+              release.get("tag_name") != sys.argv[2]
+              or release.get("draft")
+              or not release.get("prerelease")
+              or not release.get("immutable")
+          ):
               raise SystemExit("existing release metadata differs from the immutable prerelease contract")
           PY
               mkdir "${RUNNER_TEMP}/existing-release"
@@ -158,21 +166,67 @@ jobs:
                 <(find artifacts -maxdepth 1 -type f -printf '%f\n' | LC_ALL=C sort) \
                 <(find "${RUNNER_TEMP}/existing-release" -maxdepth 1 -type f -printf '%f\n' | LC_ALL=C sort)
               (cd "${RUNNER_TEMP}/existing-release" && sha256sum --check SHA256SUMS)
-              echo "exists=true" >> "${GITHUB_OUTPUT}"
+              exit 0
               ;;
+            404) ;;
             *)
               echo "GitHub release lookup failed with HTTP ${status}" >&2
               exit 1
               ;;
           esac
-      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
-        if: steps.release-state.outputs.exists != 'true'
-        with:
-          generate_release_notes: true
-          prerelease: true
-          make_latest: false
-          overwrite_files: false
-          files: artifacts/*
+
+          release_id=""
+          release_verified=false
+          cleanup() {
+            local exit_status="$?"
+            trap - EXIT
+            if [[ -n "${release_id}" && "${release_verified}" != true ]]; then
+              immutable="$(gh api "${release_endpoint}/${release_id}" --jq '.immutable' 2>/dev/null || true)"
+              if [[ "${immutable}" == true ]]; then
+                echo "The release became immutable; preserving it for an idempotent rerun." >&2
+              else
+                gh api --method DELETE "${release_endpoint}/${release_id}" >/dev/null || exit_status=1
+              fi
+            fi
+            exit "${exit_status}"
+          }
+          trap cleanup EXIT
+
+          marker="<!-- nebula-spec:${GITHUB_SHA} -->"
+          release_id="$(gh api --method POST "${release_endpoint}" \
+            -f tag_name="${GITHUB_REF_NAME}" \
+            -f target_commitish="${GITHUB_SHA}" \
+            -f name="${GITHUB_REF_NAME}" \
+            -f body="${marker}" \
+            -f make_latest=false \
+            -F draft=true \
+            -F prerelease=true \
+            -F generate_release_notes=true \
+            --jq '.id')"
+          upload_url="$(gh api "${release_endpoint}/${release_id}" --jq '.upload_url' | sed 's/{.*$//')"
+          for asset in artifacts/*; do
+            asset_name="$(basename "${asset}")"
+            gh api --method POST \
+              -H 'Content-Type: application/octet-stream' \
+              --input "${asset}" \
+              "${upload_url}?name=${asset_name}" >/dev/null
+          done
+
+          expected_assets="$(for asset in artifacts/*; do
+            printf '%s\tsha256:%s\n' "$(basename "${asset}")" "$(sha256sum "${asset}" | cut -d ' ' -f 1)"
+          done | LC_ALL=C sort)"
+          actual_assets="$(gh api "${release_endpoint}/${release_id}" --jq '.assets[] | [.name, .digest] | @tsv' | LC_ALL=C sort)"
+          [[ "${actual_assets}" == "${expected_assets}" ]]
+
+          immutable="$(gh api --method PATCH "${release_endpoint}/${release_id}" -F draft=false --jq '.immutable')"
+          [[ "${immutable}" == true ]] || {
+            echo "The repository did not enforce immutable releases; refusing to publish mutable assets." >&2
+            exit 1
+          }
+          [[ "$(gh api "${release_endpoint}/${release_id}" --jq '[.draft, .prerelease, .immutable, .tag_name] | @tsv')" \
+            == "$(printf 'false\ttrue\ttrue\t%s' "${GITHUB_REF_NAME}")" ]]
+          release_verified=true
+          trap - EXIT
       - name: Publish matching Go module tag
         shell: bash
         run: |
