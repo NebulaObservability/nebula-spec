@@ -1,10 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.nebula-observability.io/releases/manifest.schema.json",
-  "type": "object",
-  "required": ["release", "protocols", "otel_schema", "components"],
-  "properties": {
-    "release": { "type": "string", "pattern": "^[0-9]{4}[.][0-9]{2}[.][0-9]+(-[0-9A-Za-z.-]+)?$" },
+  "oneOf": [
+    { "$ref": "#/$defs/legacy_manifest" },
+    { "$ref": "#/$defs/platform_manifest" }
+  ],
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "spec_release": {
+      "type": "string",
+      "pattern": "^spec-v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
     "protocols": {
       "type": "object",
       "required": ["rutp", "apm_extension"],
@@ -19,14 +28,167 @@
       },
       "additionalProperties": false
     },
-    "otel_schema": { "type": "string" },
-    "components": { "type": "object", "additionalProperties": { "type": ["string", "null"] } }
-  },
-  "additionalProperties": false,
-  "$defs": {
-    "semver": {
-      "type": "string",
-      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    "legacy_manifest": {
+      "type": "object",
+      "required": ["release", "protocols", "otel_schema", "components"],
+      "properties": {
+        "release": { "type": "string", "pattern": "^[0-9]{4}[.][0-9]{2}[.][0-9]+(-[0-9A-Za-z.-]+)?$" },
+        "protocols": { "$ref": "#/$defs/protocols" },
+        "otel_schema": { "type": "string" },
+        "components": {
+          "type": "object",
+          "additionalProperties": { "type": ["string", "null"] }
+        }
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": ["repository", "revision"],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "revision": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      },
+      "additionalProperties": false
+    },
+    "oci_artifact": {
+      "type": "object",
+      "required": ["kind", "reference"],
+      "properties": {
+        "kind": { "const": "oci_image" },
+        "reference": {
+          "type": "string",
+          "pattern": "^[a-z0-9.-]+(?::[0-9]+)?/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "go_module_artifact": {
+      "type": "object",
+      "required": ["kind", "identity", "version", "release_tag"],
+      "properties": {
+        "kind": { "const": "go_module" },
+        "identity": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._~/-]+$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+        },
+        "release_tag": { "type": "string", "pattern": "^go/v[0-9A-Za-z.-]+$" }
+      },
+      "additionalProperties": false
+    },
+    "npm_package_artifact": {
+      "type": "object",
+      "required": ["kind", "identity", "version", "release_tag"],
+      "properties": {
+        "kind": { "const": "npm_package" },
+        "identity": {
+          "type": "string",
+          "pattern": "^@[a-z0-9._-]+/[a-z0-9._-]+$"
+        },
+        "version": { "$ref": "#/$defs/semver" },
+        "release_tag": { "type": "string", "pattern": "^rum-sdk-v[0-9A-Za-z.-]+$" }
+      },
+      "additionalProperties": false
+    },
+    "artifact": {
+      "oneOf": [
+        { "$ref": "#/$defs/oci_artifact" },
+        { "$ref": "#/$defs/go_module_artifact" },
+        { "$ref": "#/$defs/npm_package_artifact" }
+      ]
+    },
+    "spec_dependency": {
+      "type": "object",
+      "required": ["release", "version", "relationship", "evidence"],
+      "properties": {
+        "release": { "$ref": "#/$defs/spec_release" },
+        "version": { "$ref": "#/$defs/semver" },
+        "relationship": {
+          "type": "string",
+          "enum": ["direct", "transitive", "vendored"]
+        },
+        "via": { "type": "string", "minLength": 1 },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._@!/-]+$"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "relationship": { "enum": ["transitive", "vendored"] }
+            }
+          },
+          "then": { "required": ["via"] }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "platform_component": {
+      "type": "object",
+      "required": ["source", "artifact", "spec_dependency"],
+      "properties": {
+        "source": { "$ref": "#/$defs/source" },
+        "artifact": { "$ref": "#/$defs/artifact" },
+        "spec_dependency": { "$ref": "#/$defs/spec_dependency" }
+      },
+      "additionalProperties": false
+    },
+    "spec_component": {
+      "type": "object",
+      "required": ["repository", "release", "version"],
+      "properties": {
+        "repository": { "const": "NebulaObservability/nebula-spec" },
+        "release": { "$ref": "#/$defs/spec_release" },
+        "version": { "$ref": "#/$defs/semver" }
+      },
+      "additionalProperties": false
+    },
+    "platform_manifest": {
+      "type": "object",
+      "required": ["schema_version", "release", "protocols", "otel_schema", "components"],
+      "properties": {
+        "schema_version": { "const": 2 },
+        "release": { "type": "string", "pattern": "^[0-9]{4}[.][0-9]{2}[.][0-9]+(-[0-9A-Za-z.-]+)?$" },
+        "protocols": { "$ref": "#/$defs/protocols" },
+        "otel_schema": { "type": "string" },
+        "components": {
+          "type": "object",
+          "required": [
+            "spec",
+            "apm_agent_go",
+            "rum_web",
+            "collector",
+            "rum_ingress",
+            "backend",
+            "dashboard"
+          ],
+          "properties": {
+            "spec": { "$ref": "#/$defs/spec_component" },
+            "apm_agent_go": { "$ref": "#/$defs/platform_component" },
+            "rum_web": { "$ref": "#/$defs/platform_component" },
+            "collector": { "$ref": "#/$defs/platform_component" },
+            "rum_ingress": { "$ref": "#/$defs/platform_component" },
+            "backend": { "$ref": "#/$defs/platform_component" },
+            "dashboard": { "$ref": "#/$defs/platform_component" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

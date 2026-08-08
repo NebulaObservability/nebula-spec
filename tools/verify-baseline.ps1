@@ -67,6 +67,7 @@ $requiredFiles = @(
     'releases/2026.07.3-draft.yaml',
     'releases/2026.07.5-draft.yaml',
     'releases/2026.07.7-draft.yaml',
+    'releases/2026.08.1-mvp.yaml',
     'tools/spec_tool.py',
     'tools/check.ps1',
     'tools/requirements.txt',
