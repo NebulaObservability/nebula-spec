@@ -442,6 +442,12 @@ def release_manifest_errors(manifest: dict[str, Any], label: str = "release mani
         if isinstance(version, str) and spec.get("release") != f"spec-v{version}":
             errors.append(f"{label}: components.spec release must match its version")
 
+    known_spec_versions = {
+        version
+        for path in release_manifest_paths()
+        if (version := release_spec_version(load_yaml(path))) is not None
+    }
+
     for name, expected in PLATFORM_COMPONENT_IDENTITIES.items():
         component = components.get(name)
         if not isinstance(component, dict):
@@ -466,6 +472,17 @@ def release_manifest_errors(manifest: dict[str, Any], label: str = "release mani
         dependency_version = dependency.get("version")
         if isinstance(dependency_version, str) and dependency.get("release") != f"spec-v{dependency_version}":
             errors.append(f"{label}: {name} Spec release must match its version")
+        if isinstance(dependency_version, str) and dependency_version not in known_spec_versions:
+            errors.append(f"{label}: {name} references an unknown Spec release")
+
+        evidence = dependency.get("evidence")
+        if isinstance(evidence, list):
+            for evidence_path in evidence:
+                if not isinstance(evidence_path, str):
+                    continue
+                relative = Path(evidence_path)
+                if relative.is_absolute() or ".." in relative.parts or "." in relative.parts:
+                    errors.append(f"{label}: {name} evidence must use repository-relative paths")
 
         artifact_version = artifact.get("version")
         if artifact.get("kind") == "go_module" and isinstance(artifact_version, str):
@@ -483,6 +500,11 @@ def release_manifest_errors(manifest: dict[str, Any], label: str = "release mani
         expected_via = f"{agent_artifact.get('identity')}@{agent_artifact.get('version')}"
         if backend_dependency.get("via") != expected_via:
             errors.append(f"{label}: backend transitive Spec dependency must name the frozen Go Agent")
+        agent_dependency = agent_component.get("spec_dependency", {}) if isinstance(agent_component, dict) else {}
+        if isinstance(agent_dependency, dict) and any(
+            backend_dependency.get(field) != agent_dependency.get(field) for field in ("release", "version")
+        ):
+            errors.append(f"{label}: backend must inherit the frozen Go Agent Spec release")
 
     rum_component = components.get("rum_web")
     dashboard_component = components.get("dashboard")
@@ -494,6 +516,11 @@ def release_manifest_errors(manifest: dict[str, Any], label: str = "release mani
         expected_via = f"{rum_artifact.get('identity')}@{rum_artifact.get('version')}"
         if dashboard_dependency.get("via") != expected_via:
             errors.append(f"{label}: dashboard vendored Spec dependency must name the frozen RUM SDK")
+        rum_dependency = rum_component.get("spec_dependency", {}) if isinstance(rum_component, dict) else {}
+        if isinstance(rum_dependency, dict) and any(
+            dashboard_dependency.get(field) != rum_dependency.get(field) for field in ("release", "version")
+        ):
+            errors.append(f"{label}: dashboard must inherit the frozen RUM SDK Spec release")
 
     collector = components.get("collector", {})
     ingress = components.get("rum_ingress", {})
