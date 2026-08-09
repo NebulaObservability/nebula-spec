@@ -7,6 +7,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-artifacts-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -128,6 +132,52 @@ jobs:
         run: |
           cd artifacts
           sha256sum * > SHA256SUMS
+      - name: Verify every component Spec dependency is released
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          dependencies="${RUNNER_TEMP}/component-spec-releases"
+          python - "${dependencies}" <<'PY'
+          import pathlib
+          import sys
+
+          import yaml
+
+          current = pathlib.Path("releases/CURRENT").read_text(encoding="utf-8").strip()
+          manifest = yaml.safe_load(pathlib.Path("releases", current).read_text(encoding="utf-8"))
+          releases = sorted(
+              {
+                  component["spec_dependency"]["release"]
+                  for name, component in manifest["components"].items()
+                  if name != "spec"
+              }
+          )
+          pathlib.Path(sys.argv[1]).write_text("\n".join(releases) + "\n", encoding="utf-8")
+          PY
+          while IFS= read -r dependency; do
+            git show-ref --verify --quiet "refs/tags/${dependency}"
+            dependency_sha="$(git rev-parse "${dependency}^{commit}")"
+            git merge-base --is-ancestor "${dependency_sha}" "${GITHUB_SHA}"
+            [[ "$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${dependency}" \
+              --jq '[.tag_name, .draft, .prerelease] | @tsv')" \
+              == "$(printf '%s\tfalse\ttrue' "${dependency}")" ]]
+          done < "${dependencies}"
+      - name: Publish or verify matching Go module tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          go_tag="generated/go/v$(cat VERSION)"
+          remote_sha="$(git ls-remote --tags origin "refs/tags/${go_tag}" | awk 'NR == 1 { print $1 }')"
+          if [[ -n "${remote_sha}" && "${remote_sha}" != "${GITHUB_SHA}" ]]; then
+            echo "${go_tag} already points to ${remote_sha}, expected ${GITHUB_SHA}" >&2
+            exit 1
+          fi
+          if [[ -z "${remote_sha}" ]]; then
+            git tag "${go_tag}" "${GITHUB_SHA}"
+            git push origin "refs/tags/${go_tag}"
+          fi
       - name: Publish or verify the server-immutable prerelease
         env:
           GH_TOKEN: ${{ github.token }}
@@ -193,16 +243,46 @@ jobs:
           trap cleanup EXIT
 
           marker="<!-- nebula-spec:${GITHUB_SHA} -->"
-          release_id="$(gh api --method POST "${release_endpoint}" \
-            -f tag_name="${GITHUB_REF_NAME}" \
-            -f target_commitish="${GITHUB_SHA}" \
-            -f name="${GITHUB_REF_NAME}" \
-            -f body="${marker}" \
-            -f make_latest=false \
-            -F draft=true \
-            -F prerelease=true \
-            -F generate_release_notes=true \
-            --jq '.id')"
+          draft_ids="$(gh api --paginate "${release_endpoint}?per_page=100" \
+            --jq ".[] | select(.tag_name == \"${GITHUB_REF_NAME}\" and .draft == true) | .id")"
+          draft_count="$(sed '/^$/d' <<<"${draft_ids}" | wc -l | tr -d ' ')"
+          [[ "${draft_count}" -le 1 ]] || {
+            echo "Multiple drafts exist for ${GITHUB_REF_NAME}; refusing ambiguous recovery." >&2
+            exit 1
+          }
+          if [[ "${draft_count}" == 1 ]]; then
+            release_id="$(sed -n '1p' <<<"${draft_ids}")"
+            draft_state="$(gh api "${release_endpoint}/${release_id}" \
+              --jq '[.draft, .prerelease, .tag_name, .target_commitish] | @tsv')"
+            expected_draft_state="$(printf 'true\ttrue\t%s\t%s' \
+              "${GITHUB_REF_NAME}" "${GITHUB_SHA}")"
+            [[ "${draft_state}" == "${expected_draft_state}" ]] || {
+              echo "The existing draft is not owned by this release transaction." >&2
+              exit 1
+            }
+            draft_body="$(gh api "${release_endpoint}/${release_id}" --jq '.body // ""')"
+            case "${draft_body}" in
+              *"${marker}"*) ;;
+              *)
+                echo "The existing draft lacks this release transaction marker." >&2
+                exit 1
+                ;;
+            esac
+            while IFS= read -r asset_id; do
+              [[ -n "${asset_id}" ]] && gh api --method DELETE "${release_endpoint}/assets/${asset_id}" >/dev/null
+            done < <(gh api --paginate "${release_endpoint}/${release_id}/assets?per_page=100" --jq '.[].id')
+          else
+            release_id="$(gh api --method POST "${release_endpoint}" \
+              -f tag_name="${GITHUB_REF_NAME}" \
+              -f target_commitish="${GITHUB_SHA}" \
+              -f name="${GITHUB_REF_NAME}" \
+              -f body="${marker}" \
+              -f make_latest=false \
+              -F draft=true \
+              -F prerelease=true \
+              -F generate_release_notes=true \
+              --jq '.id')"
+          fi
           upload_url="$(gh api "${release_endpoint}/${release_id}" --jq '.upload_url' | sed 's/{.*$//')"
           for asset in artifacts/*; do
             asset_name="$(basename "${asset}")"
@@ -227,16 +307,3 @@ jobs:
             == "$(printf 'false\ttrue\ttrue\t%s' "${GITHUB_REF_NAME}")" ]]
           release_verified=true
           trap - EXIT
-      - name: Publish matching Go module tag
-        shell: bash
-        run: |
-          GO_TAG="generated/go/v$(cat VERSION)"
-          REMOTE_SHA="$(git ls-remote --tags origin "refs/tags/${GO_TAG}" | awk '{print $1}')"
-          if [ -n "$REMOTE_SHA" ] && [ "$REMOTE_SHA" != "$GITHUB_SHA" ]; then
-            echo "${GO_TAG} already points to ${REMOTE_SHA}, expected ${GITHUB_SHA}" >&2
-            exit 1
-          fi
-          if [ -z "$REMOTE_SHA" ]; then
-            git tag "$GO_TAG" "$GITHUB_SHA"
-            git push origin "refs/tags/${GO_TAG}"
-          fi

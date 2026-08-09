@@ -67,7 +67,22 @@ class ReleaseManifestValidationTest(unittest.TestCase):
                 repository="Example/nebula-backend"
             ),
             "spec release drift": lambda value: value["components"]["rum_web"]["spec_dependency"].update(
-                release="spec-v0.7.0-draft.0"
+                release="spec-v9.9.9", version="9.9.9"
+            ),
+            "transitive Spec mismatch": lambda value: value["components"]["backend"]["spec_dependency"].update(
+                release="spec-v0.5.0-draft.0", version="0.5.0-draft.0"
+            ),
+            "vendored Spec mismatch": lambda value: value["components"]["dashboard"]["spec_dependency"].update(
+                release="spec-v0.7.0-draft.0", version="0.7.0-draft.0"
+            ),
+            "absolute evidence": lambda value: value["components"]["collector"]["spec_dependency"].update(
+                evidence=["/etc/passwd"]
+            ),
+            "parent evidence": lambda value: value["components"]["collector"]["spec_dependency"].update(
+                evidence=["../../unrelated"]
+            ),
+            "direct dependency via": lambda value: value["components"]["collector"]["spec_dependency"].update(
+                via="unexpected"
             ),
         }
 
@@ -76,6 +91,25 @@ class ReleaseManifestValidationTest(unittest.TestCase):
                 changed = copy.deepcopy(original)
                 mutate(changed)
                 self.assertTrue(self.errors(changed))
+
+    def test_schema_rejects_unsafe_evidence_and_direct_via(self) -> None:
+        original = load_yaml(ROOT / "releases" / "2026.08.1-mvp.yaml")
+        mutations = (
+            lambda value: value["components"]["collector"]["spec_dependency"].update(
+                evidence=["/etc/passwd"]
+            ),
+            lambda value: value["components"]["collector"]["spec_dependency"].update(
+                evidence=["../../unrelated"]
+            ),
+            lambda value: value["components"]["collector"]["spec_dependency"].update(
+                via="unexpected"
+            ),
+        )
+
+        for mutate in mutations:
+            changed = copy.deepcopy(original)
+            mutate(changed)
+            self.assertTrue(validate(changed, self.schema, "release manifest"))
 
 
 if __name__ == "__main__":
