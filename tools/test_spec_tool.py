@@ -112,5 +112,40 @@ class ReleaseManifestValidationTest(unittest.TestCase):
             self.assertTrue(validate(changed, self.schema, "release manifest"))
 
 
+class ReleaseWorkflowSecurityTest(unittest.TestCase):
+    def test_release_assets_have_signed_supply_chain_evidence(self) -> None:
+        workflow = (ROOT / ".github" / "workflows" / "release-artifacts.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("id-token: write", workflow)
+        self.assertIn(
+            "anchore/sbom-action@aa0e114b2e19480f157109b9922bda359bd98b90",
+            workflow,
+        )
+        self.assertIn(
+            "sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6",
+            workflow,
+        )
+        self.assertIn("nebula-spec-release.cdx.json", workflow)
+        self.assertIn("https://slsa.dev/provenance/v1", workflow)
+        self.assertIn("cosign sign-blob --yes --bundle", workflow)
+        self.assertIn("cosign verify-blob", workflow)
+
+    def test_release_is_reverified_without_source_checkout(self) -> None:
+        workflow = (ROOT / ".github" / "workflows" / "release-artifacts.yml").read_text(
+            encoding="utf-8"
+        )
+        verification = workflow.split("  verify-release:", maxsplit=1)
+
+        self.assertEqual(2, len(verification), "release workflow lacks an independent verifier job")
+        self.assertNotIn("actions/checkout@", verification[1])
+        self.assertIn("gh release download", verification[1])
+        self.assertIn("[.draft, .prerelease, .immutable, .tag_name]", verification[1])
+        self.assertIn('test "$(resolve_tag_commit)" = "${GITHUB_SHA}"', verification[1])
+        self.assertIn("sha256sum --check SHA256SUMS", verification[1])
+        self.assertIn("cosign verify-blob", verification[1])
+
+
 if __name__ == "__main__":
     unittest.main()

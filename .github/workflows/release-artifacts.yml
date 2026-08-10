@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 concurrency:
   group: release-artifacts-${{ github.ref }}
@@ -128,10 +129,95 @@ jobs:
           archive generated/apm-metrics-contract "apm-metrics-contract-${version}.zip"
           archive generated/apm-agent-contract "apm-agent-contract-${version}.zip"
           archive generated/go "nebula-rutp-go-module-${version}.zip"
+      - name: Generate release CycloneDX SBOM
+        uses: anchore/sbom-action@aa0e114b2e19480f157109b9922bda359bd98b90 # v0.21.0
+        with:
+          path: ./artifacts
+          format: cyclonedx-json
+          output-file: artifacts/nebula-spec-release.cdx.json
+          artifact-name: nebula-spec-${{ github.sha }}.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
+          syft-version: v1.50.0
+      - name: Create reproducible SLSA v1 provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import pathlib
+
+          root = pathlib.Path("artifacts")
+          provenance_name = "nebula-spec-release.slsa-provenance.json"
+          subjects = []
+          for path in sorted(root.iterdir(), key=lambda candidate: candidate.name):
+              if not path.is_file() or path.name in {"SHA256SUMS", provenance_name}:
+                  continue
+              subjects.append(
+                  {
+                      "name": path.name,
+                      "digest": {"sha256": hashlib.sha256(path.read_bytes()).hexdigest()},
+                  }
+              )
+          repository = os.environ["GITHUB_REPOSITORY"]
+          ref = os.environ["GITHUB_REF"]
+          revision = os.environ["GITHUB_SHA"]
+          workflow = ".github/workflows/release-artifacts.yml"
+          statement = {
+              "_type": "https://in-toto.io/Statement/v1",
+              "subject": subjects,
+              "predicateType": "https://slsa.dev/provenance/v1",
+              "predicate": {
+                  "buildDefinition": {
+                      "buildType": "https://github.com/NebulaObservability/nebula-spec/release-artifacts@v1",
+                      "externalParameters": {"repository": repository, "ref": ref},
+                      "internalParameters": {"workflow": workflow},
+                      "resolvedDependencies": [
+                          {
+                              "uri": f"git+https://github.com/{repository}@{ref}",
+                              "digest": {"gitCommit": revision},
+                          }
+                      ],
+                  },
+                  "runDetails": {
+                      "builder": {
+                          "id": f"https://github.com/{repository}/{workflow}@{ref}"
+                      }
+                  },
+              },
+          }
+          (root / provenance_name).write_text(
+              json.dumps(statement, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
       - name: Generate checksums
+        shell: bash
         run: |
           cd artifacts
-          sha256sum * > SHA256SUMS
+          find . -maxdepth 1 -type f ! -name SHA256SUMS -printf '%f\0' \
+            | LC_ALL=C sort -z \
+            | xargs -0 sha256sum > SHA256SUMS
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.2
+      - name: Sign and verify every release asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          identity="https://github.com/${GITHUB_REPOSITORY}/.github/workflows/release-artifacts.yml@${GITHUB_REF}"
+          for artifact in artifacts/*; do
+            bundle="${artifact}.sigstore.json"
+            cosign sign-blob --yes --bundle "${bundle}" "${artifact}"
+            cosign verify-blob \
+              --bundle "${bundle}" \
+              --certificate-identity "${identity}" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              "${artifact}"
+          done
       - name: Verify every component Spec dependency is released
         env:
           GH_TOKEN: ${{ github.token }}
@@ -307,3 +393,100 @@ jobs:
             == "$(printf 'false\ttrue\ttrue\t%s' "${GITHUB_REF_NAME}")" ]]
           release_verified=true
           trap - EXIT
+
+  verify-release:
+    name: Verify published evidence as a clean consumer
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.2
+      - name: Download the immutable Release without source checkout
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          resolve_tag_commit() {
+            local object_type object_sha depth=0
+            read -r object_type object_sha < <(
+              gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${GITHUB_REF_NAME}" \
+                --jq '[.object.type, .object.sha] | @tsv'
+            )
+            while [[ "${object_type}" == tag ]]; do
+              depth=$((depth + 1))
+              [[ "${depth}" -le 8 ]]
+              read -r object_type object_sha < <(
+                gh api "repos/${GITHUB_REPOSITORY}/git/tags/${object_sha}" \
+                  --jq '[.object.type, .object.sha] | @tsv'
+              )
+            done
+            [[ "${object_type}" == commit ]]
+            printf '%s\n' "${object_sha}"
+          }
+          release_state="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF_NAME}" \
+            --jq '[.draft, .prerelease, .immutable, .tag_name] | @tsv')"
+          test "${release_state}" = "$(printf 'false\ttrue\ttrue\t%s' "${GITHUB_REF_NAME}")"
+          test "$(resolve_tag_commit)" = "${GITHUB_SHA}"
+          mkdir artifacts
+          gh release download "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --dir artifacts
+      - name: Verify checksums, provenance, SBOM, and Sigstore bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          identity="https://github.com/${GITHUB_REPOSITORY}/.github/workflows/release-artifacts.yml@${GITHUB_REF}"
+          (
+            cd artifacts
+            sha256sum --check SHA256SUMS
+          )
+          for artifact in artifacts/*; do
+            [[ "${artifact}" == *.sigstore.json ]] && continue
+            bundle="${artifact}.sigstore.json"
+            test -f "${bundle}"
+            cosign verify-blob \
+              --bundle "${bundle}" \
+              --certificate-identity "${identity}" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              "${artifact}"
+          done
+          python - <<'PY'
+          import json
+          import pathlib
+
+          root = pathlib.Path("artifacts")
+          checksums = {}
+          for line in (root / "SHA256SUMS").read_text(encoding="ascii").splitlines():
+              digest, name = line.split(maxsplit=1)
+              checksums[name.removeprefix("./")] = digest
+          if any(name.endswith(".sigstore.json") for name in checksums):
+              raise SystemExit("Sigstore bundles must remain detached from SHA256SUMS")
+
+          provenance_name = "nebula-spec-release.slsa-provenance.json"
+          provenance = json.loads((root / provenance_name).read_text(encoding="utf-8"))
+          if provenance.get("_type") != "https://in-toto.io/Statement/v1":
+              raise SystemExit("provenance statement type drifted")
+          if provenance.get("predicateType") != "https://slsa.dev/provenance/v1":
+              raise SystemExit("provenance predicate type drifted")
+          actual_subjects = {
+              subject["name"]: subject["digest"]["sha256"]
+              for subject in provenance.get("subject", [])
+          }
+          expected_subjects = {
+              name: digest for name, digest in checksums.items() if name != provenance_name
+          }
+          if actual_subjects != expected_subjects:
+              raise SystemExit("provenance subjects do not cover the complete release payload")
+
+          sbom = json.loads((root / "nebula-spec-release.cdx.json").read_text(encoding="utf-8"))
+          if sbom.get("bomFormat") != "CycloneDX" or not sbom.get("specVersion"):
+              raise SystemExit("release SBOM is not a versioned CycloneDX document")
+          if not isinstance(sbom.get("components"), list):
+              raise SystemExit("release SBOM components are missing")
+          PY
