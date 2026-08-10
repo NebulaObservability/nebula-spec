@@ -80,6 +80,25 @@ if ($missing) {
     throw "Missing required files: $($missing -join ', ')"
 }
 
+$mutableActionRefs = @()
+Get-ChildItem -LiteralPath '.github/workflows' -File | Where-Object {
+    $_.Extension -in @('.yml', '.yaml')
+} | ForEach-Object {
+    $workflow = $_
+    $lineNumber = 0
+    Get-Content -LiteralPath $workflow.FullName | ForEach-Object {
+        $lineNumber++
+        if ($_ -match '^\s*(?:-\s*)?uses:\s*(?<action>[^@\s]+)@(?<reference>[^\s#]+)' -and
+            -not $Matches.action.StartsWith('./') -and
+            $Matches.reference -notmatch '^[0-9a-f]{40}$') {
+            $mutableActionRefs += "$($workflow.FullName):${lineNumber}: $($Matches.action)@$($Matches.reference)"
+        }
+    }
+}
+if ($mutableActionRefs) {
+    throw "Workflow actions must use reviewed 40-character commit SHAs:`n$($mutableActionRefs -join "`n")"
+}
+
 $version = (Get-Content -Raw -LiteralPath 'VERSION').Trim()
 if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') {
     throw "VERSION is not a valid semantic version: $version"
