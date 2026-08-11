@@ -5,7 +5,11 @@ on:
     tags: ["spec-v*"]
 
 permissions:
+  checks: read
   contents: write
+  id-token: write
+  pull-requests: read
+  statuses: read
 
 concurrency:
   group: release-artifacts-${{ github.ref }}
@@ -13,18 +17,20 @@ concurrency:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - name: Verify immutable workflow actions
+        run: ruby tools/verify-action-pins.rb
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
-          python-version: "3.13"
+          python-version: "3.13.14"
           cache: pip
       - run: python -m pip install -r tools/requirements.txt
-      - name: Test specification validator
-        run: python -m unittest tools/test_spec_tool.py
+      - name: Test specification and release evidence validators
+        run: python -m unittest tools/test_spec_tool.py tools/test_release_sbom.py
       - name: Verify specification contracts
         run: |
           python tools/spec_tool.py lint
@@ -37,6 +43,7 @@ jobs:
       - name: Verify tag matches VERSION
         shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
           REF_CREATED: ${{ github.event.created }}
         run: |
           set -euo pipefail
@@ -49,7 +56,12 @@ jobs:
           fi
           test "${remote_sha}" = "${GITHUB_SHA}"
           git merge-base --is-ancestor "${GITHUB_SHA}" refs/remotes/origin/main
-      - uses: bufbuild/buf-setup-action@v1
+          merged_pr_number="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls?per_page=100" \
+            --jq '[.[] | select(.state == "closed" and .merged_at != null and .merge_commit_sha == env.GITHUB_SHA and .base.ref == "main" and .base.repo.full_name == env.GITHUB_REPOSITORY)] | select(length == 1) | .[0].number')"
+          [[ "${merged_pr_number}" =~ ^[1-9][0-9]*$ ]]
+          gh pr checks "${merged_pr_number}" --repo "${GITHUB_REPOSITORY}"
+      - uses: bufbuild/buf-setup-action@a47c93e0b1648d5651a065437926377d060baa99 # v1.50.0
         with:
           version: 1.72.0
       - name: Verify generated Go and TypeScript RUTP Protobuf sources
@@ -62,9 +74,9 @@ jobs:
           fi
       - run: python tools/spec_tool.py generate --check
       - run: python tools/spec_tool.py verify-artifacts
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.25.x"
+          go-version: "1.25.12"
           cache: false
       - name: Verify Go RUTP module
         working-directory: generated/go
@@ -73,9 +85,9 @@ jobs:
           go mod tidy
           git diff --exit-code -- go.mod go.sum
           go test ./...
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "22"
+          node-version: "22.23.1"
       - name: Create release directory
         shell: bash
         run: |
@@ -84,6 +96,7 @@ jobs:
           version="$(cat VERSION)"
           manifest="$(cat releases/CURRENT)"
           cp "releases/${manifest}" "artifacts/platform-release-manifest-${version}.yaml"
+          cp tools/release_sbom.py artifacts/verify-nebula-spec-release.py
       - name: Pack TypeScript semantic registry
         working-directory: generated/typescript
         run: npm pack --ignore-scripts --pack-destination ../../artifacts
@@ -104,11 +117,12 @@ jobs:
       - name: Pack RUM conformance fixtures
         working-directory: generated/conformance
         run: npm pack --ignore-scripts --pack-destination ../../artifacts
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust 1.85.0
+        run: rustup toolchain install 1.85.0 --profile minimal --no-self-update
       - name: Pack Rust semantic registry
         working-directory: generated/rust/nebula-semantic-registry
         run: |
-          cargo package --locked --allow-dirty --no-verify
+          cargo +1.85.0 package --locked --allow-dirty --no-verify
           cp target/package/*.crate ../../../artifacts/
       - name: Archive reproducible release bundles
         shell: bash
@@ -128,10 +142,108 @@ jobs:
           archive generated/apm-metrics-contract "apm-metrics-contract-${version}.zip"
           archive generated/apm-agent-contract "apm-agent-contract-${version}.zip"
           archive generated/go "nebula-rutp-go-module-${version}.zip"
+      - name: Generate release CycloneDX SBOM
+        uses: anchore/sbom-action@aa0e114b2e19480f157109b9922bda359bd98b90 # v0.20.8
+        with:
+          path: ./artifacts
+          format: cyclonedx-json
+          output-file: artifacts/nebula-spec-release.cdx.json
+          artifact-name: nebula-spec-${{ github.sha }}.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
+          syft-version: v1.50.0
+      - name: Bind the release SBOM identity and complete relationship graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(cat VERSION)"
+          python tools/release_sbom.py build \
+            --artifacts artifacts \
+            --version "${version}" \
+            --output artifacts/nebula-spec-release.cdx.json
+          python tools/release_sbom.py verify \
+            --artifacts artifacts \
+            --version "${version}" \
+            --output artifacts/nebula-spec-release.cdx.json
+      - name: Create reproducible SLSA v1 provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import pathlib
+
+          root = pathlib.Path("artifacts")
+          provenance_name = "nebula-spec-release.slsa-provenance.json"
+          subjects = []
+          for path in sorted(root.iterdir(), key=lambda candidate: candidate.name):
+              if not path.is_file() or path.name in {"SHA256SUMS", provenance_name}:
+                  continue
+              subjects.append(
+                  {
+                      "name": path.name,
+                      "digest": {"sha256": hashlib.sha256(path.read_bytes()).hexdigest()},
+                  }
+              )
+          repository = os.environ["GITHUB_REPOSITORY"]
+          ref = os.environ["GITHUB_REF"]
+          revision = os.environ["GITHUB_SHA"]
+          workflow = ".github/workflows/release-artifacts.yml"
+          statement = {
+              "_type": "https://in-toto.io/Statement/v1",
+              "subject": subjects,
+              "predicateType": "https://slsa.dev/provenance/v1",
+              "predicate": {
+                  "buildDefinition": {
+                      "buildType": "https://github.com/NebulaObservability/nebula-spec/release-artifacts@v1",
+                      "externalParameters": {"repository": repository, "ref": ref},
+                      "internalParameters": {"workflow": workflow},
+                      "resolvedDependencies": [
+                          {
+                              "uri": f"git+https://github.com/{repository}@{ref}",
+                              "digest": {"gitCommit": revision},
+                          }
+                      ],
+                  },
+                  "runDetails": {
+                      "builder": {
+                          "id": f"https://github.com/{repository}/{workflow}@{ref}"
+                      }
+                  },
+              },
+          }
+          (root / provenance_name).write_text(
+              json.dumps(statement, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
       - name: Generate checksums
+        shell: bash
         run: |
           cd artifacts
-          sha256sum * > SHA256SUMS
+          find . -maxdepth 1 -type f ! -name SHA256SUMS -printf '%f\0' \
+            | LC_ALL=C sort -z \
+            | xargs -0 sha256sum > SHA256SUMS
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.2
+      - name: Sign and verify every release asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          identity="https://github.com/${GITHUB_REPOSITORY}/.github/workflows/release-artifacts.yml@${GITHUB_REF}"
+          for artifact in artifacts/*; do
+            bundle="${artifact}.sigstore.json"
+            cosign sign-blob --yes --bundle "${bundle}" "${artifact}"
+            cosign verify-blob \
+              --bundle "${bundle}" \
+              --certificate-identity "${identity}" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              "${artifact}"
+          done
       - name: Verify every component Spec dependency is released
         env:
           GH_TOKEN: ${{ github.token }}
@@ -307,3 +419,119 @@ jobs:
             == "$(printf 'false\ttrue\ttrue\t%s' "${GITHUB_REF_NAME}")" ]]
           release_verified=true
           trap - EXIT
+
+  verify-release:
+    name: Verify published evidence as a clean consumer
+    needs: release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.2
+      - name: Download the immutable Release without source checkout
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          resolve_tag_commit() {
+            local object_type object_sha depth=0
+            read -r object_type object_sha < <(
+              gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${GITHUB_REF_NAME}" \
+                --jq '[.object.type, .object.sha] | @tsv'
+            )
+            while [[ "${object_type}" == tag ]]; do
+              depth=$((depth + 1))
+              [[ "${depth}" -le 8 ]]
+              read -r object_type object_sha < <(
+                gh api "repos/${GITHUB_REPOSITORY}/git/tags/${object_sha}" \
+                  --jq '[.object.type, .object.sha] | @tsv'
+              )
+            done
+            [[ "${object_type}" == commit ]]
+            printf '%s\n' "${object_sha}"
+          }
+          release_state="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF_NAME}" \
+            --jq '[.draft, .prerelease, .immutable, .tag_name] | @tsv')"
+          test "${release_state}" = "$(printf 'false\ttrue\ttrue\t%s' "${GITHUB_REF_NAME}")"
+          test "$(resolve_tag_commit)" = "${GITHUB_SHA}"
+          mkdir artifacts
+          gh release download "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --dir artifacts
+      - name: Verify checksums, provenance, SBOM, and Sigstore bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          identity="https://github.com/${GITHUB_REPOSITORY}/.github/workflows/release-artifacts.yml@${GITHUB_REF}"
+          (
+            cd artifacts
+            sha256sum --check SHA256SUMS
+          )
+          for artifact in artifacts/*; do
+            [[ "${artifact}" == *.sigstore.json ]] && continue
+            bundle="${artifact}.sigstore.json"
+            test -f "${bundle}"
+            cosign verify-blob \
+              --bundle "${bundle}" \
+              --certificate-identity "${identity}" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              "${artifact}"
+          done
+          version="${GITHUB_REF_NAME#spec-v}"
+          python artifacts/verify-nebula-spec-release.py verify \
+            --artifacts artifacts \
+            --version "${version}" \
+            --output artifacts/nebula-spec-release.cdx.json
+          python - <<'PY'
+          import json
+          import pathlib
+
+          root = pathlib.Path("artifacts")
+          checksums = {}
+          for line in (root / "SHA256SUMS").read_text(encoding="ascii").splitlines():
+              digest, name = line.split(maxsplit=1)
+              checksums[name.removeprefix("./")] = digest
+          if any(name.endswith(".sigstore.json") for name in checksums):
+              raise SystemExit("Sigstore bundles must remain detached from SHA256SUMS")
+
+          provenance_name = "nebula-spec-release.slsa-provenance.json"
+          provenance = json.loads((root / provenance_name).read_text(encoding="utf-8"))
+          if provenance.get("_type") != "https://in-toto.io/Statement/v1":
+              raise SystemExit("provenance statement type drifted")
+          if provenance.get("predicateType") != "https://slsa.dev/provenance/v1":
+              raise SystemExit("provenance predicate type drifted")
+          actual_subjects = {
+              subject["name"]: subject["digest"]["sha256"]
+              for subject in provenance.get("subject", [])
+          }
+          expected_subjects = {
+              name: digest for name, digest in checksums.items() if name != provenance_name
+          }
+          if actual_subjects != expected_subjects:
+              raise SystemExit("provenance subjects do not cover the complete release payload")
+
+          sbom = json.loads((root / "nebula-spec-release.cdx.json").read_text(encoding="utf-8"))
+          root_component = sbom.get("metadata", {}).get("component", {})
+          version = root_component.get("version")
+          expected_purl = f"pkg:github/NebulaObservability/nebula-spec@{version}"
+          if (
+              sbom.get("bomFormat") != "CycloneDX"
+              or sbom.get("specVersion") != "1.6"
+              or root_component
+              != {
+                  "type": "application",
+                  "bom-ref": expected_purl,
+                  "name": "nebula-spec-release",
+                  "version": version,
+                  "purl": expected_purl,
+              }
+              or not sbom.get("components")
+              or not sbom.get("dependencies")
+          ):
+              raise SystemExit("release SBOM identity/version/PURL/graph drifted")
+          PY
