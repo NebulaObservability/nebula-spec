@@ -1,7 +1,7 @@
 # @nebula-observability/rutp-protobuf
 
 Browser-compatible RUTP v1 Protobuf schemas and binary codec generated from
-`nebula-spec` with `protoc-gen-es`. The package version is `0.8.0-draft.0`
+`nebula-spec` with `protoc-gen-es`. The package version is `0.8.0-draft.1`
 and the RUTP wire version is `1.0.0-draft.1`.
 
 Import `SpecVersion` and `ProtocolVersion` from the package root. Use

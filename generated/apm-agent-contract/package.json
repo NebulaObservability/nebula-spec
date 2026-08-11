@@ -1,6 +1,6 @@
 {
   "name": "@nebula-observability/apm-agent-contract",
-  "version": "0.8.0-draft.0",
+  "version": "0.8.0-draft.1",
   "description": "Versioned Nebula Go APM Agent config, diagnostics, Resource, and runtime metrics contract.",
   "license": "Apache-2.0",
   "type": "module",
