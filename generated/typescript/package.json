@@ -1,6 +1,6 @@
 {
   "name": "@nebula-observability/semantic-registry",
-  "version": "0.8.0-draft.1",
+  "version": "0.8.0-draft.2",
   "description": "Generated Nebula Observability semantic registry.",
   "license": "Apache-2.0",
   "type": "module",
