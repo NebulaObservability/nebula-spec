@@ -1,0 +1,102 @@
+schema_version: 2
+release: 2026.08.2-mvp.0
+protocols:
+  rutp: 1.0.0-draft.1
+  apm_extension: 1.2.0-draft.0
+  apm_metrics: 1.2.0-draft.0
+  apm_agent: 1.0.0-draft.0
+  apm_agent_config: 1.0.0-draft.0
+  apm_agent_diagnostics: 1.0.0-draft.0
+  control_plane_config: 1.0.0-draft.1
+otel_schema: 1.43.0
+components:
+  spec:
+    repository: NebulaObservability/nebula-spec
+    release: spec-v0.8.0-draft.2
+    version: 0.8.0-draft.2
+  apm_agent_go:
+    source:
+      repository: NebulaObservability/nebula-apm-agent
+      revision: c69441979ab9625b6f2d2ef4f136c2df25e747e8
+    artifact:
+      kind: go_module
+      identity: github.com/NebulaObservability/nebula-apm-agent/go
+      version: v0.1.2
+      release_tag: go/v0.1.2
+    spec_dependency:
+      release: spec-v0.7.0-draft.0
+      version: 0.7.0-draft.0
+      relationship: direct
+      evidence:
+      - go/spec-release-lock.json
+  rum_web:
+    source:
+      repository: NebulaObservability/nebula-rum-sdk
+      revision: 8954ad4157910055ed29c4f136bfd71fdd6abaec
+    artifact:
+      kind: npm_package
+      identity: '@nebula-observability/rum-web'
+      version: 0.1.0
+      release_tag: rum-sdk-v0.1.0
+    spec_dependency:
+      release: spec-v0.5.0-draft.0
+      version: 0.5.0-draft.0
+      relationship: direct
+      evidence:
+      - spec/release-lock.json
+  collector:
+    source:
+      repository: NebulaObservability/nebula-collector
+      revision: 4e4bae03ae8c723d6e6048a1c5f4cd963b7fa3a6
+    artifact:
+      kind: oci_image
+      reference: docker.io/baicie2/nebula-collector@sha256:f1950fd9ab5e74a2f459a3afd4437a75b38b3a2f03de9b191bc56a2092119b2a
+    spec_dependency:
+      release: spec-v0.7.0-draft.0
+      version: 0.7.0-draft.0
+      relationship: direct
+      evidence:
+      - go.mod
+  rum_ingress:
+    source:
+      repository: NebulaObservability/nebula-collector
+      revision: 4e4bae03ae8c723d6e6048a1c5f4cd963b7fa3a6
+    artifact:
+      kind: oci_image
+      reference: docker.io/baicie2/nebula-rum-ingress@sha256:cca4035293ee8f540e85d5cb9be31034c66fb1aaaf9f03514958065c415b5457
+    spec_dependency:
+      release: spec-v0.7.0-draft.0
+      version: 0.7.0-draft.0
+      relationship: direct
+      evidence:
+      - go.mod
+  backend:
+    source:
+      repository: NebulaObservability/nebula-backend
+      revision: 363813ffb4d26e7c8279b8372da36c49baa71770
+    artifact:
+      kind: oci_image
+      reference: docker.io/baicie2/nebula-backend@sha256:57052adaa925e06d6728d06eb56601294803e5242c4d89b1f644e42c15cbcf56
+    spec_dependency:
+      release: spec-v0.7.0-draft.0
+      version: 0.7.0-draft.0
+      relationship: transitive
+      via: github.com/NebulaObservability/nebula-apm-agent/go@v0.1.2
+      evidence:
+      - go.mod
+      - third_party/go-proxy/github.com/!nebula!observability/nebula-apm-agent/go/@v/v0.1.2.info
+  dashboard:
+    source:
+      repository: NebulaObservability/nebula-dashboard
+      revision: c5a127061bed79a2cf4a4982aeb052d55c440da3
+    artifact:
+      kind: oci_image
+      reference: docker.io/baicie2/nebula-dashboard@sha256:ae60bd6322b58edf185b3a9f9b93b829155a2b201d51f8142f38789b7c13814e
+    spec_dependency:
+      release: spec-v0.5.0-draft.0
+      version: 0.5.0-draft.0
+      relationship: vendored
+      via: '@nebula-observability/rum-web@0.1.0'
+      evidence:
+      - package.json
+      - scripts/verify-rum-vendor.mjs
