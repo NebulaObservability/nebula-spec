@@ -5,8 +5,11 @@ on:
     tags: ["spec-v*"]
 
 permissions:
+  checks: read
   contents: write
   id-token: write
+  pull-requests: read
+  statuses: read
 
 concurrency:
   group: release-artifacts-${{ github.ref }}
@@ -14,18 +17,20 @@ concurrency:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
+      - name: Verify immutable workflow actions
+        run: ruby tools/verify-action-pins.rb
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
-          python-version: "3.13"
+          python-version: "3.13.14"
           cache: pip
       - run: python -m pip install -r tools/requirements.txt
-      - name: Test specification validator
-        run: python -m unittest tools/test_spec_tool.py
+      - name: Test specification and release evidence validators
+        run: python -m unittest tools/test_spec_tool.py tools/test_release_sbom.py
       - name: Verify specification contracts
         run: |
           python tools/spec_tool.py lint
@@ -38,6 +43,7 @@ jobs:
       - name: Verify tag matches VERSION
         shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
           REF_CREATED: ${{ github.event.created }}
         run: |
           set -euo pipefail
@@ -50,6 +56,11 @@ jobs:
           fi
           test "${remote_sha}" = "${GITHUB_SHA}"
           git merge-base --is-ancestor "${GITHUB_SHA}" refs/remotes/origin/main
+          merged_pr_number="$(gh api \
+            "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls?per_page=100" \
+            --jq '[.[] | select(.state == "closed" and .merged_at != null and .merge_commit_sha == env.GITHUB_SHA and .base.ref == "main" and .base.repo.full_name == env.GITHUB_REPOSITORY)] | select(length == 1) | .[0].number')"
+          [[ "${merged_pr_number}" =~ ^[1-9][0-9]*$ ]]
+          gh pr checks "${merged_pr_number}" --repo "${GITHUB_REPOSITORY}"
       - uses: bufbuild/buf-setup-action@a47c93e0b1648d5651a065437926377d060baa99 # v1.50.0
         with:
           version: 1.72.0
@@ -65,7 +76,7 @@ jobs:
       - run: python tools/spec_tool.py verify-artifacts
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.25.x"
+          go-version: "1.25.12"
           cache: false
       - name: Verify Go RUTP module
         working-directory: generated/go
@@ -76,7 +87,7 @@ jobs:
           go test ./...
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "22"
+          node-version: "22.23.1"
       - name: Create release directory
         shell: bash
         run: |
@@ -85,6 +96,7 @@ jobs:
           version="$(cat VERSION)"
           manifest="$(cat releases/CURRENT)"
           cp "releases/${manifest}" "artifacts/platform-release-manifest-${version}.yaml"
+          cp tools/release_sbom.py artifacts/verify-nebula-spec-release.py
       - name: Pack TypeScript semantic registry
         working-directory: generated/typescript
         run: npm pack --ignore-scripts --pack-destination ../../artifacts
@@ -105,11 +117,12 @@ jobs:
       - name: Pack RUM conformance fixtures
         working-directory: generated/conformance
         run: npm pack --ignore-scripts --pack-destination ../../artifacts
-      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+      - name: Install Rust 1.85.0
+        run: rustup toolchain install 1.85.0 --profile minimal --no-self-update
       - name: Pack Rust semantic registry
         working-directory: generated/rust/nebula-semantic-registry
         run: |
-          cargo package --locked --allow-dirty --no-verify
+          cargo +1.85.0 package --locked --allow-dirty --no-verify
           cp target/package/*.crate ../../../artifacts/
       - name: Archive reproducible release bundles
         shell: bash
@@ -139,6 +152,19 @@ jobs:
           upload-artifact: false
           upload-release-assets: false
           syft-version: v1.50.0
+      - name: Bind the release SBOM identity and complete relationship graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(cat VERSION)"
+          python tools/release_sbom.py build \
+            --artifacts artifacts \
+            --version "${version}" \
+            --output artifacts/nebula-spec-release.cdx.json
+          python tools/release_sbom.py verify \
+            --artifacts artifacts \
+            --version "${version}" \
+            --output artifacts/nebula-spec-release.cdx.json
       - name: Create reproducible SLSA v1 provenance
         shell: bash
         run: |
@@ -397,7 +423,7 @@ jobs:
   verify-release:
     name: Verify published evidence as a clean consumer
     needs: release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -456,6 +482,11 @@ jobs:
               --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
               "${artifact}"
           done
+          version="${GITHUB_REF_NAME#spec-v}"
+          python artifacts/verify-nebula-spec-release.py verify \
+            --artifacts artifacts \
+            --version "${version}" \
+            --output artifacts/nebula-spec-release.cdx.json
           python - <<'PY'
           import json
           import pathlib
@@ -485,8 +516,22 @@ jobs:
               raise SystemExit("provenance subjects do not cover the complete release payload")
 
           sbom = json.loads((root / "nebula-spec-release.cdx.json").read_text(encoding="utf-8"))
-          if sbom.get("bomFormat") != "CycloneDX" or not sbom.get("specVersion"):
-              raise SystemExit("release SBOM is not a versioned CycloneDX document")
-          if not isinstance(sbom.get("components"), list):
-              raise SystemExit("release SBOM components are missing")
+          root_component = sbom.get("metadata", {}).get("component", {})
+          version = root_component.get("version")
+          expected_purl = f"pkg:github/NebulaObservability/nebula-spec@{version}"
+          if (
+              sbom.get("bomFormat") != "CycloneDX"
+              or sbom.get("specVersion") != "1.6"
+              or root_component
+              != {
+                  "type": "application",
+                  "bom-ref": expected_purl,
+                  "name": "nebula-spec-release",
+                  "version": version,
+                  "purl": expected_purl,
+              }
+              or not sbom.get("components")
+              or not sbom.get("dependencies")
+          ):
+              raise SystemExit("release SBOM identity/version/PURL/graph drifted")
           PY

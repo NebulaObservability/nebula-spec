@@ -69,6 +69,9 @@ $requiredFiles = @(
     'releases/2026.07.7-draft.yaml',
     'releases/2026.08.1-mvp.yaml',
     'tools/spec_tool.py',
+    'tools/release_sbom.py',
+    'tools/test_release_sbom.py',
+    'tools/verify-action-pins.rb',
     'tools/check.ps1',
     'tools/requirements.txt',
     '.github/CODEOWNERS',
@@ -97,6 +100,15 @@ Get-ChildItem -LiteralPath '.github/workflows' -File | Where-Object {
 }
 if ($mutableActionRefs) {
     throw "Workflow actions must use reviewed 40-character commit SHAs:`n$($mutableActionRefs -join "`n")"
+}
+
+$ruby = Get-Command ruby -ErrorAction SilentlyContinue
+if (-not $ruby) {
+    throw 'Ruby is required for AST workflow action pin verification.'
+}
+& ruby ./tools/verify-action-pins.rb
+if ($LASTEXITCODE -ne 0) {
+    throw 'AST workflow action pin verification failed.'
 }
 
 $version = (Get-Content -Raw -LiteralPath 'VERSION').Trim()
