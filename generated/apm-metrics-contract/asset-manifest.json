@@ -3,7 +3,7 @@
   "files": [
     {
       "path": "README.md",
-      "sha256": "1ca3d45ddbfe6dbecb3be93ce14e01851df540d95b59af568083bffd0ca8f952"
+      "sha256": "fd5c6ba789aa9bcf3765b75c28948dfa89b9d704b024cb95b302ea454a875718"
     },
     {
       "path": "compatibility/apm-metrics.json",
@@ -47,7 +47,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "d99f088cf9b268d2e9c7e68d5f0a44728b19ecc76fee4e07b1cc144e4fa68b22"
+      "sha256": "758872394246ba517bc0a979b34bcf68cdd64f2c53e0c2506b5066b120d32483"
     },
     {
       "path": "schemas/apm-metrics-cumulative-sequence.schema.json",
@@ -65,6 +65,6 @@
   "format_version": 1,
   "metrics_contract_version": "1.2.0-draft.0",
   "otel_schema": "1.43.0",
-  "release": "2026.10.1-mvp.0",
-  "spec_version": "0.8.0-draft.3"
+  "release": "2026.10.2-mvp.0",
+  "spec_version": "0.8.0-draft.4"
 }
