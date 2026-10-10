@@ -156,6 +156,6 @@
     "control_plane_config": "1.0.0-draft.1",
     "rutp": "1.0.0-draft.1"
   },
-  "release": "2026.10.7-mvp.0",
-  "spec_version": "0.8.0-draft.10"
+  "release": "2026.10.8-mvp.0",
+  "spec_version": "0.8.0-draft.11"
 }
