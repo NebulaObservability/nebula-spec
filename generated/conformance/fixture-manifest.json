@@ -126,6 +126,16 @@
       "sha256": "d13ae78a062289cde1b633dfa22865e2358bc37afa5b731313251a065afffb01"
     },
     {
+      "kind": "release",
+      "path": "fixtures/release/invalid-release-crash-free-rate.json",
+      "sha256": "325a1024e1c9c001ef54dd663e30718591bdc6e4bd28f7787048c8bfe8718fb0"
+    },
+    {
+      "kind": "release",
+      "path": "fixtures/release/release-health.json",
+      "sha256": "491ec1096ec168fe81b725f1d9d2f2296fffbcb6b6eb3dabf66ac0a14a8803eb"
+    },
+    {
       "kind": "session-lifecycle",
       "path": "fixtures/session-lifecycle/basic.json",
       "sha256": "dc3343cf2e4611213e256953389e996402adca44d17516907432fce230126b1c"
