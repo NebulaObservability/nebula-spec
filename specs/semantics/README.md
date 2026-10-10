@@ -26,3 +26,15 @@
 每个（规则, Issue）对在告警后进入静默窗口（`silence_window`），窗口内的重复匹配被抑制；`new_issue` 的静默即 Issue 生命周期本身。抑制键 `dedup_key` 由规则类型、规则 ID 与主体（Issue，测试通知为项目）派生，客户端不可构造或覆盖。
 
 投递可靠性上限（v1）：每个（firing, 通道）恰好一次投递尝试，带超时；不重试、不持久化队列、不跨重启保证。失败的尝试连同错误原因记录在告警历史中（上限 200 条），由 `GET /api/v1/alerts` 可查。通知载荷契约见 `schemas/alert.schema.json`。
+
+
+## Release 健康（v1）
+
+发行健康按 service.version 聚合会话健康。规范定义（v1）：
+
+1. 会话携带至少一个未处理错误事件（um.error.handled 为 alse 或缺省）即计为“崩溃”。
+2. 已处理错误（um.error.handled: true）不降低会话健康。
+3. crash_free_rate = 无崩溃会话数 / 会话数，取值区间 [0, 1]。
+4. 聚合窗口由查询显式给出且必须有界；窗口外启动的会话不计入。
+
+契约与金样见 schemas/release-health.schema.json 与 ixtures/release/。

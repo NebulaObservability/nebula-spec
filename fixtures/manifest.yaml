@@ -49,6 +49,14 @@ fixtures:
     valid: false
     expected_error_paths:
       - kind
+  - path: fixtures/release/release-health.json
+    schema: schemas/release-health.schema.json
+    valid: true
+  - path: fixtures/release/invalid-release-crash-free-rate.json
+    schema: schemas/release-health.schema.json
+    valid: false
+    expected_error_paths:
+      - crash_free_rate
   - path: fixtures/protocol/partial-ack-with-unknown-members.json
     schema: schemas/batch-ack.schema.json
     valid: true

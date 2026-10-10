@@ -1,0 +1,10 @@
+{
+  "release": "1.4.2",
+  "sessions": 4,
+  "crashed_sessions": 1,
+  "crash_free_sessions": 3,
+  "crash_free_rate": 0.75,
+  "error_events": 2,
+  "first_seen_at": "2026-07-25T09:00:00Z",
+  "last_seen_at": "2026-07-25T10:00:00Z"
+}

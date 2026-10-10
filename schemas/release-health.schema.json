@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/rum/release-health.schema.json",
+  "title": "Nebula RUM release health",
+  "description": "Per-release session health aggregate (v1). A session counts as crashed when it carries at least one unhandled error event: rum.error.handled is false or the attribute is absent. Handled errors do not degrade session health. crash_free_rate is the fraction of crash-free sessions in the aggregate window, and the window is always bounded by the query.",
+  "type": "object",
+  "required": [
+    "release",
+    "sessions",
+    "crashed_sessions",
+    "crash_free_sessions",
+    "crash_free_rate",
+    "error_events",
+    "first_seen_at",
+    "last_seen_at"
+  ],
+  "properties": {
+    "release": {
+      "type": "string",
+      "description": "Release dimension (resource attribute service.version); empty means the sessions carried no release."
+    },
+    "sessions": { "type": "integer", "minimum": 1 },
+    "crashed_sessions": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Sessions carrying at least one unhandled error event."
+    },
+    "crash_free_sessions": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Sessions without any unhandled error event."
+    },
+    "crash_free_rate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "crash_free_sessions divided by sessions."
+    },
+    "error_events": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Error events observed in the aggregate's sessions, handled or not."
+    },
+    "first_seen_at": { "type": "string", "format": "date-time" },
+    "last_seen_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": true
+}
