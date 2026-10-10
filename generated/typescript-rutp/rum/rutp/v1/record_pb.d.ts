@@ -209,6 +209,22 @@ export declare type RumEvent = Message<"nebula.rum.rutp.v1.RumEvent"> & {
    * @generated from field: nebula.rum.rutp.v1.AttachmentReference payload = 5;
    */
   payload?: AttachmentReference;
+
+  /**
+   * Optional structured exception detail. Producers that cannot populate it
+   * keep sending the exception.* semantic attributes; receivers must accept
+   * both representations for the whole RUTP v1 line.
+   *
+   * @generated from field: nebula.rum.rutp.v1.ErrorStack stack = 6;
+   */
+  stack?: ErrorStack;
+
+  /**
+   * Optional ordered trail of notable actions that preceded the event.
+   *
+   * @generated from field: repeated nebula.rum.rutp.v1.Breadcrumb breadcrumbs = 7;
+   */
+  breadcrumbs: Breadcrumb[];
 };
 
 /**
@@ -216,6 +232,107 @@ export declare type RumEvent = Message<"nebula.rum.rutp.v1.RumEvent"> & {
  * Use `create(RumEventSchema)` to create a new message.
  */
 export declare const RumEventSchema: GenMessage<RumEvent>;
+
+/**
+ * ErrorStack is the structured form of the exception.* semantic attributes:
+ * type mirrors exception.type, value mirrors exception.message, and frames
+ * mirror the parsed exception.stacktrace.
+ *
+ * @generated from message nebula.rum.rutp.v1.ErrorStack
+ */
+export declare type ErrorStack = Message<"nebula.rum.rutp.v1.ErrorStack"> & {
+  /**
+   * @generated from field: string type = 1;
+   */
+  type: string;
+
+  /**
+   * @generated from field: string value = 2;
+   */
+  value: string;
+
+  /**
+   * @generated from field: repeated nebula.rum.rutp.v1.StackFrame frames = 3;
+   */
+  frames: StackFrame[];
+};
+
+/**
+ * Describes the message nebula.rum.rutp.v1.ErrorStack.
+ * Use `create(ErrorStackSchema)` to create a new message.
+ */
+export declare const ErrorStackSchema: GenMessage<ErrorStack>;
+
+/**
+ * @generated from message nebula.rum.rutp.v1.StackFrame
+ */
+export declare type StackFrame = Message<"nebula.rum.rutp.v1.StackFrame"> & {
+  /**
+   * @generated from field: string function = 1;
+   */
+  function: string;
+
+  /**
+   * @generated from field: string filename = 2;
+   */
+  filename: string;
+
+  /**
+   * @generated from field: optional uint32 line = 3;
+   */
+  line?: number;
+
+  /**
+   * @generated from field: optional uint32 column = 4;
+   */
+  column?: number;
+
+  /**
+   * @generated from field: bool in_app = 5;
+   */
+  inApp: boolean;
+};
+
+/**
+ * Describes the message nebula.rum.rutp.v1.StackFrame.
+ * Use `create(StackFrameSchema)` to create a new message.
+ */
+export declare const StackFrameSchema: GenMessage<StackFrame>;
+
+/**
+ * Breadcrumb category is a closed set at the JSON boundary
+ * (navigation, http, ui, error, custom) and is carried as a string on the wire
+ * so newer categories remain forward compatible.
+ *
+ * @generated from message nebula.rum.rutp.v1.Breadcrumb
+ */
+export declare type Breadcrumb = Message<"nebula.rum.rutp.v1.Breadcrumb"> & {
+  /**
+   * @generated from field: uint64 time_unix_nano = 1;
+   */
+  timeUnixNano: bigint;
+
+  /**
+   * @generated from field: string category = 2;
+   */
+  category: string;
+
+  /**
+   * @generated from field: string message = 3;
+   */
+  message: string;
+
+  /**
+   * @generated from field: map<string, nebula.rum.rutp.v1.AttributeValue> attributes = 4;
+   */
+  attributes: { [key: string]: AttributeValue };
+};
+
+/**
+ * Describes the message nebula.rum.rutp.v1.Breadcrumb.
+ * Use `create(BreadcrumbSchema)` to create a new message.
+ */
+export declare const BreadcrumbSchema: GenMessage<Breadcrumb>;
 
 /**
  * @generated from message nebula.rum.rutp.v1.RumMetricPoint

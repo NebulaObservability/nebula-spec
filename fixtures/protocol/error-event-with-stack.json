@@ -1,0 +1,105 @@
+{
+  "protocol_version": "1.0.0-draft.1",
+  "schema_url": "https://schemas.nebula-observability.io/rum/rutp/1.0",
+  "otel_schema_url": "https://opentelemetry.io/schemas/1.43.0",
+  "batch_id": "01JZBATCH000000000000000002",
+  "project_id": "demo-project",
+  "sent_time_unix_nano": "1784476801000000000",
+  "resource": {
+    "attributes": {
+      "service.namespace": "shop",
+      "service.name": "web-store",
+      "service.version": "1.0.0",
+      "service.instance.id": "01JZINSTALL00000000000001",
+      "deployment.environment.name": "test",
+      "telemetry.sdk.name": "nebula-rum-web",
+      "telemetry.sdk.version": "0.1.0",
+      "app.installation.id": "01JZINSTALL00000000000001"
+    }
+  },
+  "scope": {
+    "name": "io.nebulaobservability.rum.web",
+    "version": "0.1.0"
+  },
+  "clock": {
+    "wall_time_unix_nano": "1784476801000000000",
+    "monotonic_time_nano": "1000000000",
+    "offset_millis": 0,
+    "uncertainty_millis": 2
+  },
+  "records": [
+    {
+      "record_id": "01JZRECORD0000000000000002",
+      "time_unix_nano": "1784476800500000000",
+      "observed_time_unix_nano": "1784476800501000000",
+      "monotonic_time_nano": "950000000",
+      "source_id": "window:main",
+      "sequence": 2,
+      "priority": "high",
+      "context": {
+        "trace_id": "0123456789abcdef0123456789abcdef",
+        "span_id": "0123456789abcdef",
+        "trace_flags": 1,
+        "trace_state": "",
+        "session_id": "01JZSESSION000000000000001",
+        "document_id": "01JZDOCUMENT00000000000001",
+        "view_id": "01JZVIEW000000000000000001",
+        "attributes": {
+          "rum.privacy.policy.id": "nebula-default-deny",
+          "rum.privacy.policy.version": "1.0.0-draft.1"
+        }
+      },
+      "signal": {
+        "type": "event",
+        "name": "rum.error",
+        "severity_number": 17,
+        "attributes": {
+          "exception.type": "TypeError",
+          "exception.message": "Cannot read properties of undefined",
+          "error.type": "TypeError"
+        },
+        "display_message": "checkout failed",
+        "stack": {
+          "type": "TypeError",
+          "value": "Cannot read properties of undefined",
+          "frames": [
+            {
+              "function": "computeTotal",
+              "filename": "https://shop.example/static/app.js",
+              "line": 42,
+              "column": 17,
+              "in_app": true
+            },
+            {
+              "function": "onClick",
+              "filename": "https://shop.example/static/app.js",
+              "line": 88,
+              "column": 5,
+              "in_app": true
+            }
+          ]
+        },
+        "breadcrumbs": [
+          {
+            "time_unix_nano": "1784476800100000000",
+            "category": "navigation",
+            "message": "/checkout"
+          },
+          {
+            "time_unix_nano": "1784476800300000000",
+            "category": "http",
+            "message": "GET /api/v1/cart",
+            "attributes": {
+              "http.response.status_code": 200
+            }
+          },
+          {
+            "time_unix_nano": "1784476800450000000",
+            "category": "ui",
+            "message": "click submit-order"
+          }
+        ]
+      }
+    }
+  ]
+}
