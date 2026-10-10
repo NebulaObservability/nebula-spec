@@ -1,6 +1,6 @@
 {
   "name": "@nebula-observability/rum-conformance",
-  "version": "0.8.0-draft.7",
+  "version": "0.8.0-draft.8",
   "description": "Generated Nebula RUM conformance fixtures.",
   "license": "Apache-2.0",
   "type": "module",
