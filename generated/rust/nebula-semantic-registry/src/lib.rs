@@ -62,6 +62,9 @@ pub mod attributes {
     pub const RUM_ERROR_FINGERPRINT: &str = "rum.error.fingerprint";
     pub const RUM_ERROR_HANDLED: &str = "rum.error.handled";
     pub const RUM_ERROR_SOURCE: &str = "rum.error.source";
+    pub const RUM_ISSUE_FINGERPRINT: &str = "rum.issue.fingerprint";
+    pub const RUM_ISSUE_ID: &str = "rum.issue.id";
+    pub const RUM_ISSUE_STATUS: &str = "rum.issue.status";
     pub const RUM_NAVIGATION_ID: &str = "rum.navigation.id";
     pub const RUM_NAVIGATION_TYPE: &str = "rum.navigation.type";
     pub const RUM_PERFORMANCE_DURATION_MS: &str = "rum.performance.duration_ms";
@@ -116,6 +119,8 @@ pub mod events {
     pub const RUM_CRASH: &str = "rum.crash";
     pub const RUM_ERROR: &str = "rum.error";
     pub const RUM_HTTP_FAILURE: &str = "rum.http.failure";
+    pub const RUM_ISSUE_FIRST_SEEN: &str = "rum.issue.first_seen";
+    pub const RUM_ISSUE_REOPENED: &str = "rum.issue.reopened";
     pub const RUM_NETWORK_CHANGE: &str = "rum.network.change";
     pub const RUM_PERFORMANCE_LONG_TASK: &str = "rum.performance.long_task";
     pub const RUM_PERFORMANCE_MEMORY: &str = "rum.performance.memory";
@@ -271,6 +276,23 @@ impl RumErrorSource {
             Self::Resource => "resource",
             Self::Native => "native",
             Self::Unknown => "unknown",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RumIssueStatus {
+    Unresolved,
+    Resolved,
+    Ignored,
+}
+
+impl RumIssueStatus {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Unresolved => "unresolved",
+            Self::Resolved => "resolved",
+            Self::Ignored => "ignored",
         }
     }
 }

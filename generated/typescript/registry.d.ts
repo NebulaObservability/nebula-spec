@@ -58,6 +58,9 @@ export declare const Attributes: {
   readonly RumErrorFingerprint: "rum.error.fingerprint";
   readonly RumErrorHandled: "rum.error.handled";
   readonly RumErrorSource: "rum.error.source";
+  readonly RumIssueFingerprint: "rum.issue.fingerprint";
+  readonly RumIssueId: "rum.issue.id";
+  readonly RumIssueStatus: "rum.issue.status";
   readonly RumNavigationId: "rum.navigation.id";
   readonly RumNavigationType: "rum.navigation.type";
   readonly RumPerformanceDurationMs: "rum.performance.duration_ms";
@@ -112,6 +115,8 @@ export declare const Events: {
   readonly RumCrash: "rum.crash";
   readonly RumError: "rum.error";
   readonly RumHttpFailure: "rum.http.failure";
+  readonly RumIssueFirstSeen: "rum.issue.first_seen";
+  readonly RumIssueReopened: "rum.issue.reopened";
   readonly RumNetworkChange: "rum.network.change";
   readonly RumPerformanceLongTask: "rum.performance.long_task";
   readonly RumPerformanceMemory: "rum.performance.memory";
@@ -186,6 +191,9 @@ export type RumConsentState = (typeof RumConsentStateValues)[number];
 
 export declare const RumErrorSourceValues: readonly ["javascript", "promise", "console", "network", "resource", "native", "unknown"];
 export type RumErrorSource = (typeof RumErrorSourceValues)[number];
+
+export declare const RumIssueStatusValues: readonly ["unresolved", "resolved", "ignored"];
+export type RumIssueStatus = (typeof RumIssueStatusValues)[number];
 
 export declare const RumNavigationTypeValues: readonly ["navigate", "reload", "back_forward", "prerender", "spa"];
 export type RumNavigationType = (typeof RumNavigationTypeValues)[number];

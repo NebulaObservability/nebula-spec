@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/rum/issue.schema.json",
+  "title": "Nebula RUM issue record",
+  "description": "Backend-derived issue record grouping error events by the canonical fingerprint. The normative fingerprint rule (v1): lowercase hexadecimal SHA-256 over the newline-separated ASCII fields 'rum-issue-fingerprint-v1', the error type (exception.type or error.type), the top in-application stack frame (function and filename of the first frame with in_app true, else the first frame, else empty), and the release (resource attribute service.version, else empty).",
+  "type": "object",
+  "required": [
+    "issue_id",
+    "fingerprint",
+    "status",
+    "first_seen_at",
+    "last_seen_at",
+    "event_count",
+    "affected_session_count"
+  ],
+  "properties": {
+    "issue_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{8,128}$"
+    },
+    "fingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Canonical fingerprint of the grouped errors."
+    },
+    "status": { "enum": ["unresolved", "resolved", "ignored"] },
+    "first_seen_at": { "type": "string", "format": "date-time" },
+    "last_seen_at": { "type": "string", "format": "date-time" },
+    "event_count": { "type": "integer", "minimum": 1 },
+    "affected_session_count": { "type": "integer", "minimum": 1 },
+    "reopened_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How often the issue was reopened after being resolved."
+    },
+    "release": {
+      "type": "string",
+      "description": "The release dimension of the fingerprint (service.version)."
+    },
+    "error": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "value": { "type": "string", "maxLength": 4096 },
+        "top_frame": {
+          "type": "object",
+          "required": ["filename"],
+          "properties": {
+            "function": { "type": "string", "maxLength": 256 },
+            "filename": { "type": "string", "minLength": 1, "maxLength": 1024 }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "status_history": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": ["status", "actor", "at"],
+        "properties": {
+          "status": { "enum": ["unresolved", "resolved", "ignored"] },
+          "actor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Actor identity recorded with the transition."
+          },
+          "at": { "type": "string", "format": "date-time" },
+          "note": { "type": "string", "maxLength": 1024 }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

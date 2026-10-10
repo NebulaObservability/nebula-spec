@@ -1,0 +1,24 @@
+{
+  "issue_id": "issue-checkout-typeerror",
+  "fingerprint": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+  "status": "unresolved",
+  "first_seen_at": "2026-10-10T08:00:00Z",
+  "last_seen_at": "2026-10-10T09:30:00Z",
+  "event_count": 7,
+  "affected_session_count": 3,
+  "reopened_count": 1,
+  "release": "1.4.2",
+  "error": {
+    "type": "TypeError",
+    "value": "Cannot read properties of undefined",
+    "top_frame": {
+      "function": "computeTotal",
+      "filename": "https://shop.example/static/app.js"
+    }
+  },
+  "status_history": [
+    { "status": "unresolved", "actor": "system", "at": "2026-10-10T08:00:00Z" },
+    { "status": "resolved", "actor": "alice", "at": "2026-10-10T09:00:00Z", "note": "fixed in the checkout hotfix" },
+    { "status": "unresolved", "actor": "system", "at": "2026-10-10T09:30:00Z" }
+  ]
+}

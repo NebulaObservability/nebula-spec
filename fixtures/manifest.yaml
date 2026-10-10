@@ -33,6 +33,14 @@ fixtures:
     protocol_expectation: current
     expected_error_paths:
       - records/0/signal
+  - path: fixtures/issue/reopened-issue.json
+    schema: schemas/issue.schema.json
+    valid: true
+  - path: fixtures/issue/invalid-issue-status.json
+    schema: schemas/issue.schema.json
+    valid: false
+    expected_error_paths:
+      - status
   - path: fixtures/protocol/partial-ack-with-unknown-members.json
     schema: schemas/batch-ack.schema.json
     valid: true

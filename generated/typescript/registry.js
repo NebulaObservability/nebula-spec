@@ -58,6 +58,9 @@ export const Attributes = Object.freeze({
   RumErrorFingerprint: "rum.error.fingerprint",
   RumErrorHandled: "rum.error.handled",
   RumErrorSource: "rum.error.source",
+  RumIssueFingerprint: "rum.issue.fingerprint",
+  RumIssueId: "rum.issue.id",
+  RumIssueStatus: "rum.issue.status",
   RumNavigationId: "rum.navigation.id",
   RumNavigationType: "rum.navigation.type",
   RumPerformanceDurationMs: "rum.performance.duration_ms",
@@ -112,6 +115,8 @@ export const Events = Object.freeze({
   RumCrash: "rum.crash",
   RumError: "rum.error",
   RumHttpFailure: "rum.http.failure",
+  RumIssueFirstSeen: "rum.issue.first_seen",
+  RumIssueReopened: "rum.issue.reopened",
   RumNetworkChange: "rum.network.change",
   RumPerformanceLongTask: "rum.performance.long_task",
   RumPerformanceMemory: "rum.performance.memory",
@@ -181,6 +186,8 @@ export const RumAppTypeValues = Object.freeze(["web", "webview", "native", "mini
 export const RumConsentStateValues = Object.freeze(["unknown", "granted", "denied"]);
 
 export const RumErrorSourceValues = Object.freeze(["javascript", "promise", "console", "network", "resource", "native", "unknown"]);
+
+export const RumIssueStatusValues = Object.freeze(["unresolved", "resolved", "ignored"]);
 
 export const RumNavigationTypeValues = Object.freeze(["navigate", "reload", "back_forward", "prerender", "spa"]);
 

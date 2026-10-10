@@ -73,6 +73,16 @@ events:
       - { ref: error.type, requirement: recommended }
       - { ref: exception.type, requirement: optional }
       - { ref: rum.error.handled, requirement: optional }
+  - name: rum.issue.first_seen
+    stability: stable
+    attributes:
+      - { ref: rum.issue.id, requirement: required }
+      - { ref: rum.issue.fingerprint, requirement: required }
+  - name: rum.issue.reopened
+    stability: stable
+    attributes:
+      - { ref: rum.issue.id, requirement: required }
+      - { ref: rum.issue.fingerprint, requirement: required }
   - name: rum.crash
     stability: stable
     attributes:
