@@ -1,6 +1,16 @@
 {
   "fixtures": [
     {
+      "kind": "alert",
+      "path": "fixtures/alert/invalid-alert-kind.json",
+      "sha256": "8a3ca17a8c878d37159faf3b8eae89c34678d519d6f991e4aabca41114543aa2"
+    },
+    {
+      "kind": "alert",
+      "path": "fixtures/alert/new-issue-alert.json",
+      "sha256": "2910416442becc56974ba828251def16cfaac024b3ee1ff3993ae40815170e01"
+    },
+    {
       "kind": "config",
       "path": "fixtures/config/signed-config.json",
       "sha256": "de511d83b11adfcc70b84762c21943e85241d0df9d9b3e71f2c8df98b196871e"

@@ -41,6 +41,14 @@ fixtures:
     valid: false
     expected_error_paths:
       - status
+  - path: fixtures/alert/new-issue-alert.json
+    schema: schemas/alert.schema.json
+    valid: true
+  - path: fixtures/alert/invalid-alert-kind.json
+    schema: schemas/alert.schema.json
+    valid: false
+    expected_error_paths:
+      - kind
   - path: fixtures/protocol/partial-ack-with-unknown-members.json
     schema: schemas/batch-ack.schema.json
     valid: true
