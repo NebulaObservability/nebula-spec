@@ -1,6 +1,6 @@
 # @nebula-observability/apm-agent-contract
 
-Generated, immutable Go APM Agent contract for Spec `0.8.0-draft.8` and
+Generated, immutable Go APM Agent contract for Spec `0.8.0-draft.9` and
 platform release `2026.10.5-mvp.0`. It freezes the first-party Resource
 identity, the official OpenTelemetry Go runtime instrumentation `v0.69.0`
 metric profile, sanitized configuration projection, bounded diagnostics, and
