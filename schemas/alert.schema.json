@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.nebula-observability.io/rum/alert.schema.json",
+  "title": "Nebula RUM alert notification",
+  "description": "Notification payload delivered by the Issue alerting rules (v1). Rule kinds are closed: new_issue fires once per issue when first observed, error_rate fires when an issue accumulates error events in the trailing window, and test marks an operator-triggered dispatch. Delivery is at-most-once per firing per channel: exactly one attempt with a bounded timeout, no retries and no durable outbox; failed attempts are recorded in the firing history with their error. The dedup key is derived from the rule kind, rule id and subject (the issue, or the project for test notifications), so suppressions are per rule and per issue.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "fired_at",
+    "dedup_key",
+    "project_id",
+    "rule"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "description": "Payload contract version."
+    },
+    "kind": {
+      "enum": ["new_issue", "error_rate", "test"]
+    },
+    "fired_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dedup_key": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$",
+      "description": "Opaque stable suppression key for the rule and subject."
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Operator identity recorded for test notifications; absent for rule firings."
+    },
+    "rule": {
+      "type": "object",
+      "required": ["id", "kind"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "kind": {
+          "enum": ["new_issue", "error_rate", "test"]
+        },
+        "error_rate_threshold": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "error_rate_window_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "silence_window_seconds": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "issue": {
+      "$ref": "issue.schema.json",
+      "description": "Grouped issue state that triggered the firing; absent for test notifications."
+    },
+    "condition": {
+      "type": "object",
+      "description": "Error-rate condition details when kind is error_rate.",
+      "properties": {
+        "threshold": { "type": "integer", "minimum": 1 },
+        "window_seconds": { "type": "integer", "minimum": 1 },
+        "events": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "kind": "new_issue",
+  "fired_at": "2026-07-25T10:00:12Z",
+  "dedup_key": "9f2c1a66b0a24e6db0a5f5b52f9c9c21",
+  "project_id": "storefront",
+  "rule": {
+    "id": "new-issue",
+    "kind": "new_issue",
+    "silence_window_seconds": 900
+  },
+  "issue": {
+    "issue_id": "issue-4f9c2b7e1a3d5f6b8c0e2a4d",
+    "fingerprint": "4f9c2b7e1a3d5f6b8c0e2a4d6b8c0e2a4d6b8c0e2a4d6b8c0e2a4d6b8c0e2a4d",
+    "status": "unresolved",
+    "first_seen_at": "2026-07-25T10:00:10Z",
+    "last_seen_at": "2026-07-25T10:00:10Z",
+    "event_count": 1,
+    "affected_session_count": 1,
+    "reopened_count": 0,
+    "release": "1.4.2",
+    "error": {
+      "type": "TypeError",
+      "value": "cart is undefined",
+      "top_frame": {
+        "function": "computeTotal",
+        "filename": "https://shop.example/assets/cart.js"
+      }
+    },
+    "status_history": [
+      {
+        "status": "unresolved",
+        "actor": "system",
+        "at": "2026-07-25T10:00:10Z"
+      }
+    ]
+  }
+}

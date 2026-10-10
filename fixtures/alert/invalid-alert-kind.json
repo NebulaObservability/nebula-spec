@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "kind": "explosion",
+  "fired_at": "2026-07-25T10:00:12Z",
+  "dedup_key": "9f2c1a66b0a24e6db0a5f5b52f9c9c21",
+  "project_id": "storefront",
+  "rule": {
+    "id": "new-issue",
+    "kind": "new_issue"
+  }
+}
