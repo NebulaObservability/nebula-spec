@@ -126,7 +126,49 @@
         "name": { "type": "string", "pattern": "^[a-z][a-z0-9_.]*$" },
         "severity_number": { "type": "integer", "minimum": 0, "maximum": 24 },
         "attributes": { "$ref": "#/$defs/attributes" },
-        "display_message": { "type": "string" }
+        "display_message": { "type": "string" },
+        "stack": {
+          "type": "object",
+          "required": ["type", "frames"],
+          "properties": {
+            "type": { "type": "string", "minLength": 1, "maxLength": 256 },
+            "value": { "type": "string", "maxLength": 4096 },
+            "frames": {
+              "type": "array",
+              "maxItems": 64,
+              "items": {
+                "type": "object",
+                "required": ["filename"],
+                "properties": {
+                  "function": { "type": "string", "maxLength": 256 },
+                  "filename": { "type": "string", "minLength": 1, "maxLength": 1024 },
+                  "line": { "type": "integer", "minimum": 1 },
+                  "column": { "type": "integer", "minimum": 1 },
+                  "in_app": { "type": "boolean" }
+                },
+                "additionalProperties": true
+              }
+            }
+          },
+          "additionalProperties": true
+        },
+        "breadcrumbs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "required": ["time_unix_nano", "category", "message"],
+            "properties": {
+              "time_unix_nano": { "$ref": "#/$defs/uint64" },
+              "category": {
+                "enum": ["navigation", "http", "ui", "error", "custom"]
+              },
+              "message": { "type": "string", "minLength": 1, "maxLength": 1024 },
+              "attributes": { "$ref": "#/$defs/attributes" }
+            },
+            "additionalProperties": true
+          }
+        }
       },
       "additionalProperties": true
     },

@@ -23,6 +23,16 @@ fixtures:
   - path: fixtures/protocol/partial-ack.json
     schema: schemas/batch-ack.schema.json
     valid: true
+  - path: fixtures/protocol/error-event-with-stack.json
+    schema: schemas/rum-batch.schema.json
+    valid: true
+    protocol_expectation: current
+  - path: fixtures/protocol/invalid-error-stack-frames.json
+    schema: schemas/rum-batch.schema.json
+    valid: false
+    protocol_expectation: current
+    expected_error_paths:
+      - records/0/signal
   - path: fixtures/protocol/partial-ack-with-unknown-members.json
     schema: schemas/batch-ack.schema.json
     valid: true

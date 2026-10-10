@@ -604,8 +604,14 @@ type RumEvent struct {
 	Attributes     map[string]*AttributeValue `protobuf:"bytes,3,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	DisplayMessage string                     `protobuf:"bytes,4,opt,name=display_message,json=displayMessage,proto3" json:"display_message,omitempty"`
 	Payload        *AttachmentReference       `protobuf:"bytes,5,opt,name=payload,proto3" json:"payload,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Optional structured exception detail. Producers that cannot populate it
+	// keep sending the exception.* semantic attributes; receivers must accept
+	// both representations for the whole RUTP v1 line.
+	Stack *ErrorStack `protobuf:"bytes,6,opt,name=stack,proto3" json:"stack,omitempty"`
+	// Optional ordered trail of notable actions that preceded the event.
+	Breadcrumbs   []*Breadcrumb `protobuf:"bytes,7,rep,name=breadcrumbs,proto3" json:"breadcrumbs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RumEvent) Reset() {
@@ -673,6 +679,230 @@ func (x *RumEvent) GetPayload() *AttachmentReference {
 	return nil
 }
 
+func (x *RumEvent) GetStack() *ErrorStack {
+	if x != nil {
+		return x.Stack
+	}
+	return nil
+}
+
+func (x *RumEvent) GetBreadcrumbs() []*Breadcrumb {
+	if x != nil {
+		return x.Breadcrumbs
+	}
+	return nil
+}
+
+// ErrorStack is the structured form of the exception.* semantic attributes:
+// type mirrors exception.type, value mirrors exception.message, and frames
+// mirror the parsed exception.stacktrace.
+type ErrorStack struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Frames        []*StackFrame          `protobuf:"bytes,3,rep,name=frames,proto3" json:"frames,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ErrorStack) Reset() {
+	*x = ErrorStack{}
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ErrorStack) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ErrorStack) ProtoMessage() {}
+
+func (x *ErrorStack) ProtoReflect() protoreflect.Message {
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ErrorStack.ProtoReflect.Descriptor instead.
+func (*ErrorStack) Descriptor() ([]byte, []int) {
+	return file_rum_rutp_v1_record_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ErrorStack) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *ErrorStack) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+func (x *ErrorStack) GetFrames() []*StackFrame {
+	if x != nil {
+		return x.Frames
+	}
+	return nil
+}
+
+type StackFrame struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Function      string                 `protobuf:"bytes,1,opt,name=function,proto3" json:"function,omitempty"`
+	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
+	Line          *uint32                `protobuf:"varint,3,opt,name=line,proto3,oneof" json:"line,omitempty"`
+	Column        *uint32                `protobuf:"varint,4,opt,name=column,proto3,oneof" json:"column,omitempty"`
+	InApp         bool                   `protobuf:"varint,5,opt,name=in_app,json=inApp,proto3" json:"in_app,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StackFrame) Reset() {
+	*x = StackFrame{}
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StackFrame) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StackFrame) ProtoMessage() {}
+
+func (x *StackFrame) ProtoReflect() protoreflect.Message {
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StackFrame.ProtoReflect.Descriptor instead.
+func (*StackFrame) Descriptor() ([]byte, []int) {
+	return file_rum_rutp_v1_record_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *StackFrame) GetFunction() string {
+	if x != nil {
+		return x.Function
+	}
+	return ""
+}
+
+func (x *StackFrame) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *StackFrame) GetLine() uint32 {
+	if x != nil && x.Line != nil {
+		return *x.Line
+	}
+	return 0
+}
+
+func (x *StackFrame) GetColumn() uint32 {
+	if x != nil && x.Column != nil {
+		return *x.Column
+	}
+	return 0
+}
+
+func (x *StackFrame) GetInApp() bool {
+	if x != nil {
+		return x.InApp
+	}
+	return false
+}
+
+// Breadcrumb category is a closed set at the JSON boundary
+// (navigation, http, ui, error, custom) and is carried as a string on the wire
+// so newer categories remain forward compatible.
+type Breadcrumb struct {
+	state         protoimpl.MessageState     `protogen:"open.v1"`
+	TimeUnixNano  uint64                     `protobuf:"varint,1,opt,name=time_unix_nano,json=timeUnixNano,proto3" json:"time_unix_nano,omitempty"`
+	Category      string                     `protobuf:"bytes,2,opt,name=category,proto3" json:"category,omitempty"`
+	Message       string                     `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	Attributes    map[string]*AttributeValue `protobuf:"bytes,4,rep,name=attributes,proto3" json:"attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Breadcrumb) Reset() {
+	*x = Breadcrumb{}
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Breadcrumb) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Breadcrumb) ProtoMessage() {}
+
+func (x *Breadcrumb) ProtoReflect() protoreflect.Message {
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Breadcrumb.ProtoReflect.Descriptor instead.
+func (*Breadcrumb) Descriptor() ([]byte, []int) {
+	return file_rum_rutp_v1_record_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *Breadcrumb) GetTimeUnixNano() uint64 {
+	if x != nil {
+		return x.TimeUnixNano
+	}
+	return 0
+}
+
+func (x *Breadcrumb) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *Breadcrumb) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *Breadcrumb) GetAttributes() map[string]*AttributeValue {
+	if x != nil {
+		return x.Attributes
+	}
+	return nil
+}
+
 type RumMetricPoint struct {
 	state      protoimpl.MessageState     `protogen:"open.v1"`
 	Name       string                     `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -689,7 +919,7 @@ type RumMetricPoint struct {
 
 func (x *RumMetricPoint) Reset() {
 	*x = RumMetricPoint{}
-	mi := &file_rum_rutp_v1_record_proto_msgTypes[4]
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -701,7 +931,7 @@ func (x *RumMetricPoint) String() string {
 func (*RumMetricPoint) ProtoMessage() {}
 
 func (x *RumMetricPoint) ProtoReflect() protoreflect.Message {
-	mi := &file_rum_rutp_v1_record_proto_msgTypes[4]
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -714,7 +944,7 @@ func (x *RumMetricPoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RumMetricPoint.ProtoReflect.Descriptor instead.
 func (*RumMetricPoint) Descriptor() ([]byte, []int) {
-	return file_rum_rutp_v1_record_proto_rawDescGZIP(), []int{4}
+	return file_rum_rutp_v1_record_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *RumMetricPoint) GetName() string {
@@ -793,7 +1023,7 @@ type HistogramPoint struct {
 
 func (x *HistogramPoint) Reset() {
 	*x = HistogramPoint{}
-	mi := &file_rum_rutp_v1_record_proto_msgTypes[5]
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -805,7 +1035,7 @@ func (x *HistogramPoint) String() string {
 func (*HistogramPoint) ProtoMessage() {}
 
 func (x *HistogramPoint) ProtoReflect() protoreflect.Message {
-	mi := &file_rum_rutp_v1_record_proto_msgTypes[5]
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -818,7 +1048,7 @@ func (x *HistogramPoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HistogramPoint.ProtoReflect.Descriptor instead.
 func (*HistogramPoint) Descriptor() ([]byte, []int) {
-	return file_rum_rutp_v1_record_proto_rawDescGZIP(), []int{5}
+	return file_rum_rutp_v1_record_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *HistogramPoint) GetCount() uint64 {
@@ -875,7 +1105,7 @@ type SdkDiagnostic struct {
 
 func (x *SdkDiagnostic) Reset() {
 	*x = SdkDiagnostic{}
-	mi := &file_rum_rutp_v1_record_proto_msgTypes[6]
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -887,7 +1117,7 @@ func (x *SdkDiagnostic) String() string {
 func (*SdkDiagnostic) ProtoMessage() {}
 
 func (x *SdkDiagnostic) ProtoReflect() protoreflect.Message {
-	mi := &file_rum_rutp_v1_record_proto_msgTypes[6]
+	mi := &file_rum_rutp_v1_record_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -900,7 +1130,7 @@ func (x *SdkDiagnostic) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SdkDiagnostic.ProtoReflect.Descriptor instead.
 func (*SdkDiagnostic) Descriptor() ([]byte, []int) {
-	return file_rum_rutp_v1_record_proto_rawDescGZIP(), []int{6}
+	return file_rum_rutp_v1_record_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *SdkDiagnostic) GetCode() string {
@@ -978,7 +1208,7 @@ const file_rum_rutp_v1_record_proto_rawDesc = "" +
 	"attributes\x1aa\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
-	"\x05value\x18\x02 \x01(\v2\".nebula.rum.rutp.v1.AttributeValueR\x05value:\x028\x01\"\xe4\x02\n" +
+	"\x05value\x18\x02 \x01(\v2\".nebula.rum.rutp.v1.AttributeValueR\x05value:\x028\x01\"\xdc\x03\n" +
 	"\bRumEvent\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12'\n" +
 	"\x0fseverity_number\x18\x02 \x01(\rR\x0eseverityNumber\x12L\n" +
@@ -986,7 +1216,34 @@ const file_rum_rutp_v1_record_proto_rawDesc = "" +
 	"attributes\x18\x03 \x03(\v2,.nebula.rum.rutp.v1.RumEvent.AttributesEntryR\n" +
 	"attributes\x12'\n" +
 	"\x0fdisplay_message\x18\x04 \x01(\tR\x0edisplayMessage\x12A\n" +
-	"\apayload\x18\x05 \x01(\v2'.nebula.rum.rutp.v1.AttachmentReferenceR\apayload\x1aa\n" +
+	"\apayload\x18\x05 \x01(\v2'.nebula.rum.rutp.v1.AttachmentReferenceR\apayload\x124\n" +
+	"\x05stack\x18\x06 \x01(\v2\x1e.nebula.rum.rutp.v1.ErrorStackR\x05stack\x12@\n" +
+	"\vbreadcrumbs\x18\a \x03(\v2\x1e.nebula.rum.rutp.v1.BreadcrumbR\vbreadcrumbs\x1aa\n" +
+	"\x0fAttributesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
+	"\x05value\x18\x02 \x01(\v2\".nebula.rum.rutp.v1.AttributeValueR\x05value:\x028\x01\"n\n" +
+	"\n" +
+	"ErrorStack\x12\x12\n" +
+	"\x04type\x18\x01 \x01(\tR\x04type\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\x126\n" +
+	"\x06frames\x18\x03 \x03(\v2\x1e.nebula.rum.rutp.v1.StackFrameR\x06frames\"\xa5\x01\n" +
+	"\n" +
+	"StackFrame\x12\x1a\n" +
+	"\bfunction\x18\x01 \x01(\tR\bfunction\x12\x1a\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x17\n" +
+	"\x04line\x18\x03 \x01(\rH\x00R\x04line\x88\x01\x01\x12\x1b\n" +
+	"\x06column\x18\x04 \x01(\rH\x01R\x06column\x88\x01\x01\x12\x15\n" +
+	"\x06in_app\x18\x05 \x01(\bR\x05inAppB\a\n" +
+	"\x05_lineB\t\n" +
+	"\a_column\"\x9b\x02\n" +
+	"\n" +
+	"Breadcrumb\x12$\n" +
+	"\x0etime_unix_nano\x18\x01 \x01(\x04R\ftimeUnixNano\x12\x1a\n" +
+	"\bcategory\x18\x02 \x01(\tR\bcategory\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x12N\n" +
+	"\n" +
+	"attributes\x18\x04 \x03(\v2..nebula.rum.rutp.v1.Breadcrumb.AttributesEntryR\n" +
+	"attributes\x1aa\n" +
 	"\x0fAttributesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
 	"\x05value\x18\x02 \x01(\v2\".nebula.rum.rutp.v1.AttributeValueR\x05value:\x028\x01\"\xf6\x02\n" +
@@ -1060,7 +1317,7 @@ func file_rum_rutp_v1_record_proto_rawDescGZIP() []byte {
 }
 
 var file_rum_rutp_v1_record_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_rum_rutp_v1_record_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_rum_rutp_v1_record_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_rum_rutp_v1_record_proto_goTypes = []any{
 	(RecordPriority)(0),         // 0: nebula.rum.rutp.v1.RecordPriority
 	(SpanKind)(0),               // 1: nebula.rum.rutp.v1.SpanKind
@@ -1070,48 +1327,57 @@ var file_rum_rutp_v1_record_proto_goTypes = []any{
 	(*RumSpan)(nil),             // 5: nebula.rum.rutp.v1.RumSpan
 	(*SpanLink)(nil),            // 6: nebula.rum.rutp.v1.SpanLink
 	(*RumEvent)(nil),            // 7: nebula.rum.rutp.v1.RumEvent
-	(*RumMetricPoint)(nil),      // 8: nebula.rum.rutp.v1.RumMetricPoint
-	(*HistogramPoint)(nil),      // 9: nebula.rum.rutp.v1.HistogramPoint
-	(*SdkDiagnostic)(nil),       // 10: nebula.rum.rutp.v1.SdkDiagnostic
-	nil,                         // 11: nebula.rum.rutp.v1.RumSpan.AttributesEntry
-	nil,                         // 12: nebula.rum.rutp.v1.SpanLink.AttributesEntry
-	nil,                         // 13: nebula.rum.rutp.v1.RumEvent.AttributesEntry
-	nil,                         // 14: nebula.rum.rutp.v1.RumMetricPoint.AttributesEntry
-	nil,                         // 15: nebula.rum.rutp.v1.SdkDiagnostic.AttributesEntry
-	(*RumContext)(nil),          // 16: nebula.rum.rutp.v1.RumContext
-	(*ReplayManifest)(nil),      // 17: nebula.rum.rutp.v1.ReplayManifest
-	(*AttachmentReference)(nil), // 18: nebula.rum.rutp.v1.AttachmentReference
-	(*AttributeValue)(nil),      // 19: nebula.rum.rutp.v1.AttributeValue
+	(*ErrorStack)(nil),          // 8: nebula.rum.rutp.v1.ErrorStack
+	(*StackFrame)(nil),          // 9: nebula.rum.rutp.v1.StackFrame
+	(*Breadcrumb)(nil),          // 10: nebula.rum.rutp.v1.Breadcrumb
+	(*RumMetricPoint)(nil),      // 11: nebula.rum.rutp.v1.RumMetricPoint
+	(*HistogramPoint)(nil),      // 12: nebula.rum.rutp.v1.HistogramPoint
+	(*SdkDiagnostic)(nil),       // 13: nebula.rum.rutp.v1.SdkDiagnostic
+	nil,                         // 14: nebula.rum.rutp.v1.RumSpan.AttributesEntry
+	nil,                         // 15: nebula.rum.rutp.v1.SpanLink.AttributesEntry
+	nil,                         // 16: nebula.rum.rutp.v1.RumEvent.AttributesEntry
+	nil,                         // 17: nebula.rum.rutp.v1.Breadcrumb.AttributesEntry
+	nil,                         // 18: nebula.rum.rutp.v1.RumMetricPoint.AttributesEntry
+	nil,                         // 19: nebula.rum.rutp.v1.SdkDiagnostic.AttributesEntry
+	(*RumContext)(nil),          // 20: nebula.rum.rutp.v1.RumContext
+	(*ReplayManifest)(nil),      // 21: nebula.rum.rutp.v1.ReplayManifest
+	(*AttachmentReference)(nil), // 22: nebula.rum.rutp.v1.AttachmentReference
+	(*AttributeValue)(nil),      // 23: nebula.rum.rutp.v1.AttributeValue
 }
 var file_rum_rutp_v1_record_proto_depIdxs = []int32{
 	0,  // 0: nebula.rum.rutp.v1.RumRecord.priority:type_name -> nebula.rum.rutp.v1.RecordPriority
-	16, // 1: nebula.rum.rutp.v1.RumRecord.context:type_name -> nebula.rum.rutp.v1.RumContext
+	20, // 1: nebula.rum.rutp.v1.RumRecord.context:type_name -> nebula.rum.rutp.v1.RumContext
 	5,  // 2: nebula.rum.rutp.v1.RumRecord.span:type_name -> nebula.rum.rutp.v1.RumSpan
 	7,  // 3: nebula.rum.rutp.v1.RumRecord.event:type_name -> nebula.rum.rutp.v1.RumEvent
-	8,  // 4: nebula.rum.rutp.v1.RumRecord.metric:type_name -> nebula.rum.rutp.v1.RumMetricPoint
-	17, // 5: nebula.rum.rutp.v1.RumRecord.replay:type_name -> nebula.rum.rutp.v1.ReplayManifest
-	10, // 6: nebula.rum.rutp.v1.RumRecord.diagnostic:type_name -> nebula.rum.rutp.v1.SdkDiagnostic
+	11, // 4: nebula.rum.rutp.v1.RumRecord.metric:type_name -> nebula.rum.rutp.v1.RumMetricPoint
+	21, // 5: nebula.rum.rutp.v1.RumRecord.replay:type_name -> nebula.rum.rutp.v1.ReplayManifest
+	13, // 6: nebula.rum.rutp.v1.RumRecord.diagnostic:type_name -> nebula.rum.rutp.v1.SdkDiagnostic
 	1,  // 7: nebula.rum.rutp.v1.RumSpan.kind:type_name -> nebula.rum.rutp.v1.SpanKind
-	11, // 8: nebula.rum.rutp.v1.RumSpan.attributes:type_name -> nebula.rum.rutp.v1.RumSpan.AttributesEntry
+	14, // 8: nebula.rum.rutp.v1.RumSpan.attributes:type_name -> nebula.rum.rutp.v1.RumSpan.AttributesEntry
 	2,  // 9: nebula.rum.rutp.v1.RumSpan.status_code:type_name -> nebula.rum.rutp.v1.SpanStatusCode
 	6,  // 10: nebula.rum.rutp.v1.RumSpan.links:type_name -> nebula.rum.rutp.v1.SpanLink
-	12, // 11: nebula.rum.rutp.v1.SpanLink.attributes:type_name -> nebula.rum.rutp.v1.SpanLink.AttributesEntry
-	13, // 12: nebula.rum.rutp.v1.RumEvent.attributes:type_name -> nebula.rum.rutp.v1.RumEvent.AttributesEntry
-	18, // 13: nebula.rum.rutp.v1.RumEvent.payload:type_name -> nebula.rum.rutp.v1.AttachmentReference
-	3,  // 14: nebula.rum.rutp.v1.RumMetricPoint.kind:type_name -> nebula.rum.rutp.v1.MetricKind
-	14, // 15: nebula.rum.rutp.v1.RumMetricPoint.attributes:type_name -> nebula.rum.rutp.v1.RumMetricPoint.AttributesEntry
-	9,  // 16: nebula.rum.rutp.v1.RumMetricPoint.histogram:type_name -> nebula.rum.rutp.v1.HistogramPoint
-	15, // 17: nebula.rum.rutp.v1.SdkDiagnostic.attributes:type_name -> nebula.rum.rutp.v1.SdkDiagnostic.AttributesEntry
-	19, // 18: nebula.rum.rutp.v1.RumSpan.AttributesEntry.value:type_name -> nebula.rum.rutp.v1.AttributeValue
-	19, // 19: nebula.rum.rutp.v1.SpanLink.AttributesEntry.value:type_name -> nebula.rum.rutp.v1.AttributeValue
-	19, // 20: nebula.rum.rutp.v1.RumEvent.AttributesEntry.value:type_name -> nebula.rum.rutp.v1.AttributeValue
-	19, // 21: nebula.rum.rutp.v1.RumMetricPoint.AttributesEntry.value:type_name -> nebula.rum.rutp.v1.AttributeValue
-	19, // 22: nebula.rum.rutp.v1.SdkDiagnostic.AttributesEntry.value:type_name -> nebula.rum.rutp.v1.AttributeValue
-	23, // [23:23] is the sub-list for method output_type
-	23, // [23:23] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	15, // 11: nebula.rum.rutp.v1.SpanLink.attributes:type_name -> nebula.rum.rutp.v1.SpanLink.AttributesEntry
+	16, // 12: nebula.rum.rutp.v1.RumEvent.attributes:type_name -> nebula.rum.rutp.v1.RumEvent.AttributesEntry
+	22, // 13: nebula.rum.rutp.v1.RumEvent.payload:type_name -> nebula.rum.rutp.v1.AttachmentReference
+	8,  // 14: nebula.rum.rutp.v1.RumEvent.stack:type_name -> nebula.rum.rutp.v1.ErrorStack
+	10, // 15: nebula.rum.rutp.v1.RumEvent.breadcrumbs:type_name -> nebula.rum.rutp.v1.Breadcrumb
+	9,  // 16: nebula.rum.rutp.v1.ErrorStack.frames:type_name -> nebula.rum.rutp.v1.StackFrame
+	17, // 17: nebula.rum.rutp.v1.Breadcrumb.attributes:type_name -> nebula.rum.rutp.v1.Breadcrumb.AttributesEntry
+	3,  // 18: nebula.rum.rutp.v1.RumMetricPoint.kind:type_name -> nebula.rum.rutp.v1.MetricKind
+	18, // 19: nebula.rum.rutp.v1.RumMetricPoint.attributes:type_name -> nebula.rum.rutp.v1.RumMetricPoint.AttributesEntry
+	12, // 20: nebula.rum.rutp.v1.RumMetricPoint.histogram:type_name -> nebula.rum.rutp.v1.HistogramPoint
+	19, // 21: nebula.rum.rutp.v1.SdkDiagnostic.attributes:type_name -> nebula.rum.rutp.v1.SdkDiagnostic.AttributesEntry
+	23, // 22: nebula.rum.rutp.v1.RumSpan.AttributesEntry.value:type_name -> nebula.rum.rutp.v1.AttributeValue
+	23, // 23: nebula.rum.rutp.v1.SpanLink.AttributesEntry.value:type_name -> nebula.rum.rutp.v1.AttributeValue
+	23, // 24: nebula.rum.rutp.v1.RumEvent.AttributesEntry.value:type_name -> nebula.rum.rutp.v1.AttributeValue
+	23, // 25: nebula.rum.rutp.v1.Breadcrumb.AttributesEntry.value:type_name -> nebula.rum.rutp.v1.AttributeValue
+	23, // 26: nebula.rum.rutp.v1.RumMetricPoint.AttributesEntry.value:type_name -> nebula.rum.rutp.v1.AttributeValue
+	23, // 27: nebula.rum.rutp.v1.SdkDiagnostic.AttributesEntry.value:type_name -> nebula.rum.rutp.v1.AttributeValue
+	28, // [28:28] is the sub-list for method output_type
+	28, // [28:28] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_rum_rutp_v1_record_proto_init() }
@@ -1129,18 +1395,19 @@ func file_rum_rutp_v1_record_proto_init() {
 		(*RumRecord_Replay)(nil),
 		(*RumRecord_Diagnostic)(nil),
 	}
-	file_rum_rutp_v1_record_proto_msgTypes[4].OneofWrappers = []any{
+	file_rum_rutp_v1_record_proto_msgTypes[5].OneofWrappers = []any{}
+	file_rum_rutp_v1_record_proto_msgTypes[7].OneofWrappers = []any{
 		(*RumMetricPoint_Number)(nil),
 		(*RumMetricPoint_Histogram)(nil),
 	}
-	file_rum_rutp_v1_record_proto_msgTypes[5].OneofWrappers = []any{}
+	file_rum_rutp_v1_record_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_rum_rutp_v1_record_proto_rawDesc), len(file_rum_rutp_v1_record_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   12,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

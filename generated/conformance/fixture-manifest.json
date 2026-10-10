@@ -37,6 +37,11 @@
     },
     {
       "kind": "protocol",
+      "path": "fixtures/protocol/error-event-with-stack.json",
+      "sha256": "91dd7a7642d10a3874a2b39772cdca34bd40baa44fd7dd0364b831b960bf7b93"
+    },
+    {
+      "kind": "protocol",
       "path": "fixtures/protocol/invalid-batch-missing-session.json",
       "sha256": "a71c2e1f9cf78bb08e600dcfc871a61f8e3591f10fbbcbb6550718fe104f865e"
     },
@@ -44,6 +49,11 @@
       "kind": "protocol",
       "path": "fixtures/protocol/invalid-batch-unsupported-major.json",
       "sha256": "14be4932325ed0e7c464a048d0194486fb0752a80fd409113720404a8140d5ff"
+    },
+    {
+      "kind": "protocol",
+      "path": "fixtures/protocol/invalid-error-stack-frames.json",
+      "sha256": "3a5d12e8779ec885b5bb6cda5c64bc73575bafe7213922fd466a388454643d25"
     },
     {
       "kind": "protocol",

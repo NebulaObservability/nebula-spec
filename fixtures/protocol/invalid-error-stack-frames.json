@@ -1,0 +1,526 @@
+{
+    "protocol_version":  "1.0.0-draft.1",
+    "schema_url":  "https://schemas.nebula-observability.io/rum/rutp/1.0",
+    "otel_schema_url":  "https://opentelemetry.io/schemas/1.43.0",
+    "batch_id":  "01JZBATCH000000000000000002",
+    "project_id":  "demo-project",
+    "sent_time_unix_nano":  "1784476801000000000",
+    "resource":  {
+                     "attributes":  {
+                                        "service.namespace":  "shop",
+                                        "service.name":  "web-store",
+                                        "service.version":  "1.0.0",
+                                        "service.instance.id":  "01JZINSTALL00000000000001",
+                                        "deployment.environment.name":  "test",
+                                        "telemetry.sdk.name":  "nebula-rum-web",
+                                        "telemetry.sdk.version":  "0.1.0",
+                                        "app.installation.id":  "01JZINSTALL00000000000001"
+                                    }
+                 },
+    "scope":  {
+                  "name":  "io.nebulaobservability.rum.web",
+                  "version":  "0.1.0"
+              },
+    "clock":  {
+                  "wall_time_unix_nano":  "1784476801000000000",
+                  "monotonic_time_nano":  "1000000000",
+                  "offset_millis":  0,
+                  "uncertainty_millis":  2
+              },
+    "records":  [
+                    {
+                        "record_id":  "01JZRECORD0000000000000002",
+                        "time_unix_nano":  "1784476800500000000",
+                        "observed_time_unix_nano":  "1784476800501000000",
+                        "monotonic_time_nano":  "950000000",
+                        "source_id":  "window:main",
+                        "sequence":  2,
+                        "priority":  "high",
+                        "context":  {
+                                        "trace_id":  "0123456789abcdef0123456789abcdef",
+                                        "span_id":  "0123456789abcdef",
+                                        "trace_flags":  1,
+                                        "trace_state":  "",
+                                        "session_id":  "01JZSESSION000000000000001",
+                                        "document_id":  "01JZDOCUMENT00000000000001",
+                                        "view_id":  "01JZVIEW000000000000000001",
+                                        "attributes":  {
+                                                           "rum.privacy.policy.id":  "nebula-default-deny",
+                                                           "rum.privacy.policy.version":  "1.0.0-draft.1"
+                                                       }
+                                    },
+                        "signal":  {
+                                       "type":  "event",
+                                       "name":  "rum.error",
+                                       "severity_number":  17,
+                                       "attributes":  {
+                                                          "exception.type":  "TypeError",
+                                                          "exception.message":  "Cannot read properties of undefined",
+                                                          "error.type":  "TypeError"
+                                                      },
+                                       "display_message":  "checkout failed",
+                                       "stack":  {
+                                                     "type":  "TypeError",
+                                                     "value":  "Cannot read properties of undefined",
+                                                     "frames":  [
+                                                                    {
+                                                                        "function":  "frame1",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  1
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame2",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  2
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame3",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  3
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame4",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  4
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame5",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  5
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame6",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  6
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame7",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  7
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame8",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  8
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame9",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  9
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame10",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  10
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame11",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  11
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame12",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  12
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame13",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  13
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame14",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  14
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame15",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  15
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame16",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  16
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame17",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  17
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame18",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  18
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame19",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  19
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame20",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  20
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame21",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  21
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame22",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  22
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame23",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  23
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame24",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  24
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame25",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  25
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame26",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  26
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame27",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  27
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame28",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  28
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame29",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  29
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame30",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  30
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame31",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  31
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame32",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  32
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame33",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  33
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame34",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  34
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame35",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  35
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame36",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  36
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame37",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  37
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame38",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  38
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame39",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  39
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame40",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  40
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame41",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  41
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame42",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  42
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame43",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  43
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame44",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  44
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame45",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  45
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame46",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  46
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame47",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  47
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame48",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  48
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame49",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  49
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame50",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  50
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame51",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  51
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame52",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  52
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame53",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  53
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame54",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  54
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame55",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  55
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame56",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  56
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame57",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  57
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame58",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  58
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame59",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  59
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame60",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  60
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame61",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  61
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame62",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  62
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame63",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  63
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame64",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  64
+                                                                    },
+                                                                    {
+                                                                        "function":  "frame65",
+                                                                        "column":  1,
+                                                                        "filename":  "https://shop.example/static/app.js",
+                                                                        "in_app":  true,
+                                                                        "line":  65
+                                                                    }
+                                                                ]
+                                                 }
+                                   }
+                    }
+                ]
+}
