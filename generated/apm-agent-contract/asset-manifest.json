@@ -6,7 +6,7 @@
   "files": [
     {
       "path": "README.md",
-      "sha256": "b2521a337c1f7c541f300a95835dbacdffd7630564e4c32020b5d4290b45b6de"
+      "sha256": "45d1e94743971227b8f7e5f93650500eeaac62fd398b8a4588c05cd14697b4c7"
     },
     {
       "path": "contract.json",
@@ -67,7 +67,7 @@
   ],
   "format_version": 1,
   "metrics_contract_version": "1.2.0-draft.0",
-  "release": "2026.10.5-mvp.0",
+  "release": "2026.10.6-mvp.0",
   "runtime_instrumentation_version": "0.69.0",
   "spec_version": "0.8.0-draft.9"
 }

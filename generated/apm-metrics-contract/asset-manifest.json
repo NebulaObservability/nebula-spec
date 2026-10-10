@@ -3,7 +3,7 @@
   "files": [
     {
       "path": "README.md",
-      "sha256": "12502c523b8e713b9faea79a70029428ce84963689973a4c43806a4262c8eb6d"
+      "sha256": "f377055952e32090c0c0bf3e6f1786bc26d30c82ba372f3d43a8e07169e18b7b"
     },
     {
       "path": "compatibility/apm-metrics.json",
@@ -65,6 +65,6 @@
   "format_version": 1,
   "metrics_contract_version": "1.2.0-draft.0",
   "otel_schema": "1.43.0",
-  "release": "2026.10.5-mvp.0",
+  "release": "2026.10.6-mvp.0",
   "spec_version": "0.8.0-draft.9"
 }
