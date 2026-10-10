@@ -62,6 +62,9 @@ const AttributeRumDocumentId = "rum.document.id"
 const AttributeRumErrorFingerprint = "rum.error.fingerprint"
 const AttributeRumErrorHandled = "rum.error.handled"
 const AttributeRumErrorSource = "rum.error.source"
+const AttributeRumIssueFingerprint = "rum.issue.fingerprint"
+const AttributeRumIssueId = "rum.issue.id"
+const AttributeRumIssueStatus = "rum.issue.status"
 const AttributeRumNavigationId = "rum.navigation.id"
 const AttributeRumNavigationType = "rum.navigation.type"
 const AttributeRumPerformanceDurationMs = "rum.performance.duration_ms"
@@ -115,6 +118,8 @@ const EventRumConsole = "rum.console"
 const EventRumCrash = "rum.crash"
 const EventRumError = "rum.error"
 const EventRumHttpFailure = "rum.http.failure"
+const EventRumIssueFirstSeen = "rum.issue.first_seen"
+const EventRumIssueReopened = "rum.issue.reopened"
 const EventRumNetworkChange = "rum.network.change"
 const EventRumPerformanceLongTask = "rum.performance.long_task"
 const EventRumPerformanceMemory = "rum.performance.memory"
@@ -208,6 +213,12 @@ const RumErrorSourceNetwork RumErrorSource = "network"
 const RumErrorSourceResource RumErrorSource = "resource"
 const RumErrorSourceNative RumErrorSource = "native"
 const RumErrorSourceUnknown RumErrorSource = "unknown"
+
+type RumIssueStatus string
+
+const RumIssueStatusUnresolved RumIssueStatus = "unresolved"
+const RumIssueStatusResolved RumIssueStatus = "resolved"
+const RumIssueStatusIgnored RumIssueStatus = "ignored"
 
 type RumNavigationType string
 

@@ -58,6 +58,9 @@ export const Attributes = {
   RumErrorFingerprint: "rum.error.fingerprint",
   RumErrorHandled: "rum.error.handled",
   RumErrorSource: "rum.error.source",
+  RumIssueFingerprint: "rum.issue.fingerprint",
+  RumIssueId: "rum.issue.id",
+  RumIssueStatus: "rum.issue.status",
   RumNavigationId: "rum.navigation.id",
   RumNavigationType: "rum.navigation.type",
   RumPerformanceDurationMs: "rum.performance.duration_ms",
@@ -112,6 +115,8 @@ export const Events = {
   RumCrash: "rum.crash",
   RumError: "rum.error",
   RumHttpFailure: "rum.http.failure",
+  RumIssueFirstSeen: "rum.issue.first_seen",
+  RumIssueReopened: "rum.issue.reopened",
   RumNetworkChange: "rum.network.change",
   RumPerformanceLongTask: "rum.performance.long_task",
   RumPerformanceMemory: "rum.performance.memory",
@@ -186,6 +191,9 @@ export type RumConsentState = (typeof RumConsentStateValues)[number];
 
 export const RumErrorSourceValues = ["javascript", "promise", "console", "network", "resource", "native", "unknown"] as const;
 export type RumErrorSource = (typeof RumErrorSourceValues)[number];
+
+export const RumIssueStatusValues = ["unresolved", "resolved", "ignored"] as const;
+export type RumIssueStatus = (typeof RumIssueStatusValues)[number];
 
 export const RumNavigationTypeValues = ["navigate", "reload", "back_forward", "prerender", "spa"] as const;
 export type RumNavigationType = (typeof RumNavigationTypeValues)[number];

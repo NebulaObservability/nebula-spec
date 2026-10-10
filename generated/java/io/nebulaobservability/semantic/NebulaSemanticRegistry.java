@@ -63,6 +63,9 @@ public final class NebulaSemanticRegistry {
     public static final String RUM_ERROR_FINGERPRINT = "rum.error.fingerprint";
     public static final String RUM_ERROR_HANDLED = "rum.error.handled";
     public static final String RUM_ERROR_SOURCE = "rum.error.source";
+    public static final String RUM_ISSUE_FINGERPRINT = "rum.issue.fingerprint";
+    public static final String RUM_ISSUE_ID = "rum.issue.id";
+    public static final String RUM_ISSUE_STATUS = "rum.issue.status";
     public static final String RUM_NAVIGATION_ID = "rum.navigation.id";
     public static final String RUM_NAVIGATION_TYPE = "rum.navigation.type";
     public static final String RUM_PERFORMANCE_DURATION_MS = "rum.performance.duration_ms";
@@ -118,6 +121,8 @@ public final class NebulaSemanticRegistry {
     public static final String RUM_CRASH = "rum.crash";
     public static final String RUM_ERROR = "rum.error";
     public static final String RUM_HTTP_FAILURE = "rum.http.failure";
+    public static final String RUM_ISSUE_FIRST_SEEN = "rum.issue.first_seen";
+    public static final String RUM_ISSUE_REOPENED = "rum.issue.reopened";
     public static final String RUM_NETWORK_CHANGE = "rum.network.change";
     public static final String RUM_PERFORMANCE_LONG_TASK = "rum.performance.long_task";
     public static final String RUM_PERFORMANCE_MEMORY = "rum.performance.memory";
@@ -234,6 +239,16 @@ public final class NebulaSemanticRegistry {
 
     private final String value;
     RumErrorSource(String value) { this.value = value; }
+    public String value() { return value; }
+  }
+
+  public enum RumIssueStatus {
+    UNRESOLVED("unresolved"),
+    RESOLVED("resolved"),
+    IGNORED("ignored");
+
+    private final String value;
+    RumIssueStatus(String value) { this.value = value; }
     public String value() { return value; }
   }
 

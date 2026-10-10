@@ -86,6 +86,9 @@ attributes:
   - { name: rum.error.fingerprint, type: string, source: rutp, stability: stable, requirement: optional, privacy: identifier, description: Client grouping hint. }
   - { name: rum.error.source, type: enum, enum: rum.error.source, source: rutp, stability: stable, requirement: optional, privacy: public, description: Error source. }
   - { name: rum.error.handled, type: bool, source: rutp, stability: stable, requirement: optional, privacy: public, description: Whether the error was handled. }
+  - { name: rum.issue.id, type: string, source: rutp, stability: stable, requirement: optional, privacy: identifier, description: Stable issue identifier derived from the canonical error fingerprint. }
+  - { name: rum.issue.fingerprint, type: string, source: rutp, stability: stable, requirement: conditional, privacy: identifier, description: Canonical grouping fingerprint (see the issue contract for the normative rule). }
+  - { name: rum.issue.status, type: enum, enum: rum.issue.status, source: rutp, stability: stable, requirement: optional, privacy: public, description: Issue lifecycle status. }
   - { name: rum.clock.monotonic_ns, type: int, source: rutp, stability: stable, requirement: recommended, privacy: public, description: Monotonic timestamp in nanoseconds. }
   - { name: rum.clock.offset_ms, type: int, source: rutp, stability: stable, requirement: optional, privacy: public, description: Estimated wall-clock offset. }
   - { name: rum.clock.uncertainty_ms, type: int, source: rutp, stability: stable, requirement: optional, privacy: public, description: Clock offset uncertainty. }

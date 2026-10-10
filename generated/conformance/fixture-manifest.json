@@ -31,6 +31,16 @@
       "sha256": "b7b2074d054c1d6425e8b33d5e69948133e4cdc088ff7e50e25954d7a35fee1d"
     },
     {
+      "kind": "issue",
+      "path": "fixtures/issue/invalid-issue-status.json",
+      "sha256": "28dfaf7e6560a943bfe714567d2b8f02ae2d00e1ac8aeb9f34d961399eb24f63"
+    },
+    {
+      "kind": "issue",
+      "path": "fixtures/issue/reopened-issue.json",
+      "sha256": "221b6d54421b26641046b228c07d7c2a681c2c57dec4f2cbe110c441cc4cf9b5"
+    },
+    {
       "kind": "privacy",
       "path": "fixtures/privacy/default-deny.json",
       "sha256": "a0bcbcf97f58f8a2207805eb45d58c9ce2fef9cffa24b9f970d0c79d7218d13c"

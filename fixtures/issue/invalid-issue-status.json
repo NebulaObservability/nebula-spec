@@ -1,0 +1,9 @@
+{
+  "issue_id": "issue-invalid-status",
+  "fingerprint": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+  "status": "closed",
+  "first_seen_at": "2026-10-10T08:00:00Z",
+  "last_seen_at": "2026-10-10T08:00:00Z",
+  "event_count": 1,
+  "affected_session_count": 1
+}
