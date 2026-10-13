@@ -1,7 +1,7 @@
 # @nebula-observability/apm-metrics-contract
 
-Generated, immutable APM Metrics contract for Spec `0.8.0-draft.13` and
-platform release `2026.10.10-mvp.0`. The bundle contains the exact 21-metric
+Generated, immutable APM Metrics contract for Spec `0.8.0-draft.14` and
+platform release `2026.10.11-mvp.0`. The bundle contains the exact 21-metric
 OTLP profile, its schemas, ExponentialHistogram and explicit Histogram fixtures,
 continuous cumulative export sequences, the official Go runtime `v0.69.0`
 profile, negative conformance cases, and the frozen compatibility snapshot. OTLP exemplar trace/span IDs use lowercase hex;
