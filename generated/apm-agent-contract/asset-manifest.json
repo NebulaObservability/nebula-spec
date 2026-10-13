@@ -6,7 +6,7 @@
   "files": [
     {
       "path": "README.md",
-      "sha256": "288701f8040e401b17c89f0941745d24f35272d262e7143f81b55b76168305d0"
+      "sha256": "c0efdf4fcd1eb91a3f2b077b2041aa5823ab018176aee5017ad9c3794664a6cc"
     },
     {
       "path": "contract.json",
@@ -46,7 +46,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "9a8c4e6ac7fa705e3d6ec0b90eb6eb5178d9f4666bc0dfa259415663dff9bd7b"
+      "sha256": "8e949e36fd5f9f92c3fc1a72029bd7c4494309b4e5146b72dcd1b8374b80239f"
     },
     {
       "path": "schemas/apm-agent-config.schema.json",
@@ -67,7 +67,7 @@
   ],
   "format_version": 1,
   "metrics_contract_version": "1.2.0-draft.0",
-  "release": "2026.10.9-mvp.0",
+  "release": "2026.10.10-mvp.0",
   "runtime_instrumentation_version": "0.69.0",
-  "spec_version": "0.8.0-draft.12"
+  "spec_version": "0.8.0-draft.13"
 }
